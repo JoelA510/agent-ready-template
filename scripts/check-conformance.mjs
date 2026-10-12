@@ -2088,7 +2088,7 @@ export const PROBES = {
       p.endsWith('/') ? ctx.repo.files.some((f) => f.startsWith(p)) : ctx.repo.has(p),
     )
     if (ctx.repo.has('AGENTS.md')) return pass('AGENTS.md at the root', ...(others.length ? [`also: ${others.join(', ')}`] : []))
-    return fail('no AGENTS.md at the root', others.length ? `rules kept only in: ${others.join(', ')}` : 'no agent rules found anywhere')
+    return fail('no AGENTS.md at the root', others.length ? `rules kept only in: ${others.join(', ')}` : 'no agent rules in any file an agent reads by default')
   },
 
   'core.instructions-resolve': (ctx) => {

@@ -32,7 +32,9 @@ instruction set; this skill only wires it up. Then:
    itself. The audit skeleton (baseline gate table, twelve areas, file-path evidence, severity,
    verification labels, refuted findings, coverage limits) and the remediation-plan skeleton
    (item fields, fixed ordering, small independently shippable milestones, or the single-PR
-   form for a small project) are copied into a dated folder, `docs/audits/YYYY-MM-<slug>/`. Before reporting, run
+   form for a small project) are copied into a dated folder, `docs/audits/YYYY-MM-<slug>/`, or a
+   dated folder wherever the repo already keeps its plans and audits: its convention wins, as the
+   prompt says. Before reporting, run
    `LC_ALL=C grep -nE '[^]A-Za-z0-9_]\[[A-Z][^]]*\]([^([]|$)|^\[[A-Z][^]]*\]([^(:[]|$)|<!-- GUIDANCE'` on every artifact you produced; it must print
    nothing. From the template checkout, also run `node scripts/check-placeholders.mjs` on
    them; it catches a half-deleted guidance comment the grep can't see. Where the target lacks
