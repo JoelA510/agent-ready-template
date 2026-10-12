@@ -18,6 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   runs 22.22.2. A project built from the template takes the new `engines` with the release; a
   machine on an older 22 or 24 needs a newer patch release of that line. `@tanstack/react-table` is
   9.2.6 (was 9.2.4), a patch.
+- **Workflows install the pinned npm with that npm itself** (`npx -y npm@<pin> install -g
+  npm@<pin>`), not `npm install -g npm@<pin>`. npm 10.9.7, which Node 22.22.2 bundles, fails
+  replacing itself with npm 11 ("Cannot find module 'promise-retry'"), so the floor job broke on
+  the new floor. A project whose own workflows install npm that way on Node 22 should make the same
+  change.
 
 ### Fixed
 

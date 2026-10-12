@@ -107,7 +107,7 @@ fi
 if [ -f package.json ]; then
   pinned=$(node -p "(require('./package.json').packageManager || '').replace(/^npm@/, '')" 2>/dev/null || true)
   if [[ "$pinned" =~ ^[0-9] ]] && [ "$(npm --version 2>/dev/null || echo none)" != "$pinned" ]; then
-    echo "setup.sh: npm is $(npm --version 2>/dev/null || echo missing) and package.json pins $pinned; CI installs it with npm install -g npm@$pinned." >&2
+    echo "setup.sh: npm is $(npm --version 2>/dev/null || echo missing) and package.json pins $pinned; CI installs it with npx -y npm@$pinned install -g npm@$pinned." >&2
   fi
 fi
 

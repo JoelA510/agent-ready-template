@@ -136,7 +136,9 @@ describe.skipIf(!hasWorkflows)(hasWorkflows ? 'runtime pin' : 'runtime pin (skip
     .flatMap((f) => workflowJobs(f, readFileSync(join(WORKFLOWS, f), 'utf8')))
   const isSetupNode = (s: Step) => /uses:\s*actions\/setup-node@/.test(s.text)
   const runsNode = (s: Step) => /\brun:[^\n]*\b(npm|npx|node|pnpm|yarn)\b|\brun:\s*\|[\s\S]*\b(npm|npx|node|pnpm|yarn)\b/.test(s.text)
-  const pinsNpm = (s: Step) => /npm install -g[^\n]*packageManager/.test(s.text)
+  // The pinned npm installs itself (npx npm@<pin> install -g npm@<pin>): npm 10.9.7, bundled with Node
+// 22.22.2, fails replacing itself with npm 11 ("Cannot find module 'promise-retry'").
+const pinsNpm = (s: Step) => /packageManager[^\n]*npx -y "npm@\$v" install -g "npm@\$v"/.test(s.text)
   const nodeJobs = jobs.filter((j) => j.steps.some(runsNode))
 
   it('finds the jobs that run Node (positive control)', () => {
