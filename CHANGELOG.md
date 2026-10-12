@@ -10,6 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **The Node floor rises to `^22.22.2 || ^24.15.0 || >=26.0.0`** (was `^22.12.0 || ^24.0.0 ||
+  >=26.0.0`), with jsdom 30.1.2 (was 29.1.1) and lint-staged 17.6.0 (was 16.4.0). jsdom 30
+  declares that range, and lint-staged 17 needs Node 22.22.1 and Git 2.32 or later. The CI floor job
+  runs 22.22.2. A project built from the template takes the new `engines` with the release; a
+  machine on an older 22 or 24 needs a newer patch release of that line. `@tanstack/react-table` is
+  9.2.6 (was 9.2.4), a patch.
+
 ### Fixed
 
 - **`node.strict-types` failed a TypeScript 6 project that is strict.** TypeScript 6 turned

@@ -7,7 +7,7 @@
   "type": "module",
   "description": "A project build template: prompts for taking a codebase to production standards, design tokens, accessible React components, and written brand & content guidelines. Fork it and swap in your brand.",
   "engines": {
-    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "packageManager": "npm@11.19.0",
   "scripts": {
@@ -127,10 +127,10 @@
     "globals": "^17.13.0",
     "husky": "^9.1.7",
     "jest-axe": "^11.0.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.1.2",
     "json5": "^2.2.3",
     "knip": "^6.39.0",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.6.0",
     "playwright": "^1.63.0",
     "remark-gfm": "^4.0.1",
     "smol-toml": "^1.9.0",
