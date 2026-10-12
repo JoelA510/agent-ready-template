@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   flow table, and a standard's `audit-area` accepts 1-13. Areas 1-12 keep their numbers, so earlier
   audits and finding IDs still line up. A project picks up the prompt and skeleton on its next
   re-apply.
+- **The run log records the first Phase 3 run** (an existing-repository trial executing milestone
+  1 of its plan), with four template findings it raised. Nothing to do in a project.
 
 ### Fixed
 
