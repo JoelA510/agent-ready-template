@@ -457,6 +457,23 @@ describe('process:apply: merge proposals', () => {
     expect(read(target, 'prompts/new-project.md')).toBe(lines(12, { 1: 'target edit' })) // the target's file is untouched
   })
 
+  it("finds the version last offered by its hash when this history doesn't hold the recorded commit", () => {
+    // A target applied from a copy of this history (an import, a squashed export): its commit isn't
+    // here, but the version it was offered is.
+    write(template, 'prompts/new-project.md', lines(12))
+    commitTemplate('base')
+    apply()
+    const manifest = JSON.parse(read(target, 'prompts/.apply-manifest.json'))
+    write(target, 'prompts/.apply-manifest.json', JSON.stringify({ ...manifest, templateCommit: 'f'.repeat(40) }))
+    write(target, 'prompts/new-project.md', lines(12, { 1: 'target edit' }))
+    write(template, 'prompts/new-project.md', lines(12, { 10: 'template edit' }))
+    commitTemplate('change')
+    const { out } = apply()
+    expect(out).toContain('prompts/new-project.md.template (merged cleanly)')
+    expect(read(target, 'prompts/new-project.md.template')).toBe(lines(12, { 1: 'target edit', 10: 'template edit' }))
+    expect(out).toContain('or a repository this template was copied from without its history')
+  })
+
   it("parks the plain new version when the recorded commit doesn't hold what was offered", () => {
     write(template, 'prompts/new-project.md', lines(6))
     commitTemplate('base')

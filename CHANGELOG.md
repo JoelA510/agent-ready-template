@@ -12,6 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **A re-apply after a history break parked plain files instead of merge proposals.** When a
+  target's manifest records a commit this template's history doesn't hold, which is every target
+  applied before this repository's own history begins, `process:apply` couldn't read the version
+  it last offered, so a file both sides had changed was parked as the plain new version. It now
+  finds that version by its recorded hash among every version of the file here, and parks a
+  three-way merge proposal wherever the offered version survived. The warning that the recorded
+  commit isn't here now also names "a repository this template was copied from without its
+  history". For a target applied before this repository existed, that's the case: expect the
+  warning once, review the re-apply's diff, and the next re-apply records a commit from here.
 - **Docs that had gone stale.** The README's skills list now names `plan-change` and
   `template-update`, its `npm run check` row names knip and the bundle budget, and it says
   `v1.0.0-rc.2` is the first release tagged here. The AGENTS skeleton's hook guidance says the

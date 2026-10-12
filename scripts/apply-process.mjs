@@ -25,8 +25,9 @@
 //   - template changed, target copy untouched -> updated in place;
 //   - template changed AND target edited -> parked once as <name>.template (and recorded as
 //     offered, so merging it and deleting the .template ends the matter). For a text file whose
-//     last offered version is still in this checkout's history (the manifest's templateCommit),
-//     what's parked is a three-way merge proposal, `git merge-file --diff3` of the target's copy,
+//     last offered version is still in this checkout's history (at the manifest's templateCommit,
+//     or, when this history doesn't hold that commit, as any version with the recorded hash), what's
+//     parked is a three-way merge proposal, `git merge-file --diff3` of the target's copy,
 //     that version, and the new one, with conflicts marked; otherwise the new version as is;
 //   - target deleted a delivered file -> left deleted;
 //   - template dropped a file -> removed if the target's copy is untouched, reported if edited;
@@ -256,14 +257,41 @@ function legacyLeftovers(target) {
 function offeredVersion(commit, src, expected) {
   // A hash, never anything git would read as an option (`--output=...`): the manifest is editable.
   if (!/^[0-9a-f]{40,64}$/.test(commit ?? '') || !src) return null
-  let text
+  const text = showAt(commit, src)
+  if (text !== null && hash(text) === expected) return text
+  // Not at that commit: this history doesn't hold it (the target was applied from a copy of an
+  // older history, such as an import) or the template was dirty then. Any version of the file
+  // here with the recorded hash is the same text.
+  return versionsOf(src).get(expected) ?? null
+}
+
+// A file at a commit of this checkout, or null when the commit or the file isn't here, or no git.
+function showAt(commit, src) {
   try {
-    text = execFileSync('git', ['show', `${commit}:${src}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 })
+    return execFileSync('git', ['show', `${commit}:${src}`], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 })
   } catch (error) {
-    if (error.status !== undefined || error.code === 'ENOENT') return null // not in this history, or no git
+    if (error.status !== undefined || error.code === 'ENOENT') return null
     throw error
   }
-  return hash(text) === expected ? text : null
+}
+
+// Every version of a template file in this checkout's history up to HEAD, by hash.
+const versionCache = new Map()
+function versionsOf(src) {
+  if (versionCache.has(src)) return versionCache.get(src)
+  const found = new Map()
+  let commits = []
+  try {
+    commits = execFileSync('git', ['log', '--format=%H', 'HEAD', '--', src], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\n').filter(Boolean)
+  } catch (error) {
+    if (error.status === undefined && error.code !== 'ENOENT') throw error // else no history, or no git
+  }
+  for (const commit of commits) {
+    const text = showAt(commit, src)
+    if (text !== null) found.set(hash(text), text)
+  }
+  versionCache.set(src, found)
+  return found
 }
 
 /**
@@ -495,8 +523,9 @@ const shallow = () => {
   }
 }
 
-// A target applied from a commit this checkout doesn't contain (a newer template, or another
-// branch): what a re-apply here would "update" could be a downgrade. False when it can't tell.
+// A target applied from a commit this checkout doesn't contain (a newer template, another branch,
+// or the history this one was copied from): what a re-apply here would "update" could be a
+// downgrade. False when it can't tell.
 function notInHistory(commit) {
   if (!/^[0-9a-f]{40,64}$/.test(commit ?? '') || !templateCommit()) return false // nothing to look up, or no history here
   try {
@@ -512,6 +541,10 @@ function notInHistory(commit) {
 
 // --- Main -------------------------------------------------------------------------------------
 
+// Where a commit missing from this history can come from. Only someone who knows the target's
+// history can tell the three apart, so each stays a warning.
+const ELSEWHERE = 'a newer template, another branch, or a repository this template was copied from without its history'
+
 function check(target) {
   const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers } = drift(target)
   if (!delivered) {
@@ -520,7 +553,7 @@ function check(target) {
   }
   const here = templateCommit()
   console.log(`Process drift: ${target}\nDelivered from ${from?.slice(0, 12) ?? 'an unknown commit'}; this template is at ${here?.slice(0, 12) ?? 'an unknown commit'}.\n`)
-  if (ahead) console.log(`! ${from.slice(0, 12)} isn't in this template checkout's history (a newer template, or another branch): a re-apply from here could take files back. Check with the checkout it came from.\n`)
+  if (ahead) console.log(`! ${from.slice(0, 12)} isn't in this template checkout's history (${ELSEWHERE}): a re-apply from here could take files back. Check with the checkout it came from.\n`)
   if (held.length) console.log(`! The manifest records pack(s) this template doesn't ship: ${held.join(', ')}. Their files are left as they are.\n`)
   if (heldBack.length) console.log(`! The target's own skill(s) hold the template's back: ${heldBack.join(', ')} (not a copy of the template's; see process:apply's report).\n`)
   if (changes.length) {
@@ -642,7 +675,7 @@ function main() {
   if (packs.length) console.log(`Standards delivered: core, ${packs.join(', ')} (prompts/standards/).\n`)
   if (held.length) console.log(`The manifest records pack(s) this template doesn't ship: ${held.join(', ')}. Their files are left as they are; apply from the template they came from to update them.\n`)
   if (notInHistory(previous.templateCommit)) {
-    console.log(`! The target was last applied from ${previous.templateCommit.slice(0, 12)}, which isn't in this template checkout's history (a newer template, or another branch): what this run updated could be older than what it replaced.\n`)
+    console.log(`! The target was last applied from ${previous.templateCommit.slice(0, 12)}, which isn't in this template checkout's history (${ELSEWHERE}): what this run updated could be older than what it replaced. Review the diff before committing.\n`)
   }
   const ignored = gitignored(target, [...actions.filter((a) => !['kept-deleted', 'remove', 'shadowed', 'own-skill', 'outside'].includes(a.kind)).map((a) => a.dest), MANIFEST])
   if (ignored.length) {

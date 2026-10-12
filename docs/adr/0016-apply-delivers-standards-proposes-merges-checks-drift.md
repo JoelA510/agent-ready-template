@@ -98,3 +98,10 @@ others the repository was detected for. The config stays the repository's own fi
 
 Each was shown failing with its code removed or changed: no proposal, an unverified base,
 conflict markers unseen, packs forgotten, the warning silenced.
+
+**Follow-up, 2026-10-12.** When the recorded commit isn't in this checkout's history, the apply now
+looks for the version last offered by its hash among every version of the file in this history,
+so a target applied from a copy of this history (an import, a squashed export) still gets merge
+proposals for each file whose offered version survived the copy. The commit-missing warning names
+that case beside "a newer template, or another branch": only someone who knows the target's
+history can tell them apart, so it stays a warning. Shown failing with the fallback removed.
