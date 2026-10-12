@@ -45,6 +45,7 @@ has to be shown failing with the fix reverted, not assumed to.
 > - **Fix approach:** [FILL IN]
 > - **Files touched:** [FILL IN]
 > - **Depends on:** [ITEM IDS, OR NONE]
+> - **Widens:** [FINDING IDS THIS FIX MAKES MORE FREQUENT OR REACHABLE, EACH MOVED INTO THIS MILESTONE, OR NONE]
 > - **Effort:** [S / M / L]
 > - **Acceptance criteria:** [WHAT A USER OR REVIEWER CAN OBSERVE WHEN IT'S FIXED]
 > - **Test gate:** [THE CHECK THAT FAILS IF THIS REGRESSES — for a finding with a standard ID, the conformance scorecard passing it, and the waiver or baseline entry removed]

@@ -42,6 +42,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **The run log records the first Phase 3 run** (an existing-repository trial executing milestone
   1 of its plan), with four template findings it raised. Nothing to do in a project.
 
+- **A CI workflow skeleton for Node projects**, `.github/workflows/ci.yml` beside the ruleset
+  skeleton: no token permissions, actions pinned by commit, Node from `.nvmrc`, one step per gate,
+  and an optional end-to-end job. Its job names are the ruleset's required checks. A test holds its
+  pins (and the hub skeleton's) to the commits this template's own workflows use, so a Dependabot
+  bump here can't leave projects an older pin. The existing-repository trial's Phase 3 had to copy
+  this repository's workflow by hand. A project gets it staged under `prompts/skeletons/` on its
+  next re-apply.
+- **The remediation plan asks which findings each fix widens.** A fix that makes another defect
+  more frequent or reachable (unblocking a path that runs into it) moves that finding into the
+  same milestone, and the item says so (a new "Widens" field). In the trial, letting AI-first
+  games play made a turn-counter bug fire on every rotation; the plan had it a milestone later.
+- **The env-validation skeleton has an optional case.** An optional integration (an error
+  reporter's DSN, an analytics key) is off when unset and fails only on a placeholder or
+  malformed value. Marked required, as the skeleton implied, it fails every build until the
+  account exists; the trial's plan wrote exactly that criterion and had to change it.
+
 ### Fixed
 
 - **`node.strict-types` failed a TypeScript 6 project that is strict.** TypeScript 6 turned

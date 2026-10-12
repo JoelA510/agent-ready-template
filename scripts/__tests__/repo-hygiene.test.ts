@@ -201,10 +201,12 @@ const pinsNpm = (s: Step) => /packageManager[^\n]*npx -y "npm@\$v" install -g "n
 // reports anymore leaves every PR waiting forever, and a new job isn't required at all. This
 // test keeps the file right; the failure message says what else to do.
 describe.skipIf(!hasWorkflows)('workflow permissions', () => {
-  // The template's workflows and the hub skeleton's: nothing granted by default, so a job added
-  // later starts with no token scopes, and each job names the ones it uses.
+  // The template's workflows and the skeletons' (the hub's, and the project CI skeleton): nothing
+  // granted by default, so a job added later starts with no token scopes, and each job names the
+  // ones it uses.
   const HUB = join(REPO, 'templates/hub/.github/workflows')
-  const files = [WORKFLOWS, HUB]
+  const SKELETON = join(REPO, 'templates/project/.github/workflows')
+  const files = [WORKFLOWS, HUB, SKELETON]
     .filter((dir) => existsSync(dir))
     .flatMap((dir) => readdirSync(dir).filter((f) => /\.ya?ml$/.test(f)).map((f) => join(dir, f)))
 
@@ -214,6 +216,23 @@ describe.skipIf(!hasWorkflows)('workflow permissions', () => {
     const jobs = Object.entries(wf.jobs ?? {}) as [string, { permissions?: unknown; uses?: string }][]
     expect(jobs.length).toBeGreaterThan(0)
     for (const [id, job] of jobs) expect(job.permissions, `job ${id}`).toBeTypeOf('object')
+  })
+
+  // Dependabot moves the pins in .github/workflows only; a skeleton left behind would hand every
+  // project an older commit than the template runs. Each action a skeleton uses is pinned to the
+  // commit the template's own workflows use.
+  const pins = (file: string) =>
+    [...readFileSync(file, 'utf8').matchAll(/uses:\s*([\w.-]+\/[\w.-]+)@([0-9a-f]{40})/g)].map((m) => ({ action: m[1], sha: m[2] }))
+  const own = new Map(readdirSync(WORKFLOWS).filter((f) => /\.ya?ml$/.test(f)).flatMap((f) => pins(join(WORKFLOWS, f))).map((p) => [p.action, p.sha]))
+  const skeletonFiles = files.filter((f) => !f.startsWith(WORKFLOWS))
+
+  it('finds pinned actions in the skeletons (positive control)', () => {
+    expect(skeletonFiles.flatMap(pins).length).toBeGreaterThan(0)
+  })
+
+  it.each(skeletonFiles.map((f) => [f.slice(REPO.length + 1), f]))('%s pins each action to the commit the template uses', (_label, file) => {
+    const stale = pins(file).filter((p) => own.has(p.action) && own.get(p.action) !== p.sha)
+    expect(stale.map((p) => `${p.action}@${p.sha} (the template uses ${own.get(p.action)})`)).toEqual([])
   })
 })
 

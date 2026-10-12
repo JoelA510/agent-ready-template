@@ -191,7 +191,8 @@ site has no server-side authz or database):
    test doubles that enforce none of the real backend's constraints.
 7. CI/CD - does CI run typecheck+lint+test+build as a required check that
    blocks merge (a ruleset is one importable file - skeleton:
-   .github/rulesets/main.json); do scripts do what their names say; does CI run the
+   .github/rulesets/main.json; a Node workflow to start from - skeleton:
+   .github/workflows/ci.yml); do scripts do what their names say; does CI run the
    production runtime version, pinned in one file, and is it still supported
    upstream; config keys dead after a tool upgrade; preview
    deploys; rollback path; is the shipped artifact ever checked; build
@@ -264,6 +265,10 @@ docs/remediation-plan.md):
 - Each item: gap, fix approach, files touched, dependencies, effort (S/M/L),
   acceptance criteria, a test gate shown failing with the fix reverted,
   rollback, and whether it is a minimal diff or a flagged refactor.
+- For each fix, ask which other findings it widens: a defect the fix makes
+  more frequent or reachable from more places (unblocking a path that runs
+  into it). A widened finding moves into the same milestone, and the item
+  names it ("Widens: 4.3").
 - Group into milestones, each independently shippable and ending with the app
   deployable and all tests green. Milestone 1 must end with: CI enforcing
   typecheck/lint/test as a required check, no known blockers, and error

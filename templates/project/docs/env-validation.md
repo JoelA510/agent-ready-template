@@ -42,6 +42,8 @@ const server = z.object({
 const client = z.object({
   // Only variables safe to ship to a browser, marked by your framework's public prefix.
   PUBLIC_APP_URL: z.string().url(),
+  // An optional integration: unset turns it off; a malformed value still fails.
+  PUBLIC_ERROR_REPORTER_DSN: z.string().url().optional(),
 })
 
 // Public variables are listed one by one, in the literal form the bundler inlines: a bundler
@@ -50,6 +52,7 @@ const client = z.object({
 const parsed = server.merge(client).safeParse({
   ...process.env, // server side only; in client code this spread is empty
   PUBLIC_APP_URL: process.env.PUBLIC_APP_URL,
+  PUBLIC_ERROR_REPORTER_DSN: process.env.PUBLIC_ERROR_REPORTER_DSN || undefined,
 })
 
 if (!parsed.success) {
@@ -64,7 +67,7 @@ The illustration validates both halves in one place, which suits a server entry 
 client bundle, only the explicitly listed public variables exist; if client code imports this
 module, split the client schema into its own file so it never touches the server half.
 
-Two refinements the illustration leaves out, both from real incidents:
+Three refinements the illustration leaves out, all from real incidents:
 
 - **Reject placeholder values, not just empty ones.** A copied `.env.example` passes
   `z.string().min(1)` with `your-api-key` in it, and ships. Refuse the shapes your example file
@@ -72,6 +75,11 @@ Two refinements the illustration leaves out, both from real incidents:
 - **Fail the build, not the first request.** Where the platform builds on a remote service
   (EAS, a CI job), the validation runs there too, so a value missing from that environment stops
   the build instead of shipping.
+- **An optional integration is off when unset, not a failed build.** Required is for what the app
+  can't run without. A variable that switches on an optional service (an error reporter's DSN, an
+  analytics key) is optional: unset turns the feature off, which is how local builds, CI and a
+  rollback ("unset the variable") run. A placeholder or malformed value still fails. Marking one
+  required breaks every build until someone creates the account.
 
 Enforcement worth adding once the module exists: a lint rule (or a grep in CI) that fails on
 `process.env` outside this file. A convention that isn't checked is a suggestion.

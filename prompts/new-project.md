@@ -224,7 +224,8 @@ Create, as actual files in the repo:
    design-system location, apps consume packages, no cross-app imports.
 5. Tooling config - typecheck (strict), lint, format, pre-commit hooks, and CI
    (typecheck + lint + test + build on every PR), modeled on
-   ixartz/Next-js-Boilerplate. CI must fail the build on any of these, and
+   ixartz/Next-js-Boilerplate (skeleton for a Node project:
+   .github/workflows/ci.yml). CI must fail the build on any of these, and
    be a required status check on the default branch (branch protection or a
    ruleset; skeleton: .github/rulesets/main.json, imported in the repo's
    settings): CI that only reports can't block a merge. On GitHub Free,
