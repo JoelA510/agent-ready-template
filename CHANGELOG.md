@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Dependabot holds back ESLint 10 and TypeScript 7** until what blocks them ships, with the
+  reason beside each entry in `.github/dependabot.yml`. ESLint 10: `eslint-plugin-jsx-a11y`, which
+  enforces the accessibility bar in lint, accepts ESLint up to 9 in its latest release. TypeScript
+  7: it has no JavaScript compiler API, which the scorecard and `check:env` read tsconfig through,
+  and `typescript-eslint` supports TypeScript below 6.1. A fork inherits the holds; remove each
+  when its blocker is gone.
 - **The Node floor rises to `^22.22.2 || ^24.15.0 || >=26.0.0`** (was `^22.12.0 || ^24.0.0 ||
   >=26.0.0`), with jsdom 30.1.2 (was 29.1.1) and lint-staged 17.6.0 (was 16.4.0). jsdom 30
   declares that range, and lint-staged 17 needs Node 22.22.1 and Git 2.32 or later. The CI floor job
