@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0-rc.3] - 2026-10-12
+
+Fixes from the first existing-repository trial, run as far as it goes: an audit and remediation
+plan for an existing web game, then milestone 1 of that plan, carried out. Every template
+finding the trial raised is fixed here: F1-F9 from the audit and plan, and P1-P4 from execution.
+The largest changes are a thirteenth audit area, core flows (does each flow the product promises
+work end to end?), and the Node floor rising to `^22.22.2 || ^24.15.0`. Before 1.0.0 the release
+bar (CONTRIBUTING.md §8, step 5) still asks for a rerun of the steps these fixes changed, on a
+fresh trial of each kind.
+
 ### Changed
 
 - **Dependabot holds back ESLint 10 and TypeScript 7** until what blocks them ships, with the
