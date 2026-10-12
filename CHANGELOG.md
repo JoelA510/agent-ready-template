@@ -10,7 +10,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+Fixes from the third new-repository trial (a process-only bootstrap on `1.0.0-rc.3`), and one from
+the latest existing-repository trial: the skeletons, followed literally, now produce what
+milestone 1's scorecard passes.
+
+### Changed
+
+- **A Dependabot skeleton, and the CI skeleton audits its workflows and finds unused code.** A new
+  project that copied the CI skeleton as Phase 2.5 says failed three standards milestone 1 must
+  pass: `core.workflows-audited` (no zizmor), `node.unused-code` (no knip), and
+  `core.dependency-updates` (no Dependabot, and no skeleton for it). The CI skeleton gains a
+  pinned zizmor step (every stack) and a knip step (marked as the node pack's), the new
+  `.github/dependabot.yml` skeleton covers npm and `github-actions` with a 7-day cooldown, and
+  Phase 2.5, the audit's area 8, and the bootstrap skill's artifact list name them (the skill's
+  list now names the CI workflow too). A test copies both skeletons into a scratch Node project
+  and scores it. A project built from rc.3: add zizmor and knip to CI and a Dependabot config if
+  its scorecard reports them missing.
+- **The ruleset skeleton names the CI skeleton's jobs.** It had one slot for CI, while the CI
+  skeleton has two jobs, so a filled ruleset never required `End-to-end`. It now lists
+  `Typecheck, lint, test, build` and `End-to-end` (marked to delete with that job) beside the
+  audit's placeholder, and a test holds its required checks equal to the CI skeleton's job names.
+  A project whose ruleset has one CI check while its CI runs an end-to-end job: add it, and
+  re-import the ruleset where it's enforced.
+- **A private repository's security contact is a project input.** Without it, a run guessed one
+  for SECURITY.md. When it isn't given, SECURITY.md names the repository's owner, says the
+  private channel is still to be set up, and the run lists it as an open item.
+- **The word-for-word blocks survive Prettier.** The AGENTS and CONTRIBUTING skeletons wrap the
+  operating rules and the definition of done in `prettier-ignore` comments, which Phase 2.5 says
+  to keep: Prettier rewrote `*before*` as `_before_`, so the blocks no longer matched. A project
+  that formats its Markdown can add the same comments around both blocks.
+
 ### Fixed
+
+- **`process:apply` told a project with rules only in CLAUDE.md to merge the AGENTS skeleton into
+  CLAUDE.md**, which `core.agent-rules` then failed as high. The advice now matches the standard,
+  for a new or an existing project: create a root AGENTS.md from the skeleton, move the shared
+  rules into it, and have CLAUDE.md import it (`@AGENTS.md`). The `complete` skill and the audit's
+  area 12 say the same, and a test follows the advice in a scratch target and scores it. A
+  project that merged its rules into CLAUDE.md: move them to AGENTS.md and import it.
+- **A re-apply no longer asks to merge rules that are merged.** When the root AGENTS.md carries
+  the operating rules' markers, `process:apply` says nothing about agent instructions.
+- **URL-shaped placeholders pass no longer.** `https://<your-key>@o0.ingest.sentry.io/0`, the
+  shape vendors document a DSN in, passed both `check:env` and the env guide's example schema.
+  `check:env` now treats any `<…>` in a URL, and `your-…` opening its user, host, or a path
+  segment, as a placeholder (and `changeme` before an `@`); a real DSN still passes. The guide's
+  example refuses placeholders on every value, optional ones included, and says to test the rule
+  with a placeholder that is otherwise well formed. A project's env module: refuse the same shapes.
+- **The audit gate's header named the template's paths** (`docs/security/dependency-policy.md`,
+  ADR 0005) in a project that copied it. It now names the policy generically. A project that
+  copied the gate can fix the comment by hand.
 
 - **`check:upgrade-path`'s test failed CI once on removing its scratch repository**
   (`ENOTEMPTY` on `.git/objects`). A commit can leave git's auto-maintenance running in the

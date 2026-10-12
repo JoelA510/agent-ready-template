@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ManifestError, PROCESS_PROMPTS, PROCESS_SKILLS, TEMPLATE_ONLY, drift } from '../apply-process.mjs'
+import { runProbe } from '../check-conformance.mjs'
 import { listRepoFiles, skeletonDirs } from '../repo-files.mjs'
 import { fixtureGit } from './fixture-git'
 import { ISOLATED_ENV, resolvesFrom } from './isolated-env'
@@ -212,10 +213,45 @@ describe('process:apply: delivery', () => {
     write(target, '.claude/CLAUDE.md', '# existing rules\n')
     const { out } = apply()
     expect(out).toContain('The target already has agent instructions: .claude/CLAUDE.md.')
-    // The same advice the prompts give: an existing project merges in place, a new one moves to AGENTS.md.
-    expect(out).toContain('An existing project (/complete) merges the rules from prompts/skeletons/AGENTS.skeleton.md into .claude/CLAUDE.md')
-    expect(out).toContain('a new one (/bootstrap) folds .claude/CLAUDE.md into a new AGENTS.md')
+    // New or existing project alike: the rules move to a root AGENTS.md, which CLAUDE.md imports.
+    expect(out).toContain('create it from prompts/skeletons/AGENTS.skeleton.md, and move the shared rules from .claude/CLAUDE.md into it')
+    expect(out).toContain('`@../AGENTS.md` as the first line of .claude/CLAUDE.md')
+    expect(out).not.toContain('into .claude/CLAUDE.md')
     expect(existsSync(join(target, 'CLAUDE.md'))).toBe(false)
+    expect(existsSync(join(target, 'AGENTS.md'))).toBe(false)
+  })
+
+  // The AGENTS skeleton as a prompt run leaves it: placeholders filled (an unfilled one reads as a
+  // leftover from an old apply, not as instructions).
+  const filledAgents = () => read(target, 'prompts/skeletons/AGENTS.skeleton.md').replace(/\[[A-Z][^\]\n]*\]/g, 'filled')
+
+  // The advice and the scorecard give one answer: a target that follows the advice passes
+  // core.agent-rules, and the next apply has nothing left to say.
+  it('advises rules kept only in CLAUDE.md into the shape core.agent-rules passes', () => {
+    write(target, 'CLAUDE.md', '# Project rules\n\n- Run the tests before committing.\n')
+    const first = apply().out
+    expect(runProbe(target, 'core.agent-rules')).toMatchObject({ status: 'fail', evidence: ['no AGENTS.md at the root', 'rules kept only in: CLAUDE.md'] })
+    expect(first).toContain('the standard core.agent-rules fails rules kept only in CLAUDE.md')
+    // Follow it word for word: AGENTS.md from the skeleton, with the moved rules; CLAUDE.md imports it.
+    expect(first).toContain('create it from prompts/skeletons/AGENTS.skeleton.md')
+    const importLine = first.match(/`(@[^`]+)` as the first line of CLAUDE\.md/)?.[1]
+    expect(importLine).toBe('@AGENTS.md')
+    write(target, 'AGENTS.md', `${filledAgents()}\n- Run the tests before committing.\n`)
+    write(target, 'CLAUDE.md', `${importLine}\n\n## Claude Code\n`)
+    expect(runProbe(target, 'core.agent-rules').status).toBe('pass')
+    const again = apply().out
+    expect(again).not.toContain('already has agent instructions')
+    expect(again).not.toContain('skips AGENTS.md')
+  })
+
+  it('says nothing about merging once AGENTS.md carries the operating rules (a re-apply after a prompt run)', () => {
+    write(target, 'AGENTS.md', '# shared rules\n')
+    write(target, 'CLAUDE.md', '@AGENTS.md\n')
+    expect(apply().out).toContain('Merge the rules from prompts/skeletons/AGENTS.skeleton.md into AGENTS.md.') // positive control
+    write(target, 'AGENTS.md', filledAgents())
+    const { out } = apply()
+    expect(out).not.toContain('Merge the rules')
+    expect(out).not.toContain('already has agent instructions')
   })
 
   it('prefers AGENTS.md as the merge target, and never a personal CLAUDE.local.md', () => {
