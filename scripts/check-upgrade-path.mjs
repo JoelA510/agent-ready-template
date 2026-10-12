@@ -9,10 +9,10 @@
 //
 // It needs the release tags (in CI, a checkout with fetch-depth: 0). With none behind HEAD it
 // exits 2: there was nothing to upgrade from, and that's never a pass. The one exception is a
-// repository that has never released: a full clone with no v* tag at all, such as a new template
-// before its first release or a project made with GitHub's "Use this template", which copies no
-// tags. That exits 0 and says so. A shallow clone with no tags still exits 2, since the tags may
-// just not have been fetched. It applies with no --pack, since a release from before --pack
+// full clone with no release before HEAD: no v* tag at all (a new template before its first
+// release, or a project made with GitHub's "Use this template", which copies no tags), or v* tags
+// only on HEAD itself (CI re-run on the first release's commit). That exits 0 and says so. A
+// shallow clone still exits 2, since the tags may just not have been fetched. It applies with no --pack, since a release from before --pack
 // existed can't take one: pack standards aren't upgraded here.
 //
 // Run: node scripts/check-upgrade-path.mjs [--from <tag>]
@@ -47,12 +47,16 @@ export function previousRelease(root = ROOT) {
 }
 
 /**
- * True when this repository has never released: no v* tag anywhere, in a clone that isn't shallow.
- * A shallow clone may simply lack the tags, so it never counts.
+ * Why there is legitimately no release before HEAD, or null: 'none' when the repository has no v*
+ * tag at all, 'head' when every v* tag is on HEAD (its first release). Only in a clone that isn't
+ * shallow: a shallow clone may simply lack the tags, so it never counts.
  */
-export function neverReleased(root = ROOT) {
-  if (git(root, ['rev-parse', '--is-shallow-repository']) === 'true') return false
-  return git(root, ['tag', '--list', 'v*']) === ''
+export function firstRelease(root = ROOT) {
+  if (git(root, ['rev-parse', '--is-shallow-repository']) === 'true') return null
+  const tags = git(root, ['tag', '--list', 'v*']).split('\n').filter(Boolean)
+  if (!tags.length) return 'none'
+  const head = git(root, ['rev-parse', 'HEAD'])
+  return tags.every((t) => git(root, ['rev-list', '-n', '1', t]) === head) ? 'head' : null
 }
 
 const apply = (script, target, ...args) => spawnSync(process.execPath, [script, '--target', target, ...args], { encoding: 'utf8' })
@@ -107,8 +111,13 @@ function main(argv) {
   }
   from ??= previousRelease()
   if (!from) {
-    if (neverReleased()) {
+    const first = firstRelease()
+    if (first === 'none') {
       console.log('✓ No release yet: this full clone has no v* tag, so there is nothing to upgrade from. The first release tag starts this check.')
+      return 0
+    }
+    if (first === 'head') {
+      console.log('✓ HEAD is the first release: every v* tag is on this commit, so there is nothing earlier to upgrade from.')
       return 0
     }
     throw new CheckError('No release tag behind HEAD to upgrade from. In CI, check out with fetch-depth: 0 so the tags come too.')
