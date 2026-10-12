@@ -136,9 +136,14 @@ record all go in that folder. Record the commit you audited.
   in the audit's baseline table. A gate that needs an undocumented flag,
   silently skips suites, or can't run here (mark it blocked (environment) and
   say what's missing) is a finding. From a template checkout, also run
-  `npm run check:conformance -- --root <repo>` (when detection misses a pack,
-  pass every pack with `--pack`: it replaces detection) and record its
-  scorecard there. Each failing standard is a finding in the area the
+  `npm run check:conformance -- --root <repo> --visibility <public|private>`
+  with the visibility the inputs established (without it, the standards that
+  depend on visibility are skipped; when detection misses a pack, pass every
+  pack with `--pack`: it replaces detection) and record its scorecard there.
+  The standards it marks as repository settings are scored by
+  `npm run check:settings -- --repo <owner/name>`, with a token that can read
+  the repository's settings in `GITHUB_TOKEN`; run it too, and record a setting
+  it couldn't read as skipped, never as passed. Each failing standard is a finding in the area the
   scorecard names, cited by its ID beside the finding's own (`2.1
   node.strict-types`), so the next audit's scorecard lines up with this one.
   A passing scorecard covers only the deterministic half: every area still

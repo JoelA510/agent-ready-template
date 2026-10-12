@@ -12,6 +12,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **`node.strict-types` failed a TypeScript 6 project that is strict.** TypeScript 6 turned
+  `strict` on by default, and the check only read an explicit `"strict": true`, so a project
+  leaving it unset was reported as "strict is off". The check now reads the project's TypeScript
+  version (installed, else the lowest major its declared range allows): unset passes from 6 on,
+  fails below 6, and fails, saying why, when the version can't be read. An existing-repository
+  trial found it; a project whose scorecard failed this standard for that reason passes on its next
+  run.
+- **The scorecard named standards a repository couldn't read.** `process:apply` delivers a pack's
+  standards only with `--pack`, but the scorecard scores every pack it detects. For a repository
+  that took the process, the scorecard now names the packs it scored without their standards, and
+  the `--pack` flags that deliver them.
+- **The existing-project prompt's scorecard step skipped what depends on visibility, and left out
+  repository settings.** The command now passes `--visibility` from the run's inputs, and the
+  prompt runs `check:settings` for the settings standards, recording what it can't read as skipped.
+  The audit skeleton's baseline table gains rows for settings, the environment checks, and the
+  agent-instruction check. Projects get both on their next re-apply.
+- **`/complete` stopped to ask for the definition of complete** even when the README answers it. It
+  now derives it from the README, product docs, or spec, states it as an assumption, and asks only
+  when the repository gives nothing to derive it from.
 - **A re-apply after a history break parked plain files instead of merge proposals.** When a
   target's manifest records a commit this template's history doesn't hold, which is every target
   applied before this repository's own history begins, `process:apply` couldn't read the version

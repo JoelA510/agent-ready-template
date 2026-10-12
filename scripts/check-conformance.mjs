@@ -1014,6 +1014,24 @@ function supabaseTables(ctx) {
   return { count: sql.length, tables: [...migrationTables(sql)].filter(([name]) => name.startsWith('public.')) }
 }
 
+// The major version of TypeScript the project compiles with: the installed one, else the lowest
+// major its declared range allows (`~6.0.2` -> 6, `>=5` -> 5), else null.
+function typescriptMajor(ctx, pkg) {
+  for (const dir of [...new Set([ctx.path, '.'])]) {
+    const installed = join(ctx.repo.root, dir, 'node_modules', 'typescript', 'package.json')
+    if (!existsSync(installed)) continue
+    try {
+      const major = Number.parseInt(JSON.parse(readFileSync(installed, 'utf8')).version, 10)
+      if (Number.isInteger(major)) return major
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error
+    }
+  }
+  const range = deps(pkg).typescript
+  const m = typeof range === 'string' ? /(?:^|[\s^~=<>v])(\d+)(?:\.|\s|$)/.exec(range.trim()) : null
+  return m ? Number(m[1]) : null
+}
+
 function tsConfigs(path, seen = new Set(), out = []) {
   const T = loadTs()
   if (seen.has(path)) return out
@@ -2770,6 +2788,7 @@ export const PROBES = {
     const base = config && join(ctx.repo.root, config)
     if (!base) return fail(`no tsconfig.json or jsconfig.json in ${ctx.path === '.' ? 'the root' : ctx.path}, so nothing typechecks the project`, ...pathHint(ctx, ctx.repo.pkg(ctx.path)))
     const rel = (p) => toPosix(relative(ctx.repo.root, p))
+    const tsMajor = typescriptMajor(ctx, ctx.repo.pkg(ctx.path))
     const configs = tsConfigs(base)
     const unreadable = configs.filter((c) => c.problem)
     if (unreadable.length) {
@@ -2785,8 +2804,11 @@ export const PROBES = {
       if (!tsFiles.length && !jsFiles.length) continue
       compiled++
       if (tsFiles.length) {
+        // TypeScript 6 turned strict on by default, so an unset key is strict there and off before.
         if (c.options.strict) ok.push(`${rel(c.path)}: strict (${tsFiles.length} TypeScript files)`)
-        else problems.push(`${rel(c.path)}: strict is off for ${tsFiles.length} TypeScript files${jsFiles.length && c.options.checkJs ? ` (checkJs is on for its ${jsFiles.length} JavaScript files; the TypeScript ones still need strict)` : ''}`)
+        else if (c.options.strict === undefined && tsMajor >= 6) ok.push(`${rel(c.path)}: strict by default under TypeScript ${tsMajor} (${tsFiles.length} TypeScript files); setting "strict": true keeps it under an older compiler`)
+        else if (c.options.strict === undefined && tsMajor === null) problems.push(`${rel(c.path)}: strict isn't set, and the project's TypeScript version couldn't be read (neither installed nor declared), so whether it defaults on is unknown`)
+        else problems.push(`${rel(c.path)}: strict is off for ${tsFiles.length} TypeScript files${c.options.strict === undefined ? ` (unset, which TypeScript ${tsMajor} reads as off)` : ''}${jsFiles.length && c.options.checkJs ? ` (checkJs is on for its ${jsFiles.length} JavaScript files; the TypeScript ones still need strict)` : ''}`)
       } else if (c.options.checkJs) ok.push(`${rel(c.path)}: checkJs (${jsFiles.length} JavaScript files)`)
       else problems.push(`${rel(c.path)}: compiles ${jsFiles.length} JavaScript files with checkJs off`)
     }
@@ -3542,6 +3564,11 @@ export function conform(rootArg, options = {}) {
   else if (config.data.packs) [source, specs] = [`${CONFIG} packs`, config.data.packs]
   const packs = resolvePacks(specs, catalog, root, source)
   const undeclared = detected.filter((d) => !packs.some((p) => p.pack === d.pack)).map((d) => d.pack)
+  // A repository that took the process (it has an apply manifest) but not a scored pack's standards:
+  // its audit would cite standards it can't read. process:apply delivers a pack only with --pack.
+  const undelivered = existsSync(join(root, 'prompts/.apply-manifest.json'))
+    ? [...new Set(packs.map((p) => p.pack))].filter((p) => p !== 'core' && !isDir(join(root, 'prompts/standards', p)))
+    : []
   const visibility = options.visibility ?? config.data.visibility ?? null
 
   const results = []
@@ -3591,6 +3618,7 @@ export function conform(rootArg, options = {}) {
     packs,
     packSource: source,
     undeclared,
+    undelivered,
     visibility,
     results,
     problems,
@@ -3629,6 +3657,9 @@ export function formatCard(card) {
   lines.push(`Standards conformance: ${card.root}`)
   lines.push(`Packs (${card.packSource}): ${packs}`)
   if (card.undeclared.length) lines.push(`Detected but not in the declared packs: ${card.undeclared.join(', ')}`)
+  if (card.undelivered?.length) {
+    lines.push(`Scored pack(s) whose standards this repository doesn't carry: ${card.undelivered.join(', ')}. Deliver them with the template's process:apply -- --target <this repository> ${card.undelivered.map((p) => `--pack ${p}`).join(' ')}`)
+  }
   lines.push('')
   const sorted = [...card.results].sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || a.key.localeCompare(b.key))
   for (const r of sorted) {

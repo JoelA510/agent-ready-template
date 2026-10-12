@@ -39,6 +39,7 @@ export interface Scorecard {
   packs: { pack: string; path: string }[]
   packSource: string
   undeclared: string[]
+  undelivered: string[]
   visibility: 'public' | 'private' | null
   results: Result[]
   problems: string[]
