@@ -1,0 +1,118 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Writing Principles" />
+
+# Writing Principles
+
+Voice & Tone (see the previous page) is about *who Acme sounds like*. This page is
+about *how to write an individual sentence* — the mechanical habits that make copy easy
+to read regardless of context. These are proposed as defaults for every writer touching
+the system, from marketing copy to a button label, and — like the rest of this
+section — they're a recommendation for your team to adjust, not a rule already carved in.
+
+## Lead with the point
+
+Put the most important information first. Readers — and especially customers scanning an
+email between meetings — decide whether to keep reading in the first sentence. Burying
+the point under context and caveats means the reader has to do the work of finding it.
+
+- **Do:** "Your renewal has moved to August 4. We rescheduled it after a billing change;
+  here's what changes for you."
+- **Don't:** "Due to a change in your billing schedule, which was flagged to our team
+  this morning, we wanted to let you know that there has been a change made to your
+  renewal date, which is now August 4."
+
+Both sentences contain the same facts. Only one lets the reader act on the first clause.
+
+## Plain language over jargon — with a real carve-out
+
+Default to the plainest word that says the same thing. Most formal-sounding phrasing is
+habit, not requirement, and it costs the reader effort for no added precision.
+
+| Jargon | Plain language |
+| --- | --- |
+| "prior to" | "before" |
+| "in the event that" | "if" |
+| "subsequent to" | "after" |
+| "at this point in time" | "now" |
+| "shall" (in non-binding UI/marketing copy) | "will" |
+
+The carve-out: a defined term of art stays exactly as-is when the term itself is doing
+real work — when swapping it for a plain-language paraphrase would change or blur its
+technical or legal meaning. **Personal data** (in a privacy policy) is the clearest
+example: it's not just "your info," because the term has a specific regulatory definition
+and specific obligations that the plain paraphrase doesn't carry. Other terms in this
+category: *service-level agreement*, *sub-processor*, *chargeback*. The test is simple —
+would a specialist wince at the substitution because something real got lost? If yes,
+keep the term of art and, where it's the reader's first encounter with it, define it in
+plain language alongside it rather than replacing it.
+
+- **Do (unnecessary jargon, simplified):** "Let us know before Friday if anything
+  changes."
+- **Don't:** "Please advise our team prior to the end of the business week in the event
+  that any of the aforementioned circumstances should change."
+- **Do (necessary precision, kept):** "We process your personal data only to provide the
+  service, as described in our privacy policy."
+- **Don't (over-simplified, loses meaning):** "We just use your info to help you out."
+
+## Active voice over passive
+
+Active voice names who's doing the action, which is almost always what the reader needs
+to know. Passive voice hides the actor — sometimes intentionally, but usually just out of
+habit — and forces the reader to guess or re-read.
+
+- **Do:** "We processed your refund on July 18."
+- **Don't:** "Your refund was processed on July 18."
+
+The passive version isn't wrong, but it leaves open *who* processed it, which is important
+if something later goes wrong with the refund. Default to active; use passive only when the
+actor is genuinely unknown or truly irrelevant to the reader (e.g., "the account was
+created in 2019" when authorship of the account isn't the point).
+
+## Second person: address the reader as "you"
+
+Write to the person reading, not about them in the third person and not in the abstract
+passive. This is consistent with the *Human* voice attribute, but it's a mechanical
+habit worth calling out on its own.
+
+- **Do:** "You'll receive an invoice on the first of each month."
+- **Don't:** "Customers will receive an invoice on the first of each month." *(when
+  writing directly to that customer)*
+
+## One idea per sentence
+
+A sentence carrying two or three ideas asks the reader to hold all of them in mind at
+once before any of them resolve. Split compound sentences at the seams — most of the
+time, two short sentences are easier to read than one long one joined with "and" or a
+semicolon.
+
+- **Do:** "We received your signed contract. Your project is now open, and you'll get a
+  welcome email with your account login within one business day."
+- **Don't:** "We received your signed contract, and as a result your project is now open,
+  which means you will shortly receive a welcome email containing your account login
+  details, and this should arrive within one business day."
+
+## Sentence case for UI text
+
+Buttons, headings, and nav labels use sentence case — capitalize only the first word and
+proper nouns — rather than Title Case. This matches the convention set by GOV.UK and
+Polaris, and it reads as calmer and less shouty at small sizes, where every word starting
+with a capital letter starts to look like a wall of emphasis.
+
+| Sentence case (use this) | Title Case (don't) |
+| --- | --- |
+| "Save changes" | "Save Changes" |
+| "New project" | "New Project" |
+| "Billing and invoices" | "Billing And Invoices" |
+
+The one exception is a proper noun that's always capitalized regardless of position —
+"Acme," a person's name, a defined product name.
+
+## The read-it-aloud test
+
+Before shipping a sentence, say it out loud as if a customer were sitting across the desk.
+If it would sound stiff, robotic, or over-formal spoken aloud to a real person, rewrite
+it until it wouldn't. Nobody says "please be advised that the aforementioned document has
+been received" to a customer in person — so it shouldn't be written that way either. This
+is the fastest gut-check available and it catches almost everything the rules above are
+trying to prevent.

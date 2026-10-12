@@ -1,0 +1,19 @@
+node_modules
+dist
+storybook-static
+*.local
+.DS_Store
+npm-debug.log*
+.vite
+*.tsbuildinfo
+# storybook-design-token addon cache (regenerated on `storybook dev`/`build-storybook`)
+public/design-tokens.source.json
+# Generated stakeholder decision guides (branded deliverables, not source — see docs/proposals/README.md)
+docs/proposals/*.html
+# Local import archives (bundles/tarballs used to seed this repo — not source, never committed)
+*.bundle
+*.tar.gz
+# Per-developer agent settings (the shared ones live in .claude/settings.json)
+.claude/settings.local.json
+# Skill eval results (claude plugin eval writes one directory per run)
+evals/results/

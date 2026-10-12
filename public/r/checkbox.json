@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "checkbox",
+  "type": "registry:ui",
+  "title": "Checkbox",
+  "description": "The Checkbox component.",
+  "dependencies": [
+    "@radix-ui/react-checkbox@^1",
+    "lucide-react@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as CheckboxPrimitive from '@radix-ui/react-checkbox'\nimport { Check } from 'lucide-react'\n\nimport { cn } from '@/lib/utils'\n\nfunction Checkbox({\n  className,\n  ...props\n}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {\n  return (\n    <CheckboxPrimitive.Root\n      data-slot=\"checkbox\"\n      className={cn(\n        'peer size-4 shrink-0 rounded-[4px] border border-input shadow-sm outline-none transition-colors',\n        'focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n        'disabled:pointer-events-none disabled:opacity-50',\n        'data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary',\n        'aria-invalid:ring-destructive/20 aria-invalid:border-destructive',\n        className,\n      )}\n      {...props}\n    >\n      <CheckboxPrimitive.Indicator\n        data-slot=\"checkbox-indicator\"\n        className=\"flex items-center justify-center text-current\"\n      >\n        <Check className=\"size-3.5\" strokeWidth={3} />\n      </CheckboxPrimitive.Indicator>\n    </CheckboxPrimitive.Root>\n  )\n}\n\nexport { Checkbox }\n"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Terminology" />
+
+# Terminology
+
+This is a **recommended starting glossary**, not a settled dictionary — and more than any
+other page in this section, it's one you're expected to replace. The entries below use the
+template's placeholder organization and generic B2B SaaS terms (projects,
+customers, invoices). Swap them for the real vocabulary of your own product and domain. What's
+worth keeping is the *method*: pick one word for each concept, write down why, and use it
+everywhere.
+
+Acme doesn't yet have a large body of existing copy to reverse-engineer conventions from —
+the starting site is essentially a tagline, a nav shell, and a logo — so most of the calls
+below are reasoned proposals grounded in the two real things this system has to go on: the
+site's one public line of copy ("We help teams do their best work") and the vocabulary already
+live in production inside Acme's own usage-and-billing dashboard. Where a row here doesn't
+match how people at your organization actually talk about the work, their usage should win —
+please correct it.
+
+That's also the right way to think about this page over time. As Alla Kholmatova argues in
+*Design Systems*, a shared vocabulary only stays useful if someone keeps curating it as new
+terms show up — a glossary that's written once and never revisited quietly stops matching how
+the team actually talks, and inconsistent usage creeps back in one document at a time. Treat
+this table as living: when a new domain term comes up in real work, it belongs here, reviewed
+the same way a change to a token or component would be — see **Governance** in the sidebar for
+how that review works.
+
+## Preferred terms
+
+The choices below are Acme's placeholder defaults. Keep the *shape* of each row — a preferred
+term, the alternative it beats, and a plain reason — and substitute your own domain's words.
+
+| Use | Not | Why |
+| --- | --- | --- |
+| **Customer** | Account | Use "customer" for the person or company you serve, and reserve "account" for the billing entity — they sound interchangeable but aren't (one customer can hold several accounts). If your product genuinely serves "members," "subscribers," or "patients," pick that word instead; the rule is one term used consistently, not this specific one. |
+| **Project** | Job, Deal | "Project" is a neutral, widely understood term for a discrete unit of work, and it's already the noun Acme's own dashboard uses internally — this recommendation follows real, active usage rather than introducing a new word. Whatever your domain actually calls this unit — "deal," "ticket," "campaign," "workspace" — pick one and use it everywhere; "Job" and "Deal" each carry connotations that may over- or under-describe your real work. |
+| **Team member** | User | Both are correct, and neither is a factual error — this is a pure consistency call, not an accuracy one. The recommendation is "team member" in people-facing copy because it reads warmer than "user"; reserve "user" for technical and analytics contexts and "seat" for billing. If the people doing the work prefer "user" day to day, that's a legitimate reason to flip this — the point is picking one and using it everywhere, not this particular one being sacred. |
+| **Sign in** | Log in | "Sign in" is the more current, plain-language convention across contemporary products, and it reads slightly less technical than "log in," which has a faint command-line/terminal connotation left over from an earlier era of software. |
+| **Your organization** | Org, Workspace | When referring to the customer's organization in product copy, "your organization" (second person) or "the company" reads plainly and works across industries. Pick one register and hold it: "Org" is fine in dense UI but reads as clipped in prose, and "Workspace" means a specific object in many products, not the company as a whole. |
+| **Contract** | Agreement, Order form | When referring to the formal document that defines the relationship, "contract" is the plainest, most widely recognized term. "Agreement" is an acceptable synonym if your legal team standardizes on it; "Order form" is narrower and names one specific document rather than the relationship it creates. |
+| **A context-specific verb** — "Send for review," "Save draft," "Send invoice" | Submit | "Submit" is a generic, bureaucratic verb that doesn't tell the reader what's actually about to happen. Naming the real action — what gets sent, saved, or shared, and to whom — is both clearer and more consistent with a plain-language voice. See the before/after pattern below, in the spirit of how [Shopify's Polaris](https://polaris.shopify.com/) content guidelines pair concrete before/after phrasing with each component rather than stating the principle in the abstract. |
+
+## Before / after: generic verbs
+
+| Generic | Context-specific |
+| --- | --- |
+| Submit | Send for review |
+| Submit | Send invoice |
+| Submit | Save draft |
+| Submit | Request approval |
+
+Each of these is a different action with a different result for the person on the other end of
+it — collapsing them all into "Submit" hides that difference from the person clicking the
+button. If a genuinely generic action doesn't have a more specific verb (a rare case), "Submit"
+is an acceptable fallback rather than something to avoid at all costs — but it should be the
+exception, checked for a better option first, not the default.
+
+## A note on scope
+
+Keep this glossary scoped to the terms that actually vary across your product's surfaces — the
+nouns for your core objects (what Acme calls a *project* and a *customer*), the verbs on your
+primary actions, and any word your team keeps writing two different ways. A glossary that tries
+to define every word in the language stops being consulted; one that pins down the dozen terms
+people genuinely disagree about gets used. Acme's core objects are *projects*, *customers*, and
+*invoices* — list yours here, and let this section grow only as real ambiguity shows up.
+
+## How to use this page
+
+- If a term below conflicts with how someone who actually does the work describes it, that's a
+  signal to fix this page, not a reason to keep using the wrong word quietly.
+- If a new domain term comes up that isn't covered here — a feature name, a new object type, an
+  internal shorthand that's starting to leak into customer-facing copy — add it, following the
+  same review path as any other change to this system (see **Governance**). A glossary that
+  only grows when someone remembers to update it stops being reliable; the goal is to catch
+  inconsistent usage while it's still one document, not after it's spread across a dozen
+  screens.

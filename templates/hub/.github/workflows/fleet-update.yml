@@ -1,0 +1,94 @@
+name: Fleet update
+
+# Proposes the template's process to every repository in fleet.json: one pull request each, where
+# a process:apply re-run would change something. Run by hand, after a template release: first as a
+# dry run (the default), then with "apply" ticked. Setup: templates/hub/README.md in the template.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Push branches and open pull requests (unticked, a dry run)
+        type: boolean
+        default: false
+
+# Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
+permissions: {}
+
+concurrency:
+  group: fleet-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Fleet update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The app's token reaches only the repositories fleet.json names under this account, and the
+      # template if it's here too. An empty list would mean every repository, so that fails.
+      - id: fleet
+        name: List the repositories the token may reach
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TEMPLATE_REPOSITORY: ${{ vars.TEMPLATE_REPOSITORY }}
+        run: |
+          # shellcheck disable=SC2016 # the single quotes keep JavaScript's ${} from the shell
+          node -e '
+            const name = (url) => {
+              const m = /(?:^|[/@])github\.com[/:]([^/]+)\/([^/]+?)(?:\.git)?\/?$/.exec(url ?? "")
+              return m && m[1].toLowerCase() === process.env.OWNER.toLowerCase() ? m[2] : null
+            }
+            const urls = [...require("./fleet.json").repos.map((r) => r.url), `https://github.com/${process.env.TEMPLATE_REPOSITORY}`]
+            const names = [...new Set(urls.map(name).filter(Boolean))]
+            if (!names.length) {
+              console.log(`::error::Nothing in fleet.json or TEMPLATE_REPOSITORY is under ${process.env.OWNER}, and an empty list would give the token every repository.`)
+              process.exit(1)
+            }
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `repositories=${names.join(",")}\n`)
+          '
+
+      # The pushes and pull requests land in other repositories, so they use the app's token,
+      # asked for with only what this needs: write to contents and pull requests.
+      - id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.FLEET_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FLEET_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.fleet.outputs.repositories }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          repository: ${{ vars.TEMPLATE_REPOSITORY }}
+          ref: ${{ vars.TEMPLATE_REF }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: template
+          fetch-depth: 0 # merge proposals read the template's history
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: template/.nvmrc
+          package-manager-cache: false # nothing restored from a cache into a job that holds the app's key
+
+      - name: Install the template's dependencies
+        working-directory: template
+        run: npm ci --ignore-scripts
+
+      - name: Propose the update
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          set -o pipefail # the tee below would otherwise hide a failed update
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          if [ "$APPLY" = "true" ]; then flag=--apply; else flag=; fi
+          node template/scripts/fleet-update.mjs --fleet fleet.json $flag | tee -a "$GITHUB_STEP_SUMMARY"

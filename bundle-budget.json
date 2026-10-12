@@ -1,0 +1,7 @@
+{
+  "dir": "dist",
+  "budgets": [
+    { "files": "assets/*.js", "gzip": "90 kB", "why": "React and the components the smoke app renders: 79.0 kB on 2026-10-08" },
+    { "files": "assets/*.css", "gzip": "20 kB", "why": "Tailwind's output for every token and component class: 17.5 kB on 2026-10-08" }
+  ]
+}

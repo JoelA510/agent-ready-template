@@ -1,0 +1,67 @@
+name: Skill evals
+
+# Runs the skill evals in evals/ with `claude plugin eval`: whether each skill fires on the
+# phrasing people use (and stays quiet otherwise), and what two prompts make an agent do. They
+# call a model, so they cost money (about $2 for the suite at three runs a case) and don't run on
+# pull requests: run them by hand after changing a skill or a prompt, and monthly, to catch a model
+# change, when the repository variable EVALS_MONTHLY is "true". Setup: evals/README.md.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 7 3 * *' # the 3rd of each month, 07:41 UTC: off the hour, when GitHub delays scheduled runs
+
+# Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
+permissions: {}
+
+concurrency:
+  group: evals
+  cancel-in-progress: false
+
+jobs:
+  evals:
+    name: Skill evals
+    if: github.event_name == 'workflow_dispatch' || vars.EVALS_MONTHLY == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false # nothing restored from a cache into a job that holds a secret
+
+      - name: Use the pinned npm
+        run: npm install -g "npm@$(node -p "require('./package.json').packageManager.split('@')[1]")" # zizmor: ignore[adhoc-packages] -- the exact npm package.json pins
+
+      # Every grader of every run must pass (the default threshold): a skill that fires in two runs
+      # of three needs a sharper description, not a looser bar. The cost ceiling stops a runaway
+      # suite. EVAL_MODEL and EVAL_JUDGE_MODEL, when set, pin the models.
+      - name: Run the evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EVAL_MODEL: ${{ vars.EVAL_MODEL }}
+          EVAL_JUDGE_MODEL: ${{ vars.EVAL_JUDGE_MODEL }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::The ANTHROPIC_API_KEY secret isn't set, so the evals can't run."
+            exit 1
+          fi
+          models=()
+          if [ -n "$EVAL_MODEL" ]; then models+=(--model "$EVAL_MODEL"); fi
+          if [ -n "$EVAL_JUDGE_MODEL" ]; then models+=(--judge-model "$EVAL_JUDGE_MODEL"); fi
+          npx --yes @anthropic-ai/claude-code@2.1.286 plugin eval . --trust-plugin --scaffold \
+            --ablation none --no-publish --max-cost-usd 10 --json results.json "${models[@]}"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: eval-results
+          path: |
+            results.json
+            evals/results/
+          if-no-files-found: ignore

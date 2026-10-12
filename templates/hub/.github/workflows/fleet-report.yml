@@ -1,0 +1,116 @@
+name: Fleet report
+
+# Scores every repository in fleet.json against the template's standards each week, with their
+# process drift and GitHub settings, and posts the report to a pinned issue. Setup:
+# templates/hub/README.md in the template.
+on:
+  schedule:
+    - cron: '17 6 * * 1' # Mondays, 06:17 UTC: off the hour, when GitHub delays scheduled runs
+  workflow_dispatch:
+
+# Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
+permissions: {}
+
+concurrency:
+  group: fleet-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Fleet report
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # the pinned report issue, with GITHUB_TOKEN
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The app's token reaches only the repositories fleet.json names under this account, and the
+      # template if it's here too. An empty list would mean every repository, so that fails.
+      - id: fleet
+        name: List the repositories the token may reach
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TEMPLATE_REPOSITORY: ${{ vars.TEMPLATE_REPOSITORY }}
+        run: |
+          # shellcheck disable=SC2016 # the single quotes keep JavaScript's ${} from the shell
+          node -e '
+            const name = (url) => {
+              const m = /(?:^|[/@])github\.com[/:]([^/]+)\/([^/]+?)(?:\.git)?\/?$/.exec(url ?? "")
+              return m && m[1].toLowerCase() === process.env.OWNER.toLowerCase() ? m[2] : null
+            }
+            const urls = [...require("./fleet.json").repos.map((r) => r.url), `https://github.com/${process.env.TEMPLATE_REPOSITORY}`]
+            const names = [...new Set(urls.map(name).filter(Boolean))]
+            if (!names.length) {
+              console.log(`::error::Nothing in fleet.json or TEMPLATE_REPOSITORY is under ${process.env.OWNER}, and an empty list would give the token every repository.`)
+              process.exit(1)
+            }
+            require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `repositories=${names.join(",")}\n`)
+          '
+
+      # GITHUB_TOKEN reaches only this repository and can't read admin settings, so the clones
+      # and the settings check use a GitHub App installed on the account's repositories.
+      - id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.FLEET_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FLEET_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.fleet.outputs.repositories }}
+          permission-contents: read
+          permission-administration: read
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          repository: ${{ vars.TEMPLATE_REPOSITORY }}
+          ref: ${{ vars.TEMPLATE_REF }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: template
+          fetch-depth: 0 # process drift reads the template's history
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: template/.nvmrc
+          package-manager-cache: false # nothing restored from a cache into a job that holds the app's key
+
+      - name: Install the template's dependencies
+        working-directory: template
+        run: npm ci --ignore-scripts
+
+      # The report fails when a repository fails a standard; that's what it's for, so this step
+      # records the exit code instead of failing, and the last step fails the job only when a
+      # repository couldn't be checked at all.
+      - name: Score the fleet
+        id: report
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+          status=0
+          node template/scripts/fleet-report.mjs --fleet fleet.json --settings --out report.md --json report.json || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Post the report to the pinned issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ vars.FLEET_ISSUE }}
+        run: |
+          # shellcheck disable=SC2016 # the single quotes keep JavaScript's ${} from the shell
+          # An issue body holds 65,536 characters; the whole report is in this run's summary.
+          node -e '
+            const fs = require("fs")
+            const text = fs.readFileSync("report.md", "utf8")
+            const cut = text.length > 60000
+            fs.writeFileSync("body.md", cut ? `${text.slice(0, 60000)}\n\n(Truncated: the full report is in the workflow run.)\n` : text)
+          '
+          gh issue edit "$ISSUE" --body-file body.md
+
+      - name: Fail when a repository couldn't be checked
+        if: steps.report.outputs.status == '2'
+        run: |
+          echo "::error::At least one repository couldn't be checked; the report names it."
+          exit 1

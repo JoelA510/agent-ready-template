@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "collapsible",
+  "type": "registry:ui",
+  "title": "Collapsible",
+  "description": "The Collapsible component.",
+  "dependencies": [
+    "@radix-ui/react-collapsible@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/collapsible.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as CollapsiblePrimitive from '@radix-ui/react-collapsible'\n\nimport { cn } from '@/lib/utils'\n\nfunction Collapsible({ ...props }: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {\n  return <CollapsiblePrimitive.Root data-slot=\"collapsible\" {...props} />\n}\n\nfunction CollapsibleTrigger({\n  ...props\n}: React.ComponentProps<typeof CollapsiblePrimitive.Trigger>) {\n  return <CollapsiblePrimitive.Trigger data-slot=\"collapsible-trigger\" {...props} />\n}\n\nfunction CollapsibleContent({\n  className,\n  ...props\n}: React.ComponentProps<typeof CollapsiblePrimitive.Content>) {\n  return (\n    <CollapsiblePrimitive.Content\n      data-slot=\"collapsible-content\"\n      className={cn(\n        'overflow-hidden text-sm',\n        'data-[state=open]:animate-[collapsible-down_var(--motion-duration-base)_var(--motion-easing-standard)]',\n        'data-[state=closed]:animate-[collapsible-up_var(--motion-duration-base)_var(--motion-easing-standard)]',\n        className,\n      )}\n      {...props}\n    />\n  )\n}\n\nexport { Collapsible, CollapsibleTrigger, CollapsibleContent }\n"
+    }
+  ]
+}

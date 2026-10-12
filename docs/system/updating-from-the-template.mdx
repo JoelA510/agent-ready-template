@@ -1,0 +1,113 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="System/Updating from the Template" />
+
+# Taking template updates
+
+A project built from this template owns its copy: nothing updates it behind your back. When the
+template ships a fix you want (a check that now catches something, a component accessibility
+fix, a prompt that asks a better question), you take it on purpose, from a release, and review
+it like any other change.
+
+An agent can walk through all of it: the `template-update` skill runs `prompts/template-update.md`
+(the CHANGELOG checklist, the files, each `.template`, and the scorecard). Across many
+repositories, the template's `npm run fleet:update` (and the hub's **Fleet update** workflow)
+opens the `process:apply` part as one pull request per repository; the skill then finishes it.
+
+## Which version you're on
+
+Each template release is a git tag, `v<version>` (for example `v1.0.0`), with a `CHANGELOG.md`
+entry. `npm run init` records the version the template's `package.json` named when you started
+as `templateVersion`, and restarts your own `version` at `0.1.0`.
+
+Read every CHANGELOG entry between your `templateVersion` and the release you want, in the
+release's own copy (`git show template/v1.0.0:CHANGELOG.md` once you've fetched it, below).
+Entries are written for this moment: each says what changed and what a project built from the
+template needs to do. Pay most attention to **Changed**, **Fixed**, and **Security**. If you
+started from `main` between releases, some entries after your `templateVersion` are already in
+your copy; the merge below knows exactly where you started, so it won't apply them twice.
+
+## A repo that received only the process (`process:apply`)
+
+Update your template checkout to the new release and run `npm run process:apply -- --target
+<repo>` again. It updates only what you haven't edited, and parks anything both sides changed as
+`<name>.template` for you to merge by hand. Its record of what you have is the template commit in
+`prompts/.apply-manifest.json`. See `prompts/README.md` ("Applying this to a project that isn't
+a fork"). Nothing below applies.
+
+## A fork, a clone, or a repo made with "Use this template"
+
+Every change arrives as one merge of a release tag, on a branch, reviewed as a pull request.
+
+### 1. Fetch the template's releases
+
+```bash
+git remote add --no-tags upstream https://github.com/<owner>/<template-repo>.git
+git fetch upstream main '+refs/tags/v*:refs/tags/template/v*'
+git switch -c template-update
+```
+
+The template's tags arrive as `template/v1.0.0` and so on, so they can't collide with your own
+`v1.0.0`. Merge a tag, never `upstream/main`: a tag is a release someone checked, and its
+CHANGELOG entry describes exactly what it contains.
+
+### 2. "Use this template" only, the first time: connect the histories
+
+GitHub's **Use this template** starts your repository with a copy of the template's files but
+none of its history, so git has nothing to merge from. Your first commit is an exact copy of one
+template commit; tell git which:
+
+```bash
+first=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+base=$(git log --format='%H %T' upstream/main | awk -v t="$(git rev-parse "$first^{tree}")" '$2 == t { print $1; exit }')
+echo "${base:?no template commit has exactly your first commit's files}"
+git replace --graft "$first" "$base"
+```
+
+If `base` comes back empty, stop: your first commit isn't an unmodified copy, and a merge from a
+guessed starting point would undo or repeat changes. A fork or clone skips this step, and so does
+every later update: the merge in step 3 joins the histories for good.
+
+### 3. Merge the release, without committing yet
+
+```bash
+git merge --no-commit --no-ff template/v1.0.0
+```
+
+If you ran step 2, remove the graft now; the merge no longer needs it: `git replace -d "$first"`.
+
+A real merge handles what a patch can't: a file the release deletes that you edited stops as a
+conflict for you to decide, binary files come across, and nothing you already have is applied
+twice.
+
+### 4. Resolve
+
+- **Lines `init` rebranded** conflict whenever the release changes them: the template's side has
+  the placeholder name, yours has your own. Take the template's change and put your name back.
+- **Lines and files the release adds** arrive with the placeholder name and no conflict. Find
+  them before you commit. The search names the placeholder on purpose, and skips what `init`
+  skips: the changelog, `init` and its test, and lines marked to keep it.
+
+  ```bash
+  git grep -n -i -w acme -- . ':!CHANGELOG.md' ':!scripts/init.mjs' ':!scripts/__tests__/init.test.ts' | grep -v init:keep
+  ```
+
+- **Generated files** (the list is `OUTPUTS` in `scripts/generated.mjs`: today `platforms/`,
+  `src/styles/tokens/`, `registry.json`, `public/r/`, `public/llms.txt`, `.claude/skills/`): never resolve by hand.
+  Take either side, then run every build that file names (today `npm run tokens:build`,
+  `npm run registry:build`, `npm run skills:build`).
+- **`package.json`**: keep your `name`, `version`, `homepage`, and `templateVersion`; take the
+  template's dependency and script changes. Then run `npm install` to rebuild
+  `package-lock.json` rather than merging it line by line.
+- **`CHANGELOG.md`**: keep yours; it's the project's changelog now. Restore it even when it
+  merged without a conflict: `git checkout HEAD -- CHANGELOG.md`.
+- **Files you rewrote on purpose** (`docs/brand/`, the palette in `tokens/core/color.json`):
+  yours win; read the template's side for anything structural worth carrying over.
+
+### 5. Finish
+
+1. Set `templateVersion` in `package.json` to the release you merged.
+2. Run the gates: `npm run check` and `npm run test:browser`.
+3. Commit the merge, then run `npm run check:generated`.
+4. Open a pull request titled with the release (for example "Take template v1.0.0"), and list
+   the CHANGELOG entries that asked you to do something, with what you did.

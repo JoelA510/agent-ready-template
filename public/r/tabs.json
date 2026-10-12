@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tabs",
+  "type": "registry:ui",
+  "title": "Tabs",
+  "description": "The Tabs component.",
+  "dependencies": [
+    "@radix-ui/react-tabs@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/tabs.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as TabsPrimitive from '@radix-ui/react-tabs'\n\nimport { cn } from '@/lib/utils'\n\nfunction Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {\n  return (\n    <TabsPrimitive.Root data-slot=\"tabs\" className={cn('flex flex-col gap-2', className)} {...props} />\n  )\n}\n\nfunction TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {\n  return (\n    <TabsPrimitive.List\n      data-slot=\"tabs-list\"\n      className={cn('inline-flex w-fit items-center justify-center rounded-lg bg-muted p-1', className)}\n      {...props}\n    />\n  )\n}\n\nfunction TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {\n  return (\n    <TabsPrimitive.Trigger\n      data-slot=\"tabs-trigger\"\n      className={cn(\n        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors',\n        'outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n        'disabled:pointer-events-none disabled:opacity-50',\n        'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',\n        'data-[state=inactive]:text-muted-foreground',\n        className,\n      )}\n      {...props}\n    />\n  )\n}\n\nfunction TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {\n  return (\n    <TabsPrimitive.Content\n      data-slot=\"tabs-content\"\n      className={cn(\n        'mt-4 outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n        className,\n      )}\n      {...props}\n    />\n  )\n}\n\nexport { Tabs, TabsList, TabsTrigger, TabsContent }\n"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "elevation": {
+    "$description": "Elevation scale. Values are pre-composed CSS box-shadow strings (kept simple across light/dark for v1 — dark-surface elevation typically leans on the lighter `card` background plus `border` rather than a heavier shadow).",
+    "sm": { "$value": "0 1px 2px 0 rgb(15 23 22 / 0.06)", "$type": "string" },
+    "md": { "$value": "0 4px 8px -2px rgb(15 23 22 / 0.10), 0 2px 4px -2px rgb(15 23 22 / 0.06)", "$type": "string" },
+    "lg": { "$value": "0 12px 24px -4px rgb(15 23 22 / 0.12), 0 4px 8px -4px rgb(15 23 22 / 0.08)", "$type": "string" },
+    "xl": { "$value": "0 24px 48px -8px rgb(15 23 22 / 0.18), 0 8px 16px -8px rgb(15 23 22 / 0.10)", "$type": "string" }
+  }
+}

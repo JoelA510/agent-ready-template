@@ -1,0 +1,7 @@
+{
+  "$comment": "The repositories the weekly fleet report scores, by URL; the workflow clones each with the hub's GitHub App token. Each entry: name, url, visibility (public | private), and packs where detection misses one. Shape and statuses: standards/README.md in the template.",
+  "repos": [
+    { "name": "web-app", "url": "https://github.com/OWNER/web-app.git", "visibility": "public" },
+    { "name": "mobile", "url": "https://github.com/OWNER/mobile.git", "visibility": "private", "packs": [{ "pack": "node", "path": "app" }, { "pack": "expo", "path": "app" }] }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "combobox",
+  "type": "registry:ui",
+  "title": "Combobox",
+  "description": "The Combobox component.",
+  "dependencies": [
+    "lucide-react@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/command.json",
+    "https://joela510.github.io/agent-ready-template/r/popover.json",
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/combobox.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport { Check, ChevronsUpDown } from 'lucide-react'\n\nimport { cn } from '@/lib/utils'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@/components/ui/command'\nimport { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'\n\nexport interface ComboboxOption {\n  value: string\n  label: string\n}\n\ninterface ComboboxProps {\n  options: ComboboxOption[]\n  value?: string\n  onValueChange?: (value: string) => void\n  placeholder?: string\n  searchPlaceholder?: string\n  emptyText?: string\n  className?: string\n  disabled?: boolean\n  id?: string\n  'aria-label'?: string\n  'aria-labelledby'?: string\n  'aria-invalid'?: boolean | 'true' | 'false'\n}\n\n/**\n * A searchable Select: the Popover + Command composition pattern, packaged as one\n * ready-to-use component for the common single-select case (see combobox.stories.tsx\n * for the API this optimizes for). Reach for it instead of Select once the option list\n * is long enough that typing to filter beats scrolling.\n */\nfunction Combobox({\n  options,\n  value,\n  onValueChange,\n  placeholder = 'Select an option...',\n  searchPlaceholder = 'Search...',\n  emptyText = 'No results found.',\n  className,\n  disabled,\n  id,\n  ...props\n}: ComboboxProps) {\n  const [open, setOpen] = React.useState(false)\n  // The listbox the trigger controls — wired to aria-controls below so the combobox role\n  // has its required relationship to the option list it opens.\n  const listboxId = React.useId()\n\n  const selectedOption = options.find((option) => option.value === value)\n\n  return (\n    <Popover open={open} onOpenChange={setOpen}>\n      <PopoverTrigger asChild>\n        <button\n          type=\"button\"\n          id={id}\n          data-slot=\"combobox-trigger\"\n          role=\"combobox\"\n          aria-expanded={open}\n          aria-controls={listboxId}\n          disabled={disabled}\n          className={cn(\n            'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors',\n            selectedOption ? 'text-foreground' : 'text-muted-foreground',\n            'outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n            'disabled:pointer-events-none disabled:opacity-50',\n            'aria-invalid:ring-destructive/20 aria-invalid:border-destructive',\n            className,\n          )}\n          {...props}\n        >\n          <span className=\"line-clamp-1\">{selectedOption ? selectedOption.label : placeholder}</span>\n          <ChevronsUpDown className=\"size-4 shrink-0 opacity-50\" />\n        </button>\n      </PopoverTrigger>\n      <PopoverContent align=\"start\" className=\"w-(--radix-popover-trigger-width) p-0\">\n        <Command>\n          <CommandInput placeholder={searchPlaceholder} />\n          <CommandList id={listboxId}>\n            <CommandEmpty>{emptyText}</CommandEmpty>\n            <CommandGroup>\n              {options.map((option) => (\n                <CommandItem\n                  key={option.value}\n                  value={option.label}\n                  onSelect={() => {\n                    onValueChange?.(option.value)\n                    setOpen(false)\n                  }}\n                >\n                  <Check\n                    className={cn('size-4', option.value === value ? 'opacity-100' : 'opacity-0')}\n                  />\n                  {option.label}\n                </CommandItem>\n              ))}\n            </CommandGroup>\n          </CommandList>\n        </Command>\n      </PopoverContent>\n    </Popover>\n  )\n}\n\nexport { Combobox }\n"
+    }
+  ]
+}

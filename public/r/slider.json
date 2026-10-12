@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "slider",
+  "type": "registry:ui",
+  "title": "Slider",
+  "description": "The Slider component.",
+  "dependencies": [
+    "@radix-ui/react-slider@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/slider.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as SliderPrimitive from '@radix-ui/react-slider'\n\nimport { cn } from '@/lib/utils'\n\nfunction Slider({\n  className,\n  defaultValue,\n  value,\n  min = 0,\n  max = 100,\n  'aria-label': ariaLabel,\n  'aria-labelledby': ariaLabelledby,\n  thumbLabels,\n  ...props\n}: React.ComponentProps<typeof SliderPrimitive.Root> & {\n  // Per-thumb accessible names, applied by index. A range slider has two thumbs that\n  // each need their own name (e.g. ['Minimum', 'Maximum']) — a single aria-label can't\n  // distinguish them. Falls back to aria-label when an index isn't provided.\n  thumbLabels?: string[]\n}) {\n  // Radix renders one Thumb per value, so derive the thumb count from the\n  // controlled `value`, the uncontrolled `defaultValue`, or fall back to the\n  // single-range [min, max] default that Radix itself uses.\n  const _values = React.useMemo(\n    () =>\n      Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min, max],\n    [value, defaultValue, min, max],\n  )\n\n  return (\n    <SliderPrimitive.Root\n      data-slot=\"slider\"\n      defaultValue={defaultValue}\n      value={value}\n      min={min}\n      max={max}\n      className={cn(\n        'relative flex w-full touch-none select-none items-center',\n        'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',\n        'data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col',\n        className,\n      )}\n      {...props}\n    >\n      <SliderPrimitive.Track\n        data-slot=\"slider-track\"\n        className={cn(\n          'relative grow overflow-hidden rounded-full bg-muted',\n          'data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full',\n          'data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5',\n        )}\n      >\n        <SliderPrimitive.Range\n          data-slot=\"slider-range\"\n          className={cn(\n            'absolute bg-primary',\n            'data-[orientation=horizontal]:h-full',\n            'data-[orientation=vertical]:w-full',\n          )}\n        />\n      </SliderPrimitive.Track>\n      {Array.from({ length: _values.length }, (_, index) => (\n        <SliderPrimitive.Thumb\n          data-slot=\"slider-thumb\"\n          key={index}\n          aria-label={thumbLabels?.[index] ?? ariaLabel}\n          aria-labelledby={thumbLabels ? undefined : ariaLabelledby}\n          className={cn(\n            'block size-4 shrink-0 rounded-full border border-primary bg-background shadow-sm transition-colors',\n            'outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n            'disabled:pointer-events-none disabled:opacity-50',\n          )}\n        />\n      ))}\n    </SliderPrimitive.Root>\n  )\n}\n\nexport { Slider }\n"
+    }
+  ]
+}

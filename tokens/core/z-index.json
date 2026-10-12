@@ -1,0 +1,11 @@
+{
+  "z": {
+    "$description": "Stacking-order scale, consumed as raw CSS custom properties (z-index: var(--z-popover)) rather than a Tailwind utility namespace, so layering stays centralized and collision-free. The ordering encodes one deliberate decision: because Radix portals every floating overlay to document.body, any interactive floating overlay (a Select, Dropdown, Combobox, Context menu, or Popover) can be opened from INSIDE a modal — so they ALL share the single `popover` tier, which sits ABOVE `modal`. (An earlier scale put menus on a `dropdown` tier below `modal`; that tier is retired because it made menus unusable inside dialogs. See docs/foundations/elevation-and-motion.mdx → Stacking order.) Tiers are spaced 100 apart with sticky deliberately far below, leaving room to insert a tier without renumbering.",
+    "sticky": { "$value": "100", "$type": "number" },
+    "overlay": { "$value": "1000", "$type": "number" },
+    "modal": { "$value": "1100", "$type": "number" },
+    "popover": { "$value": "1200", "$type": "number" },
+    "tooltip": { "$value": "1300", "$type": "number" },
+    "toast": { "$value": "1400", "$type": "number" }
+  }
+}

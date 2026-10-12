@@ -1,0 +1,120 @@
+# Governance
+
+A design system isn't a components folder and a `tokens.json` file — it's a product, and the
+teams building your organization's products (web apps, internal tools, marketing sites) are
+its users. Alla Kholmatova's *Design Systems* makes the case, backed by interviews with dozens
+of teams, that systems don't usually fail because a button was styled badly. They fail because
+nobody owned the decision, review happened inconsistently (or not at all), and drift crept in
+until the "system" was just documentation nobody trusted. The artifacts — tokens, components,
+this document — are the easy part. Who's accountable for them, and how a change gets from idea
+to shipped, is the part that actually determines whether this stays alive or rots.
+
+**Treat this document as a recommended model, not a finished policy.** Nothing here is
+ratified for your organization until your team says so — it's a proposed starting model, sized
+deliberately for a team adopting a design system for the first time rather than borrowed
+wholesale from an enterprise design-systems group with a dozen dedicated staff. Read it as a
+strong recommendation to accept, adjust, or override, and edit it to match whatever your team
+actually agrees to.
+
+## 1. Ownership
+
+**Recommendation:** a small design systems working group — one design co-owner, one
+engineering co-owner, jointly accountable. Neither is a full-time role; both keep their
+regular work and treat this as a standing responsibility layered on top, reviewed together
+roughly every cycle.
+
+Day to day, whoever's "on point" that cycle reviews most incoming changes alone — that's
+what keeps the model from becoming a bottleneck. The two co-owners' judgment is what
+settles anything contested: a disagreement over whether a change belongs in this system at
+all, or whether it's ready to ship. The alternative worth naming and rejecting is
+**diffuse ownership** — "everyone on the team owns the design system." Kholmatova's research
+treats this as functionally equivalent to no ownership at all: without a specific person
+whose job it is to notice drift and say no, nobody does, and the system quietly stops
+matching what's actually in the product. A single named owner (no co-owner) is the other
+real alternative; it's simpler, but it puts a bus factor of one under both the design and
+engineering sides of every review, which is a bad trade for the redundancy a two-person team
+buys.
+
+One thing this model should **not** flex on: content and copy changes go through the exact
+same review as a token or component change, not a lighter one. As the Storybook
+introduction puts it, a perfectly accessible button with the wrong words on it still fails
+the user. Treating copy as a lower-stakes edit than a hex value is exactly the kind of
+drift this group exists to prevent.
+
+## 2. Contribution model
+
+Not every change needs the same ceremony. Three tiers, scaled to how much a change can
+break for someone downstream:
+
+| Tier | Example | Process | Turnaround |
+| --- | --- | --- | --- |
+| **(a) Typo / copy tweak** | Fixing a misspelled label, rewording an error message to match Voice & Tone | Direct PR, one reviewer | Same day |
+| **(b) New component, token, or content page** | Adding a `Combobox` primitive, a new spacing token, a UI Copy Patterns entry | PR + a design review + an engineer familiar with the existing pattern, checked against the "what done looks like" list in the Storybook introduction | Normal review cycle |
+| **(c) Breaking change** | Renaming or removing a token, changing a component's public API | A short written proposal first (3–4 sentences: what's changing, why, who's affected), *then* a PR, plus a migration note in the changelog | Deliberately slower |
+
+Most contributions should land in (a) or (b) — that's the system working as intended.
+Tier (c) should be **rare by design**: if breaking changes are showing up often, that's a
+signal the API surface wasn't designed conservatively enough up front, and the working
+group should treat it as a prompt to slow down on the *next* addition, not just wave the
+current one through. The proposal step for (c) is deliberately lightweight — four sentences,
+not a design doc — because the point is forcing a moment of "does anyone affected know this
+is coming," not adding process for its own sake.
+
+## 3. Versioning
+
+**Recommendation:** semantic versioning on the token/component package — `patch` for fixes
+and non-breaking additions, `minor` for new components or tokens, `major` for breaking
+changes, exactly as semver is meant to be read by anyone depending on it.
+
+Every release also gets a **plain-language changelog entry**: what changed, and why it
+matters to whoever's consuming the package — not a pasted list of commit messages. This is
+the same instinct behind GOV.UK's content guidance: never state a rule without the reason a
+person would need to act on it correctly. Compare:
+
+- **Not this:** `fix: various button tweaks`
+- **This:** "`Button`'s default variant now meets 4.5:1 contrast against `bg-muted` (previously
+  3.8:1). If you've overridden the default variant's background color, check contrast
+  against your override before upgrading — the built-in default is no longer the value
+  you may have measured against."
+
+The second version tells a consumer whether *they* need to do anything. The first doesn't,
+and that gap is exactly what turns a routine upgrade into an unpleasant surprise later.
+
+## 4. Deprecation
+
+**Recommendation:** never remove a token or component in the same release that introduces
+its replacement. Mark the old one deprecated, keep it working for at least one full minor
+version, and only remove it in a subsequent major — with the removal called out explicitly
+in that release's changelog, not buried in a diff.
+
+For example: if `bg-primary-strong` is introduced to replace the ad hoc `brand-700` alias,
+`brand-700` gets flagged deprecated in that same minor release but keeps working. It's only
+actually removed at the next major version, and that major's changelog says so in plain
+language, with a pointer to what replaces it. This gives every consuming team a real window
+to migrate on their own schedule instead of a hard break they discover at build time.
+
+## 5. When content and components disagree
+
+This will happen, and it's worth settling the rule before it does rather than re-litigating
+it every time: a component ships with default copy — placeholder text, a button label, an
+error string — that conflicts with current Voice & Tone or UI Copy Patterns guidance. Shopify
+Polaris is the model worth following here, in that its content guidance is documented
+directly against the components it governs rather than filed away separately where nobody
+thinks to check it.
+
+**Resolution: content guidance wins for anything product-facing.** A component's default
+copy is a starting example for what the prop could hold, never a mandate baked into the
+component itself. If a `Dialog`'s example destructive-confirmation copy says "Are you sure?"
+and the current guidance calls for naming the consequence directly ("Delete this project?
+This can't be undone."), the guidance wins, the product surface gets updated, and — if the
+default is genuinely misleading rather than just an example — the component's default string
+gets a follow-up fix too. That follow-up is ordinarily a tier (a) or (b) change under the
+model above, not a breaking one, unless it requires changing the prop's shape rather than
+just its default value.
+
+---
+
+None of the five decisions above are locked in. If a different ownership shape, a faster
+tier (c) process, or a different deprecation window fits your organization better once this
+is actually in use, this document should change to match — the working group it proposes is
+exactly the body that would make that call.

@@ -1,0 +1,4 @@
+{
+  "$comment": "Waivers for npm audit advisories scripts/check-audit.mjs would otherwise block. Policy: docs/security/dependency-policy.md. Each entry: advisory (GHSA id), package, reason, owner, expires (YYYY-MM-DD).",
+  "waivers": []
+}

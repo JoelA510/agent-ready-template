@@ -1,0 +1,39 @@
+/**
+ * Do not edit directly, this file was auto-generated.
+ */
+
+.dark {
+  --background: #151514;
+  --foreground: #fafaf9;
+  --card: #242523;
+  --card-foreground: #fafaf9;
+  --popover: #242523;
+  --popover-foreground: #fafaf9;
+  --primary: #b9bba0;
+  --primary-foreground: #151514;
+  --secondary: #373833;
+  --secondary-foreground: #fafaf9;
+  --muted: #373833;
+  --muted-foreground: #d6d7d1;
+  --accent: #3f3122;
+  --accent-foreground: #d9b387;
+  --destructive: #f49f9a;
+  --destructive-foreground: #151514;
+  --success: #a8e6bf;
+  --success-foreground: #151514;
+  --warning: #f1ae27;
+  --warning-foreground: #151514;
+  --info: #9dc7f1;
+  --info-foreground: #151514;
+  --border: #373833;
+  --input: #373833;
+  --ring: #b9bba0;
+  --sidebar: #242523;
+  --sidebar-foreground: #fafaf9;
+  --sidebar-primary: #b9bba0;
+  --sidebar-primary-foreground: #151514;
+  --sidebar-accent: #373833;
+  --sidebar-accent-foreground: #fafaf9;
+  --sidebar-border: #373833;
+  --sidebar-ring: #b9bba0;
+}

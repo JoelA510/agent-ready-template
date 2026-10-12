@@ -1,0 +1,19 @@
+# EditorConfig — cross-editor consistency for contributors from any org. https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Markdown can use trailing whitespace for hard line breaks — don't strip it.
+trim_trailing_whitespace = false
+
+[*.{svg,png,jpg,jpeg,gif,ico}]
+# Binary/asset files: leave them alone.
+insert_final_newline = false
+trim_trailing_whitespace = false

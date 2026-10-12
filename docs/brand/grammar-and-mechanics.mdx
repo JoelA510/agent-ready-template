@@ -1,0 +1,159 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Grammar & Mechanics" />
+
+# Grammar & Mechanics
+
+This page is a rulebook, not an essay — it's built to be scanned mid-sentence while you're
+writing a button label or a paragraph of customer-facing copy, not read start to finish. Every
+rule below still gets a reason, following [GOV.UK's content guidance](
+https://www.gov.uk/guidance/content-design/writing-for-gov-uk): a rule with no rationale gets
+argued with or ignored the first time someone finds it inconvenient, and a rule with a reason
+attached tends to survive contact with an edge case.
+
+One more thing before the rules themselves: **none of this is locked in.** The organization
+named here is a placeholder the template ships with, and it doesn't have a large existing body
+of copy to extract conventions from — the starting site is intentionally minimal, just a
+tagline, a nav shell, and a logo — so almost everything here is a reasoned starting proposal,
+not a transcription of established convention. Where a rule below conflicts with something a
+teammate or an admin already writes a certain way for good reason, that real-world usage should
+win over this document, and this document should get updated to match. Treat every row as a
+recommendation to accept, adjust, or override.
+
+## Capitalization
+
+Use **sentence case** everywhere in the product and on marketing surfaces: headings, buttons,
+nav labels, table headers, form labels. Capitalize the first word and proper nouns only —
+never Title Case.
+
+| Do | Don't |
+| --- | --- |
+| Save changes | Save Changes |
+| Account settings | Account Settings |
+| New project | New Project |
+| Team activity | Team Activity |
+
+**Why:** sentence case reads as plainer and more human, and it quietly removes an entire
+category of style arguments — nobody has to decide whether "of" or "for" is "important enough"
+to capitalize in a heading, because nothing is capitalized past the first word. Proper nouns
+keep their normal capitalization wherever they land: **Acme**, **Firestore**, **Inc.**.
+
+## The serial (Oxford) comma
+
+Always use it. No exceptions recommended.
+
+| Without | With |
+| --- | --- |
+| We thank our customers, Acme's founders and their families. | We thank our customers, Acme's founders, and their families. |
+
+**Why:** dropping the final comma in a list of three or more items can make the last two items
+read as a single, appositive pair — in the "without" example above, it reads as if "Acme's
+founders and their families" *are* the customers being thanked, which isn't the intended
+meaning. In contracts and product copy, where a list often enumerates scope, parties, or
+deliverables, that kind of ambiguity isn't a style nitpick — it can change what a sentence
+actually commits to. Defaulting to "always on" removes the need to judge, case by case, whether
+a given list is ambiguous enough to bother.
+
+## Numbers
+
+| Context | Rule | Example |
+| --- | --- | --- |
+| Prose, one through nine | Spell out | "three teammates reviewed the draft" |
+| Prose, 10 and above | Use numerals | "14 projects closed this quarter" |
+| Dates | Always numerals | "March 3, 2026" |
+| Times | Always numerals | "9:30 am" |
+| Money | Always numerals | "$450," "$5" |
+| Percentages | Always numerals | "12%," "3%" |
+| Measurements | Always numerals | "6 ft," "2 GB" |
+
+**Why:** the one-through-nine spell-out convention is a common editorial default that keeps
+short prose numbers from looking like data points when they aren't. But dates, times, money,
+percentages, and measurements are always numerals **even under 10** — "$5" and "3%" are correct,
+"$five" and "three%" are not — because these are precise, scannable values a reader is likely
+to be looking *for*, not reading past, and numerals are faster to spot and compare at a glance.
+
+## Dates
+
+Use the full written form in prose and formal contexts: **"March 3, 2026."** In dense UI or
+tabular contexts — a table column, a compact list row — a numeric form ("3/3/26") or a relative
+form ("in 2 days," "3 days ago") is fine and often more scannable.
+
+The one hard rule: **don't mix formats on the same screen.** A table where one row reads
+"March 3, 2026" and the next reads "3/3/26" forces the reader to re-parse the format on every
+row. Pick one register per surface and hold it.
+
+| Surface | Recommended format |
+| --- | --- |
+| Contracts, formal correspondence | "March 3, 2026" |
+| Marketing copy, page body text | "March 3, 2026" |
+| Dense tables (project list, billing summary) | "3/3/26" or relative, picked once per table |
+
+## Contractions
+
+Use contractions — "you're," "don't," "can't" — in product UI and marketing copy. Avoid them in
+formal or compliance documents.
+
+| Context | Example |
+| --- | --- |
+| Product UI (recommended) | "You're all set — we'll email you when the review's done." |
+| Contract or legal notice (avoid) | "The Customer will not be liable for delays caused by..." |
+
+**Why:** contractions are part of what makes this system's voice read as approachable and
+human rather than stiff, in the surfaces where that register is appropriate — a confirmation
+toast, an empty state, a marketing page. Formal and compliance documents carry legal weight and
+are read in a different register entirely, where the fuller, more deliberate form is what
+readers expect and what the genre calls for.
+
+## Em dash
+
+Use an em dash for an interruption or an aside — like this — with a space on each side. Don't
+reach for it as a substitute for restructuring a weak or run-on sentence.
+
+**This is a decision, not a law of punctuation.** Style guides split. Chicago, the Microsoft
+Writing Style Guide, and Google's developer documentation style guide close the em dash up
+("an aside—like this—in"); AP spaces it ("an aside — like this — in"). This system spaces it,
+as every page of these docs does, which is the less common choice in UI writing, so it's the
+first rule to revisit when you adopt your organization's editorial style. If you close it up,
+change this rule, the examples below, and the docs' own prose together. Mixing the two is the
+one wrong answer.
+
+| Do | Don't |
+| --- | --- |
+| The payment deadline moved — again — so double-check the calendar. | The payment deadline moved -- again -- so double check. *(two hyphens instead of a dash, and "double-check" needs its hyphen)* |
+| The payment deadline moved — again — so double-check the calendar. | The payment deadline moved—again — so double-check the calendar. *(closed on one side, spaced on the other)* |
+| We closed the project this week. The customer was notified separately. | We reviewed the project — checked the file — updated the customer — and closed it — all before lunch. *(overused as a crutch)* |
+
+**Why:** one em dash sets off a genuine aside cleanly. Three or four in a row is usually a sign
+the sentence should have been split into two or three sentences instead — if a sentence needs
+that many dashes to hold together, rewrite it rather than punctuate around the problem.
+
+## Abbreviations & acronyms
+
+Spell out on first use with the abbreviation in parentheses, then use the abbreviation for the
+rest of that page or screen.
+
+| Do | Don't |
+| --- | --- |
+| "Every subscription starts with a master service agreement (MSA) that defines scope. Once the MSA is signed..." | Opening with "MSA" and never expanding it |
+
+**Why:** never assume a customer recognizes company-internal or industry shorthand — "MSA,"
+"SKU," even "Inc." as a suffix aren't guaranteed to mean anything to someone reading them for
+the first time, and the cost of spelling a term out once is a few extra words against the cost
+of losing a reader partway through a paragraph. Terms in genuinely universal use in context
+(PDF, email) don't need this treatment.
+
+## Ampersands
+
+Avoid "&" in prose — write "and" in full. It's fine inside the company's own name or a brand
+lockup, and acceptable in a genuinely space-constrained UI label.
+
+| Context | Example |
+| --- | --- |
+| Prose (avoid &) | "Acme handles both billing and reporting in one workspace." |
+| Brand name (fine as-is) | Acme Inc. |
+| Constrained UI label (acceptable) | A narrow mobile nav tab reading "Terms & Conditions" |
+
+**Why:** "&" reads as informal shorthand in running prose, which works against the considered,
+plain-language voice this system is going for. The exception isn't arbitrary — a company/brand
+name is a fixed proper noun, not a stylistic choice, and a UI label under real horizontal space
+constraints is solving a different problem (fit) than a sentence is.

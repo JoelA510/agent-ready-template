@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "badge",
+  "type": "registry:ui",
+  "title": "Badge",
+  "description": "The Badge component.",
+  "dependencies": [
+    "@radix-ui/react-slot@^1",
+    "class-variance-authority@^0.7"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/badge.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport { Slot } from '@radix-ui/react-slot'\nimport { cva, type VariantProps } from 'class-variance-authority'\n\nimport { cn } from '@/lib/utils'\n\nconst badgeVariants = cva(\n  \"inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium transition-colors [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3 outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring\",\n  {\n    variants: {\n      variant: {\n        default: 'bg-primary text-primary-foreground',\n        secondary: 'bg-secondary text-secondary-foreground',\n        outline: 'border border-border bg-transparent text-foreground',\n        success: 'bg-success text-success-foreground',\n        warning: 'bg-warning text-warning-foreground',\n        destructive: 'bg-destructive text-destructive-foreground',\n        info: 'bg-info text-info-foreground',\n      },\n    },\n    defaultVariants: {\n      variant: 'default',\n    },\n  },\n)\n\nfunction Badge({\n  className,\n  variant,\n  asChild = false,\n  ...props\n}: React.ComponentProps<'span'> &\n  VariantProps<typeof badgeVariants> & {\n    asChild?: boolean\n  }) {\n  const Comp = asChild ? Slot : 'span'\n\n  return (\n    <Comp data-slot=\"badge\" className={cn(badgeVariants({ variant, className }))} {...props} />\n  )\n}\n\nexport { Badge, badgeVariants }\n"
+    }
+  ]
+}

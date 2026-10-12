@@ -1,0 +1,157 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/UI Copy Patterns" />
+
+# UI Copy Patterns
+
+This is likely the most-consulted page in the whole system — not the highest-concept, just
+the one people reach for daily. Building a delete confirmation, an error toast, an empty
+list? The pattern is probably here already, in the shape Shopify's Polaris popularized:
+a short rule plus real, copy-pasteable examples, rather than an abstract principle you have
+to translate yourself every time. Six situations come up in almost every product surface
+this system covers; this page gives each one a fixed shape.
+
+Like **Writing Principles**, these patterns are settled defaults meant to be used as-is,
+not reopened per feature — consistency here is worth more than any individual writer's
+preference for how to phrase a single button.
+
+## Button labels
+
+**Pattern: verb + noun, sentence case, specific enough to act on without reading anything
+else on the screen.** A button is often read in isolation — scanned in a row of other
+buttons, or announced alone by a screen reader — so it has to carry its own meaning. A
+bare verb with no object forces the reader to go find context that a few extra words
+would have supplied for free.
+
+| Don't (bare or vague) | Do (verb + specific noun) |
+| --- | --- |
+| "Save" | "Save changes" |
+| "Delete" | "Delete project" |
+| "Submit" | "Send invoice" |
+| "OK" | "Confirm and continue" |
+| "Yes" | "Delete project" *(name the actual action, not just an answer to an implied question)* |
+
+Never ship a bare "OK," "Yes," or "Submit" on anything consequential — deleting,
+canceling, or committing money or a subscription change. Reserve terse one-word buttons
+for truly low-stakes, fully reversible actions where a longer label would be needless
+noise, and even then prefer a specific verb ("Skip," "Dismiss") over a content-free one.
+
+## Error messages
+
+**Pattern: what happened, why if it's known, and how to fix it — in that order, never
+blaming the person reading it.** An error is the system's problem to explain clearly, not
+a chance to scold the user for something the interface should have prevented or clarified
+up front. A raw system error or stack trace surfaced verbatim tells the reader nothing
+they can act on.
+
+- **Do:** "Enter a valid email address, like name@example.com."
+- **Don't:** "Error: invalid input."
+
+
+- **Do:** "We couldn't save this document. Check your connection and try again."
+- **Don't:** "Something went wrong." *(too vague — nothing to act on)*
+
+
+- **Do:** "This file is too large to upload. Files must be under 25 MB."
+- **Don't:** "Upload failed: ERR_FILE_SIZE_EXCEEDED_413"
+
+If the underlying cause genuinely isn't knowable (a transient network blip, a third-party
+outage), it's fine to say so plainly and give the one thing the reader can still do — "We
+couldn't reach the server. Try again in a moment" — rather than inventing a reason that
+isn't true.
+
+## Empty states
+
+**Pattern: say what this space is for, then give the one primary action that fills it.**
+An empty list or dashboard with no copy reads as broken, not empty-on-purpose. The fix
+isn't decoration — it's telling the reader what normally lives here and how to put the
+first thing in it.
+
+- **Do (a projects list with nothing in it yet):** "No projects yet. Create your first
+  project to start tracking tasks, deadlines, and billing in one place."
+- **Don't:** "No data." *(reads as an error, gives no next step)*
+
+
+- **Do (an invoices tab with none sent):** "No invoices sent yet. Create an invoice to
+  bill a customer for work or expenses on this project."
+- **Don't:** "Empty."
+
+Always pair the explanation with the actual button or link that resolves it — "Create
+your first project" should sit right next to (or be) the action, not just describe it in
+prose while the real button is labeled something generic elsewhere on the screen.
+
+## Confirmation dialogs
+
+**Pattern: state the specific, concrete consequence of the action — never a bare "Are you
+sure?"** A generic confirmation forces the reader to remember what they were about to do
+and guess at the blast radius. Naming the actual consequence lets them make the decision
+with the information already in front of them, without hunting for it.
+
+- **Do:** "Delete this project? This removes all associated documents and can't be
+  undone."
+- **Don't:** "Are you sure?"
+
+
+- **Do:** "Discard unsaved changes? Your edits to this document will be lost."
+- **Don't:** "Are you sure you want to leave this page?"
+
+
+- **Do:** "Sign out of Acme? You'll need to sign back in to view your projects."
+- **Don't:** "Confirm sign out"
+
+If the action is destructive and irreversible, say so in plain words ("can't be undone,"
+"permanently removes") rather than leaving reversibility ambiguous — that ambiguity is
+exactly what makes a reader hesitate and re-read the dialog three times, or worse, click
+through without understanding what they agreed to.
+
+## Form field help text
+
+**Pattern: add help text only when the label alone isn't enough, and use it to explain
+*why* the information is needed or *what format* is expected.** Help text under every
+field, restating the label in longer words, trains readers to stop reading it. Reserve it
+for fields where the label genuinely leaves a real question open.
+
+- **Do (format unclear from the label alone):** Label: "Tax ID." Help text: "Enter your
+  tax ID as it appears on your registration documents."
+- **Don't:** Label: "Tax ID." Help text: "Enter your tax ID." *(adds nothing the label
+  didn't already say)*
+
+
+- **Do (why it's needed isn't obvious):** Label: "Phone number." Help text: "We'll only
+  use this to reach you about urgent account updates."
+- **Don't:** No help text on a field asking for a tax ID with no explanation of why a
+  billing form needs it.
+
+If a label is already fully self-explanatory ("Email address," "First name"), skip help
+text entirely — an empty field with no clutter under it is a better outcome than help
+text invented to fill the space.
+
+## Success messages
+
+**Pattern: short, past tense, and specific about what happened.** A success message
+confirms that a specific thing occurred, not that something vaguely good happened
+somewhere. Specificity here also doubles as a receipt the reader can act on later — "sent
+to jane@example.com" is something they can point back to if a customer says they never
+received it.
+
+- **Do:** "Project created."
+- **Don't:** "Success!"
+
+
+- **Do:** "Invoice sent to jane@example.com."
+- **Don't:** "Sent!"
+
+
+- **Do:** "Changes saved."
+- **Don't:** "Great job! Everything is saved and looking good."
+
+## Quick reference
+
+| Situation | Structure | Example |
+| --- | --- | --- |
+| Button label | Verb + specific noun, sentence case | "Delete project" |
+| Error message | What happened + why (if known) + how to fix | "Enter a valid email address, like name@example.com." |
+| Empty state | What this space is for + the primary action | "No projects yet. Create your first project to start tracking tasks, deadlines, and billing in one place." |
+| Confirmation dialog | The specific, concrete consequence | "Delete this project? This removes all associated documents and can't be undone." |
+| Form field help text | Why it's needed, or what format is expected | "Enter your tax ID as it appears on your registration documents." |
+| Success message | Short, past tense, specific | "Invoice sent to jane@example.com." |

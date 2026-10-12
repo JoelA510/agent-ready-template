@@ -1,0 +1,8 @@
+{
+  "$comment": "The repositories npm run fleet:report scores. Copy this to a private repository of your own; it names every repository you have. Each entry: name, and either path (resolved from this file's directory) or url (cloned shallow; ref optional). Optional: visibility (public | private) and packs, which override the repository's own docs/standards/conformance.json. Shape and statuses: standards/README.md.",
+  "repos": [
+    { "name": "web-app", "path": "../web-app", "visibility": "public", "packs": ["node", "vite-spa", "supabase"] },
+    { "name": "mobile", "path": "../mobile", "visibility": "private", "packs": [{ "pack": "node", "path": "app" }] },
+    { "name": "tools", "url": "https://github.com/OWNER/tools.git", "ref": "main", "visibility": "private" }
+  ]
+}

@@ -1,0 +1,64 @@
+# acme-design-system
+
+> Accessible React components on design tokens (Radix UI and Tailwind CSS v4), published as a
+> shadcn registry. Each link below is a registry item: JSON holding the component's full source
+> and its dependencies. Install one with `npx shadcn@latest add https://joela510.github.io/agent-ready-template/r/<name>.json`.
+
+Storybook, at this site's root, shows every component in every state, in light and dark.
+
+## Components
+
+- [Accordion](https://joela510.github.io/agent-ready-template/r/accordion.json): The Accordion component.
+- [Alert](https://joela510.github.io/agent-ready-template/r/alert.json): The Alert component.
+- [Alert Dialog](https://joela510.github.io/agent-ready-template/r/alert-dialog.json): The Alert Dialog component.
+- [Aspect Ratio](https://joela510.github.io/agent-ready-template/r/aspect-ratio.json): The Aspect Ratio component.
+- [Avatar](https://joela510.github.io/agent-ready-template/r/avatar.json): The Avatar component.
+- [Badge](https://joela510.github.io/agent-ready-template/r/badge.json): The Badge component.
+- [Breadcrumb](https://joela510.github.io/agent-ready-template/r/breadcrumb.json): The Breadcrumb component.
+- [Button](https://joela510.github.io/agent-ready-template/r/button.json): The Button component.
+- [Calendar](https://joela510.github.io/agent-ready-template/r/calendar.json): The Calendar component.
+- [Card](https://joela510.github.io/agent-ready-template/r/card.json): The Card component.
+- [Carousel](https://joela510.github.io/agent-ready-template/r/carousel.json): The Carousel component.
+- [Chart](https://joela510.github.io/agent-ready-template/r/chart.json): The Chart component.
+- [Checkbox](https://joela510.github.io/agent-ready-template/r/checkbox.json): The Checkbox component.
+- [Collapsible](https://joela510.github.io/agent-ready-template/r/collapsible.json): The Collapsible component.
+- [Combobox](https://joela510.github.io/agent-ready-template/r/combobox.json): The Combobox component.
+- [Command](https://joela510.github.io/agent-ready-template/r/command.json): The Command component.
+- [Context Menu](https://joela510.github.io/agent-ready-template/r/context-menu.json): The Context Menu component.
+- [Data Table](https://joela510.github.io/agent-ready-template/r/data-table.json): The Data Table component.
+- [Date Picker](https://joela510.github.io/agent-ready-template/r/date-picker.json): The Date Picker component.
+- [Dialog](https://joela510.github.io/agent-ready-template/r/dialog.json): The Dialog component.
+- [Drawer](https://joela510.github.io/agent-ready-template/r/drawer.json): The Drawer component.
+- [Dropdown Menu](https://joela510.github.io/agent-ready-template/r/dropdown-menu.json): The Dropdown Menu component.
+- [Form](https://joela510.github.io/agent-ready-template/r/form.json): The Form component.
+- [Hover Card](https://joela510.github.io/agent-ready-template/r/hover-card.json): The Hover Card component.
+- [Input](https://joela510.github.io/agent-ready-template/r/input.json): The Input component.
+- [Input Otp](https://joela510.github.io/agent-ready-template/r/input-otp.json): The Input Otp component.
+- [Label](https://joela510.github.io/agent-ready-template/r/label.json): The Label component.
+- [Menubar](https://joela510.github.io/agent-ready-template/r/menubar.json): The Menubar component.
+- [Navigation Menu](https://joela510.github.io/agent-ready-template/r/navigation-menu.json): The Navigation Menu component.
+- [Pagination](https://joela510.github.io/agent-ready-template/r/pagination.json): The Pagination component.
+- [Popover](https://joela510.github.io/agent-ready-template/r/popover.json): The Popover component.
+- [Progress](https://joela510.github.io/agent-ready-template/r/progress.json): The Progress component.
+- [Radio Group](https://joela510.github.io/agent-ready-template/r/radio-group.json): The Radio Group component.
+- [Resizable](https://joela510.github.io/agent-ready-template/r/resizable.json): The Resizable component.
+- [Scroll Area](https://joela510.github.io/agent-ready-template/r/scroll-area.json): The Scroll Area component.
+- [Select](https://joela510.github.io/agent-ready-template/r/select.json): The Select component.
+- [Separator](https://joela510.github.io/agent-ready-template/r/separator.json): The Separator component.
+- [Sheet](https://joela510.github.io/agent-ready-template/r/sheet.json): The Sheet component.
+- [Sidebar](https://joela510.github.io/agent-ready-template/r/sidebar.json): The Sidebar component.
+- [Skeleton](https://joela510.github.io/agent-ready-template/r/skeleton.json): The Skeleton component.
+- [Slider](https://joela510.github.io/agent-ready-template/r/slider.json): The Slider component.
+- [Sonner](https://joela510.github.io/agent-ready-template/r/sonner.json): The Sonner component.
+- [Switch](https://joela510.github.io/agent-ready-template/r/switch.json): The Switch component.
+- [Table](https://joela510.github.io/agent-ready-template/r/table.json): The Table component.
+- [Tabs](https://joela510.github.io/agent-ready-template/r/tabs.json): The Tabs component.
+- [Textarea](https://joela510.github.io/agent-ready-template/r/textarea.json): The Textarea component.
+- [Toggle](https://joela510.github.io/agent-ready-template/r/toggle.json): The Toggle component.
+- [Toggle Group](https://joela510.github.io/agent-ready-template/r/toggle-group.json): The Toggle Group component.
+- [Tooltip](https://joela510.github.io/agent-ready-template/r/tooltip.json): The Tooltip component.
+
+## Utilities
+
+- [useIsMobile hook](https://joela510.github.io/agent-ready-template/r/use-mobile.json): matchMedia-backed hook that reports whether the viewport is below the mobile breakpoint.
+- [cn() utility](https://joela510.github.io/agent-ready-template/r/utils.json): clsx + tailwind-merge class-name helper used by every component.

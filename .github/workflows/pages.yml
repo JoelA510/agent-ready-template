@@ -1,0 +1,172 @@
+name: Storybook and registry on GitHub Pages
+
+# Publishes Storybook (the living docs) and the component registry it serves at /r/, so
+# `npx shadcn@latest add <site>/r/button.json` installs a component. Runs on every push to main.
+#
+# Needs Settings → Pages → Source: "GitHub Actions". Until then, each run says so in a notice and
+# deploys nothing, so a fork that doesn't want a site isn't red. package.json "homepage" must be
+# the site's URL (npm run init takes it as --homepage): the registry's items name their
+# dependencies by URL under it, and the build refuses to publish a registry pointed elsewhere.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
+permissions: {}
+
+# One deployment at a time; a newer push queues rather than cancelling one mid-deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read # GET /repos/{owner}/{repo}/pages below
+    outputs:
+      url: ${{ steps.site.outputs.url }}
+      public: ${{ steps.site.outputs.public }}
+      item-sha: ${{ steps.item.outputs.sha }}
+      marker: ${{ steps.item.outputs.marker }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # 404 means Pages is off. A site that deploys from a branch can't take this workflow's
+      # artifact. Any other failure is an error, not a reason to skip.
+      - name: Is Pages set to deploy from GitHub Actions?
+        id: site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! response=$(gh api "repos/$GITHUB_REPOSITORY/pages" 2>pages-error.txt); then
+            if grep -q 'HTTP 404' pages-error.txt; then
+              echo "::notice title=Pages is off::Nothing deployed. To publish Storybook and the registry, set Settings → Pages → Source to GitHub Actions."
+              exit 0
+            fi
+            cat pages-error.txt >&2
+            exit 1
+          fi
+          build_type=$(jq -r .build_type <<<"$response")
+          if [ "$build_type" != "workflow" ]; then
+            echo "::notice title=Pages deploys from a branch::Nothing deployed. Set Settings → Pages → Source to GitHub Actions (it's \"$build_type\")."
+            exit 0
+          fi
+          {
+            echo "url=$(jq -r .html_url <<<"$response")"
+            # Not `.public // true`: jq's `//` treats false as missing.
+            echo "public=$(jq -r 'if .public == false then "false" else "true" end' <<<"$response")"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node
+        if: steps.site.outputs.url != ''
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          # What this job builds is published, so it installs from the registry rather than
+          # restore what another run saved: a poisoned cache would ship with the site. setup-node
+          # caches on its own when package.json names the package manager, so it's turned off.
+          package-manager-cache: false
+
+      - name: Use the pinned npm
+        if: steps.site.outputs.url != ''
+        run: npm install -g "npm@$(node -p "require('./package.json').packageManager.split('@')[1]")" # zizmor: ignore[adhoc-packages] -- the exact npm package.json pins
+
+      # Needs no dependencies, so a registry built for another address fails before the install.
+      - name: The registry is built for this site
+        if: steps.site.outputs.url != ''
+        env:
+          SITE: ${{ steps.site.outputs.url }}
+        run: node scripts/check-pages-homepage.mjs "$SITE"
+
+      - name: Install dependencies
+        if: steps.site.outputs.url != ''
+        run: npm ci
+
+      # This runs on push, beside CI rather than after it, so it checks what it publishes itself:
+      # the committed registry, tokens, and skill copies match their sources.
+      - name: Generated files are current
+        if: steps.site.outputs.url != ''
+        run: npm run check:generated
+
+      # prebuild-storybook builds the tokens; public/ (the registry at r/) is copied in as-is.
+      - name: Build Storybook
+        if: steps.site.outputs.url != ''
+        run: npm run build-storybook
+
+      # What the deploy job checks the live site against: a marker only this run's deployment
+      # carries, and the registry item's fingerprint.
+      - name: Mark the build
+        id: item
+        if: steps.site.outputs.url != ''
+        run: |
+          marker="$GITHUB_SHA $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          echo "$marker" > storybook-static/build-id.txt
+          {
+            echo "marker=$marker"
+            echo "sha=$(sha256sum storybook-static/r/button.json | cut -d' ' -f1)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload the site
+        if: steps.site.outputs.url != ''
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: storybook-static
+
+  deploy:
+    name: Deploy
+    needs: build
+    if: needs.build.outputs.url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      # First that this run's deployment is the one being served (its marker, with a query string
+      # past the CDN cache and retries for the few seconds the CDN can lag), then that the registry
+      # item a consumer's `shadcn add` fetches is byte for byte what this run built. A site behind
+      # access control (non-public Pages) can't be fetched anonymously, so it's skipped with a notice.
+      - name: The live site is this build's
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED: ${{ needs.build.outputs.item-sha }}
+          MARKER: ${{ needs.build.outputs.marker }}
+          PUBLIC: ${{ needs.build.outputs.public }}
+        run: |
+          if [ "$PUBLIC" = "false" ]; then
+            echo "::notice title=Private Pages site::Deployed; the live check needs anonymous access, so it was skipped."
+            exit 0
+          fi
+          # The build job's marker, not one recomputed here: re-running only this job reuses that
+          # build's artifact under a new run attempt.
+          base="${SITE%/}"
+          for attempt in 1 2 3 4 5 6; do
+            if [ "$(curl -fsS --max-time 20 "$base/build-id.txt?try=$attempt-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" || true)" = "$MARKER" ]; then
+              curl -fsS --max-time 20 "$base/r/button.json?run=$GITHUB_RUN_ID" -o button.json
+              actual=$(sha256sum button.json | cut -d' ' -f1)
+              if [ "$actual" != "$EXPECTED" ]; then
+                echo "::error::$base/r/button.json isn't this build's copy (sha256 $actual, built $EXPECTED)."
+                exit 1
+              fi
+              echo "✓ $base serves this build, and its registry item matches"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$base/build-id.txt didn't show this run's marker after six tries."
+          exit 1

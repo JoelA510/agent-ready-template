@@ -1,0 +1,217 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Typography" />
+
+# Typography
+
+Type does more work than any other design token in this system. A fresh template starts with
+almost no established brand — no library of marketing copy or UI to inherit a voice from —
+which means the typeface choices are, for now, most of what "the brand" visibly is. That's
+exactly why this page treats the display/heading typeface as an open decision rather than a
+settled one: get the type wrong and there's no other visual signal to correct the impression.
+
+Everything below the options section — the scale, the line-height and letter-spacing
+tokens, the sans-vs-serif usage rule — is settled and safe to build against today. The
+open question is narrower and specific: **which typeface pairs with Inter for display and
+heading type.**
+
+## The one thing that isn't in question: Inter for body text
+
+Inter is the body/UI font in all three options below and isn't being reconsidered here. It's
+a safe, neutral default for a template — one of the most extensively hinted, screen-tested
+typefaces available for interface work — and self-hosting it via `@fontsource-variable/inter`
+means no third-party font CDN request on every page load. Every option in this document is really a question about one thing:
+what pairs with Inter for display and heading type.
+
+<div className="not-prose my-6 rounded-lg border border-neutral-200 p-6 dark:border-neutral-700">
+  <p className="font-sans text-sm text-neutral-500 dark:text-neutral-400 mb-2">font-sans — Inter, body copy</p>
+  <p className="font-sans text-lg leading-relaxed">
+    Acme Inc. helps good people build good organizations. This is body text set in
+    Inter at 18px with relaxed line height — the size and treatment used for most reading
+    copy in the product.
+  </p>
+</div>
+
+## The options for display/heading type
+
+This system self-hosts four fonts specifically so this comparison can be made with real,
+rendered type rather than descriptions of it: Inter (settled, above), and three
+candidates for the display/heading role — Fraunces, Almarai, and Source Serif 4. Each is
+shown below at the same size and weight so the differences are visible, not just asserted.
+
+### Option 1 — Fraunces + Inter (current working default)
+
+<div className="not-prose my-6 rounded-lg border-2 border-brand-700 p-6 dark:border-brand-500">
+  <p className="font-sans text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-500 mb-3">Implemented now in src/styles/globals.css</p>
+  <p className="font-serif text-4xl font-semibold mb-1">Acme Inc.</p>
+  <p className="font-serif text-xl italic text-neutral-600 dark:text-neutral-400">We help good people build good organizations.</p>
+</div>
+
+Fraunces is a warm, soft-contrast serif with old-style, slightly quirky detailing —
+noticeably distinct from a workhorse text serif. It's become a common choice in recent
+professional-services and hospitality rebrands precisely because it reads as considered
+and editorial without tipping into stuffiness.
+
+**Why this is the recommendation:** of the three options, Fraunces creates the strongest
+visual separation from the Inter body text — it doesn't just look like "Inter's serif
+cousin," it looks like a deliberate typographic decision. That counts for a lot if your
+organization's logo wordmark is a distinctive classical serif rather than a generic one:
+display type that's merely "a bigger, serif-shaped version of the body font" would
+undersell that mark, and Fraunces is the option most likely to feel like it belongs next to
+it. (Replace this reasoning with your own wordmark's character when you make the call.)
+
+**The honest tradeoff:** Fraunces' warmth and slightly quirky old-style details are a
+stronger personality than a text serif like Source Serif 4. That's the point, but it also
+means it's the option furthest from "safe" — it will read as a specific choice to anyone
+who notices type at all, not a neutral one.
+
+### Option 2 — Almarai + Inter
+
+<div className="not-prose my-6 rounded-lg border border-neutral-200 p-6 dark:border-neutral-700">
+  <p className="font-sans text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-3">A sans that matches an existing sans-first brand</p>
+  <p className="font-almarai text-4xl font-bold mb-1">Acme Inc.</p>
+  <p className="font-almarai text-xl text-neutral-600 dark:text-neutral-400">We help good people build good organizations.</p>
+</div>
+
+Almarai is a geometric sans — rounded, friendly, low-contrast strokes. It's the option to
+reach for if your organization already ships a sans-first brand: choosing it would mean the
+marketing site and every product surface share one heading typeface with zero translation
+between them.
+
+**Why it's worth serious consideration:** full visual consistency with an existing sans-first
+brand, today, with no rebrand risk. If the top priority is "match what already ships" rather
+than "make the best independent typographic decision," this is the answer.
+
+**The honest tradeoff:** Almarai is a sans, so it doesn't echo a serif logo wordmark's
+character at all — the wordmark and the heading type would be making two different
+typographic arguments. It also tends to read a little more casual and startup-adjacent than
+the gravitas many B2B brands reach for in large display type. That may be exactly right for a
+younger or more playful brand, but it's worth naming plainly rather than glossing over.
+
+### Option 3 — Source Serif 4 + Inter
+
+<div className="not-prose my-6 rounded-lg border border-neutral-200 p-6 dark:border-neutral-700">
+  <p className="font-sans text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-3">The safe middle-ground pick</p>
+  <p className="font-source-serif text-4xl font-semibold mb-1">Acme Inc.</p>
+  <p className="font-source-serif text-xl italic text-neutral-600 dark:text-neutral-400">We help good people build good organizations.</p>
+</div>
+
+Source Serif 4 is a conservative, classic transitional serif — closer in spirit to the
+refined, classical character of a traditional serif wordmark than Fraunces' warmer, quirkier
+personality, and a genuine serif (unlike Almarai).
+
+**Why it's the middle ground:** it echoes a serif wordmark without asking anyone to
+sign off on a distinctive, opinionated typeface. It's also the most generic of the three —
+less distinctive than Fraunces, more traditionally "serif" and less brand-consistent than
+matching an existing sans. This is the pick if the room can't agree and wants the option
+least likely to be wrong, rather than the option most likely to be memorable.
+
+### Side-by-side, same size and weight
+
+<div className="not-prose my-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+    <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 mb-2">Fraunces (default)</p>
+    <p className="font-serif text-2xl font-semibold">Projects &amp; Customers</p>
+  </div>
+  <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+    <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 mb-2">Almarai</p>
+    <p className="font-almarai text-2xl font-bold">Projects &amp; Customers</p>
+  </div>
+  <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+    <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 mb-2">Source Serif 4</p>
+    <p className="font-source-serif text-2xl font-semibold">Projects &amp; Customers</p>
+  </div>
+</div>
+
+### Comparison at a glance
+
+| | Option 1: Fraunces + Inter | Option 2: Almarai + Inter | Option 3: Source Serif 4 + Inter |
+| --- | --- | --- | --- |
+| Status | **Current working default** — implemented | Matches an existing sans-first brand | Not implemented; available for comparison |
+| Character | Warm soft-serif, old-style, editorial | Geometric sans, rounded, friendly | Classic transitional serif, conservative |
+| Echoes a serif wordmark? | Yes — distinct serif personality | No — it's a sans | Yes — closer to classical/refined |
+| Distinctiveness vs. Inter body | Highest of the three | Lowest (same sans family logic as body) | Moderate |
+| Best argument for it | Strongest "this is special" signal for display type | Zero-friction consistency with an existing sans brand | Safe, echoes a serif wordmark, low risk |
+| Best argument against it | Most opinionated; needs real buy-in | Doesn't reflect a serif wordmark's character; can read casual | Most generic; least memorable of the three |
+
+**How to switch:** the working default is a two-line change, not a structural one. It
+lives in `tokens/core/typography.json`'s `font.family.serif` value (feeding
+`--font-family-serif`), which `src/styles/globals.css`'s `@theme inline` block exposes as
+`--font-serif` — swap the font stack there, run `npm run tokens:build`, and every
+`font-serif` usage across the system updates. Nothing about component code, the type
+scale, or any other token changes.
+
+This is exactly the kind of call this system is set up to leave open rather than
+force: it's a brand decision as much as a technical one, and it should be made by whoever
+owns Acme's brand, with the three real, rendered options in front of them — not
+defaulted silently because Fraunces happened to be implemented first.
+
+## Type scale
+
+The scale is a fixed set of nine sizes. It isn't part of the options discussion above —
+this is the same numeric scale regardless of which display typeface wins.
+
+| Token | rem | px | Typical use |
+| --- | --- | --- | --- |
+| `text-xs` | 0.75rem | 12px | Fine print, timestamps, disclaimers |
+| `text-sm` | 0.875rem | 14px | Secondary UI text, labels, table cells, captions |
+| `text-md` (`text-base`) | 1rem | 16px | Body copy default — the size most text on a page should be |
+| `text-lg` | 1.125rem | 18px | Emphasized body copy, lead paragraphs |
+| `text-xl` | 1.25rem | 20px | Small headings, card titles |
+| `text-2xl` | 1.5rem | 24px | Section headings |
+| `text-3xl` | 1.875rem | 30px | Page headings |
+| `text-4xl` | 2.25rem | 36px | Prominent page headings, feature callouts |
+| `text-5xl` | 3rem | 48px | Hero and marketing display type |
+
+Two sizes are deliberately absent between `4xl` and `5xl` and above `5xl`: this scale is
+built for product UI, where anything larger than a hero headline belongs to a marketing
+page's own layout, not a shared component token.
+
+## Line height
+
+Line height is a separate token from size — pick it based on how the text is being read,
+not how big it is.
+
+| Token | Value | When to use it |
+| --- | --- | --- |
+| `leading-tight` | 1.1 | Large display headings (`3xl` and up) — at that size, generous line spacing looks disconnected rather than readable |
+| `leading-snug` | 1.3 | Smaller headings and card titles — enough air to separate wrapped lines without floating apart |
+| `leading-normal` | 1.5 | Body copy default — the standard for comfortable multi-line reading |
+| `leading-relaxed` | 1.65 | Longer-form reading passages (long-form documentation, help content) where extra spacing measurably reduces reading fatigue |
+
+## Letter spacing
+
+| Token | Value | When to use it |
+| --- | --- | --- |
+| `tracking-tight` | -0.02em | Large display headings, where default spacing can look slightly loose at big sizes |
+| `tracking-normal` | 0em | Everything else — body copy, UI labels, most headings |
+| `tracking-wide` | 0.02em | All-caps labels and eyebrows (like the "Implemented now" labels above) — capital letters need a touch more room to avoid feeling cramped |
+
+## When to use serif vs. sans
+
+One rule, applied consistently regardless of which display option above is chosen:
+
+- **`font-sans` (Inter) is the default for everything functional.** Body copy, buttons,
+  form labels, table data, navigation, error messages, empty states — anything the user
+  reads to *do* something, not to be persuaded by. If you're not sure which font a piece
+  of UI text should use, it's `font-sans`.
+- **`font-serif` (or whichever display option is chosen) is reserved for genuine display
+  and editorial headings** — page titles, section headings on marketing and about pages,
+  pull quotes. It should never appear in body copy, form fields, table cells, or any
+  other UI chrome. The moment a serif shows up somewhere transactional, it stops reading
+  as "considered" and starts reading as "inconsistent."
+
+This mirrors GOV.UK's typography guidance: use one typeface for reading and interaction,
+and reserve any second typeface for the small number of places where a shift in register
+is doing real communicative work — not as decoration sprinkled through the interface.
+
+## Reference systems this leans on
+
+- **GOV.UK Design System** — the rationale-first structure of this page (state the
+  reasoning, not just the rule) follows GOV.UK's convention of never asserting "do this"
+  without "because...".
+- **IBM Carbon** — Carbon's pattern of documenting several supported options for a single
+  decision, rather than one mandate, is the model for presenting three real typeface
+  options here instead of picking silently and moving on.
+- **Shopify Polaris** — pairing concrete before/after examples (the rendered swatches
+  above) with the written guidance, rather than describing type choices in the abstract.

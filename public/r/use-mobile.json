@@ -1,0 +1,14 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "use-mobile",
+  "type": "registry:hook",
+  "title": "useIsMobile hook",
+  "description": "matchMedia-backed hook that reports whether the viewport is below the mobile breakpoint.",
+  "files": [
+    {
+      "path": "src/hooks/use-mobile.ts",
+      "type": "registry:hook",
+      "content": "import * as React from 'react'\n\n/**\n * Width (in px) below which the app-shell switches from the fixed desktop rail\n * to the Sheet-based mobile drawer. Kept in sync with Tailwind's `md` breakpoint.\n */\nconst MOBILE_BREAKPOINT = 768\n\nconst MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`\n\n/**\n * Subscribe a callback to viewport-width changes across the mobile breakpoint.\n * React only ever invokes this on the client, so touching `window` here is safe.\n */\nfunction subscribe(onStoreChange: () => void) {\n  const mql = window.matchMedia(MOBILE_QUERY)\n  mql.addEventListener('change', onStoreChange)\n  return () => mql.removeEventListener('change', onStoreChange)\n}\n\nfunction getSnapshot() {\n  return window.innerWidth < MOBILE_BREAKPOINT\n}\n\n/**\n * Returns `true` when the viewport is narrower than {@link MOBILE_BREAKPOINT}.\n *\n * Backed by `useSyncExternalStore`, which keeps the matchMedia subscription in\n * sync with React and is SSR-safe: the server snapshot resolves to `false`\n * (never touching `window`) and hydration corrects it on the client.\n */\nexport function useIsMobile() {\n  return React.useSyncExternalStore(subscribe, getSnapshot, () => false)\n}\n"
+    }
+  ]
+}

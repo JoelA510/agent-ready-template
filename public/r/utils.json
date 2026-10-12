@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "utils",
+  "type": "registry:lib",
+  "title": "cn() utility",
+  "description": "clsx + tailwind-merge class-name helper used by every component.",
+  "dependencies": [
+    "clsx@^2",
+    "tailwind-merge@^3"
+  ],
+  "files": [
+    {
+      "path": "src/lib/utils.ts",
+      "type": "registry:lib",
+      "content": "import { type ClassValue, clsx } from 'clsx'\nimport { twMerge } from 'tailwind-merge'\n\n/**\n * Merge conditional class names, then resolve conflicting Tailwind utilities\n * (e.g. a caller's `px-2` overriding a component's default `px-4`) in favor\n * of the one that appears last. Standard shadcn/ui `cn` helper.\n */\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs))\n}\n"
+    }
+  ]
+}

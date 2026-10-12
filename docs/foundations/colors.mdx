@@ -1,0 +1,277 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Colors" />
+
+# Colors
+
+Color is the one part of this system with a genuine, undecided fork in it, and this page is
+written that way on purpose. Everything below is an **options menu, not a mandate** — three
+real strategies for how Acme's brand color shows up across a full product suite, each
+with a name, a rationale, real swatches, and real contrast numbers. One of them is what's
+actually implemented in `tokens/` today. None of them is final. Following [IBM Carbon's lead](
+https://carbondesignsystem.com/) — a mature system that documents several supported patterns
+for a given problem rather than a single mandate — is the right mental model here: read this
+as a menu to choose from with real stakeholder input, not a decision that's already been made
+for you.
+
+## A placeholder palette, and how to rebrand it
+
+The values in `tokens/core/color.json` are a **neutral placeholder starter palette**, not a
+brand you have to keep. The starting hue is a muted olive/moss: the `brand-700` token
+(`#5c5d4b`) is a **very desaturated** color — HSL roughly 64°, 11%, 31% — chosen precisely
+because it's quiet and unopinionated, a safe default to build against before your own brand is
+wired in. Nothing in the ramp below is fixed: the 50–950 steps are extrapolated lighter and
+darker from that one anchor point, the same way you'd build out a type scale from a single base
+size. Treat `palette.brand.*` and `palette.accent.*` as the two ramps you'll replace.
+
+<div className="flex flex-wrap gap-3 my-4">
+  <div className="text-center">
+    <div className="size-16 rounded-md border border-neutral-300" style={{ backgroundColor: '#ecede7' }} />
+    <p className="text-xs mt-1 font-mono">#ecede7</p>
+    <p className="text-xs text-neutral-500">placeholder surface</p>
+  </div>
+  <div className="text-center">
+    <div className="size-16 rounded-md" style={{ backgroundColor: '#585947' }} />
+    <p className="text-xs mt-1 font-mono">#585947</p>
+    <p className="text-xs text-neutral-500">placeholder base hue</p>
+  </div>
+  <div className="text-center">
+    <div className="size-16 rounded-md bg-brand-700" />
+    <p className="text-xs mt-1 font-mono">#5c5d4b</p>
+    <p className="text-xs text-neutral-500">brand-700 (token)</p>
+  </div>
+</div>
+
+**How to rebrand.** Swapping this placeholder for your organization's brand is a three-step
+change, not a rewrite:
+
+1. **Swap the base hues.** Replace the `palette.brand.*` and `palette.accent.*` base colors
+   with your organization's primary and secondary brand colors. Hex, `rgb()`, and `oklch()`
+   all work, so a palette copied from Tailwind v4 (authored in oklch) can go in as it is. The
+   contrast gate measures an oklch color as the sRGB color it renders as. It lists any color it
+   had to gamut-map from outside sRGB; leave those a margin, because a browser that clips
+   instead of mapping renders them slightly differently.
+2. **Regenerate the 50–950 steps.** Extrapolate each ramp lighter and darker from its new base
+   the way the placeholder does, so every ramp keeps the same shape and step count.
+3. **Re-check contrast.** The ratios quoted throughout this page were measured against the
+   placeholder hex values; once your own colors are in, re-measure the key pairings and verify
+   they still clear WCAG 2.2 AA (see **Foundations → Accessibility**).
+
+The placeholder deliberately starts from a single quiet anchor rather than a large existing
+pattern library, so there's little to unlearn when you replace it. That's also the brief for
+every option below: whatever base color you land on, extend its register consistently across
+the ramp rather than contradicting it.
+
+## Three strategies for using it
+
+The question these three options answer is: **once you have one quiet, desaturated brand
+color, how far across the product does it spread?** All three keep `brand-700` as the
+anchor value. They disagree about how much of the interface is allowed to be that color.
+
+### Option A — Heritage *(current working default)*
+
+brand — the placeholder olive/moss, as the full `50`–`950` ramp anchored on the base hue —
+**is** the primary action color everywhere: buttons, links, and focus rings all reference
+`brand-700` (or `brand-600` for rings) directly, system-wide, across the customer portal and
+internal tools alike.
+
+<div className="flex flex-wrap items-center gap-4 my-4">
+  <button className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium">Primary button</button>
+  <span className="text-sm underline text-brand-700">A text link</span>
+  <div className="size-10 rounded-md bg-brand-700 ring-2 ring-offset-2 ring-brand-600" />
+</div>
+
+| Pairing | Contrast |
+| --- | --- |
+| White text on `brand-700` (#5c5d4b) | **6.73:1** — passes AA for normal text (just under the 7:1 AAA threshold) |
+| `brand-700` on `neutral-50` (#fafaf9), as a link/text color | **6.44:1** |
+
+**Why recommend this as the default:** it's the highest-fidelity option — anyone who
+recognizes your brand mark recognizes it immediately in the product, in every
+button they click. And critically, there's no accessibility trade-off to accepting it:
+6.73:1 isn't scraping by at the AA floor of 4.5:1 — it sits well above AA and just short of
+the 7:1 AAA threshold for normal text (and clears AAA outright for large text, whose
+threshold is 4.5:1).
+Recommending a brand color as primary usually means negotiating away contrast headroom;
+this one doesn't ask for that trade.
+
+### Option B — Ink-first, olive as accent
+
+Primary UI actions — buttons, links, focus rings — use a near-neutral warm charcoal
+(`neutral-900` or `neutral-950`) instead of brand. brand is reserved strictly as an
+**accent**: header/nav moments, tags, chart categories, marketing pages. It never appears
+as the default button color.
+
+<div className="flex flex-wrap items-center gap-4 my-4">
+  <button className="px-4 py-2 rounded-md bg-neutral-900 text-white text-sm font-medium">Primary button</button>
+  <button className="px-4 py-2 rounded-md bg-neutral-950 text-white text-sm font-medium">Primary (950 variant)</button>
+  <span className="px-2 py-1 rounded bg-brand-100 text-brand-800 text-xs font-medium">Accent tag</span>
+</div>
+
+| Pairing | Contrast |
+| --- | --- |
+| White text on `neutral-900` | **15.4:1** |
+| White text on `neutral-950` | **18.27:1** |
+
+Both numbers are stronger than Option A's 6.73:1 — this isn't a compromise on
+accessibility either, it's a different design bet. The case for it: a product suite
+isn't only marketing pages — it usually includes a dense, data-heavy internal tool
+(an analytics and billing dashboard), and a muted olive repeated across dozens
+of buttons and links on a screen like that can start to read as flat and monotone at scale,
+because it's a low-saturation color to begin with. Reserving brand as an accent means it
+only shows up where it's meant to draw the eye, which sharpens hierarchy and — somewhat
+counterintuitively — makes the brand color feel more distinctive, not less, because it
+stops being wallpaper. This is a genuinely common pattern in mature B2B products: plenty of
+serious design systems keep their brand hue quiet and reserve it for specific accent
+moments rather than painting it across every interactive control (without pointing at any
+one competitor's unpublished internal decisions, since that's not something to assert
+without a source).
+
+### Option C — Evolved / brightened
+
+Same hue family (~64°), but modestly more saturated than the literal placeholder base value. The
+reasoning: a color calibrated for a small embossed or printed seal doesn't have to carry the
+same intensity when it's covering large UI surfaces on a backlit screen. A slightly richer
+version of the same hue can still read as unmistakably "the same color" — it's a values and
+chroma adjustment, not a hue shift — while feeling more alive in a browser than on a
+letterhead.
+
+<div className="flex flex-wrap gap-3 my-4">
+  <div className="text-center">
+    <div className="size-16 rounded-md bg-brand-700" />
+    <p className="text-xs mt-1 font-mono">#5c5d4b</p>
+    <p className="text-xs text-neutral-500">placeholder base (A / B)</p>
+  </div>
+  <div className="text-center">
+    <div className="size-16 rounded-md border border-neutral-300" style={{ backgroundColor: '#556b3f' }} />
+    <p className="text-xs mt-1 font-mono">#556b3f (illustrative)</p>
+    <p className="text-xs text-neutral-500">brightened direction</p>
+  </div>
+</div>
+
+This is the middle-ground pitch between fully preserving heritage (Option A) and meaningfully
+departing from brand as the primary action color (Option B): it keeps brand as the primary
+action color like Option A, but asks whether the exact extracted value is the right one to
+scale up, or just the right one to start from. No token values have been computed for this
+direction yet — it needs its own contrast pass and a decision on how much saturation increase
+is "more alive" versus "no longer the same color," and that work should happen only if this
+option is the one worth pursuing.
+
+## What's implemented today, and what changing it costs
+
+**Option A is the working default implemented in this repo right now.** Open
+`tokens/semantic/light.json` or `dark.json` and `primary` / `primary-foreground` resolve to
+`palette.brand.700` / `color.white` (and `palette.brand.400` / `palette.neutral.950` in dark
+mode). If you open Storybook today, every primary button, every link, every focus ring is
+brand.
+
+Switching to Option B requires **no new tokens** — this is the actual point of having a
+semantic layer between raw palette and components. The only change needed is repointing two
+aliases:
+
+```
+// tokens/semantic/light.json
+"primary": { "$value": "{palette.brand.700}" }   →   "{palette.neutral.900}"
+"ring":    { "$value": "{palette.brand.600}" }    →   "{palette.neutral.800}" (or similar)
+
+// tokens/semantic/dark.json — mirrored
+"primary": { "$value": "{palette.brand.400}" }    →   "{palette.neutral.50}" or an inverted equivalent
+```
+
+...then re-run `npm run tokens:build`. No component file changes — not one. Every button,
+link, and focus ring in `src/components/ui/` reads `bg-primary` / `text-primary-foreground`,
+never `bg-brand-700` directly (see **Introduction** on why semantic tokens
+exist at all). That's the whole point of this token layer: a strategy change is a two-line
+JSON edit and a rebuild, not a find-and-replace across the codebase.
+
+This choice is not final, and it should be made with real stakeholder input — not decided by
+default because it's what happened to get built first.
+
+## accent: the secondary accent
+
+`tokens/core/color.json` also defines a `accent` ramp — a muted warm tan/terracotta, deliberately
+a different hue family from brand (accent sits in warm orange/brown territory; brand sits in
+olive/moss territory) so brand meaning and status meaning never collide, and so an accent used
+next to brand reads as a *second* color, not a slightly-off version of the first.
+
+<div className="flex flex-wrap gap-2 my-4">
+  <div className="size-12 rounded-md bg-accent-100" />
+  <div className="size-12 rounded-md bg-accent-300" />
+  <div className="size-12 rounded-md bg-accent-500" />
+  <div className="size-12 rounded-md bg-accent-700" />
+  <div className="size-12 rounded-md bg-accent-900" />
+</div>
+
+| Pairing | Contrast |
+| --- | --- |
+| `accent-900` on `accent-100` (accent surface, e.g. a tag or callout) | **10.2:1** |
+
+Even a quiet, near-monochrome brand needs at least one secondary accent, and the reason is
+concrete rather than aesthetic: a data-heavy product surface — an analytics and billing
+dashboard, say — renders Recharts and D3 charts, and charts need several
+genuinely distinguishable categorical colors to plot multiple series at once. A strictly
+monochrome palette — just brand at different tints — can't support that; adjacent tints of
+the same low-saturation hue are exactly the kind of thing colorblind users and quick-glance
+scanning both struggle to tell apart. accent exists to give charts, tags, and editorial accents
+somewhere to go that isn't "a lighter or darker brand," without introducing a color that could
+be mistaken for a status signal.
+
+## Status colors are their own hue family, on purpose
+
+`success`, `warning`, `danger`, and `info` (also in `tokens/core/color.json`) are deliberately
+**not** derived from brand or accent at all — they're independent hues (green, amber, red,
+blue) chosen so status meaning is never ambiguous with brand meaning. A brand-colored badge
+should never make someone wonder for a half-second whether it means "this record is fine" or
+"this is just how we brand things."
+
+<div className="flex flex-wrap gap-4 my-4">
+  <div className="text-center">
+    <div className="size-12 rounded-md" style={{ backgroundColor: '#207941' }} />
+    <p className="text-xs mt-1">success-700</p>
+  </div>
+  <div className="text-center">
+    <div className="size-12 rounded-md" style={{ backgroundColor: '#ae7b13' }} />
+    <p className="text-xs mt-1">warning-700</p>
+  </div>
+  <div className="text-center">
+    <div className="size-12 rounded-md" style={{ backgroundColor: '#ab2821' }} />
+    <p className="text-xs mt-1">danger-700</p>
+  </div>
+  <div className="text-center">
+    <div className="size-12 rounded-md" style={{ backgroundColor: '#255c93' }} />
+    <p className="text-xs mt-1">info-700</p>
+  </div>
+</div>
+
+These are consumed only through semantic aliases (`bg-destructive`, `bg-success`, and so on)
+— never exposed as raw utility classes the way `brand-*` and `accent-*` are — because status
+color should always be a deliberate, named choice in a component, not something reached for
+because it happened to be the nearest swatch.
+
+## Other reference numbers for this palette
+
+A few more measured pairings worth having on hand when building or reviewing a component,
+independent of which primary-color option is chosen:
+
+| Pairing | Use case | Contrast |
+| --- | --- | --- |
+| `neutral-950` on `neutral-50` | Default body text | **17.5:1** |
+| `neutral-600` on `neutral-50` | Muted/secondary text | **5.33:1** |
+
+Both clear WCAG 2.2 AA (4.5:1 for normal text) with real margin — see **Foundations →
+Accessibility** for how contrast is verified across this palette more broadly, including the
+combinations not listed here.
+
+## Summary
+
+| | Option A — Heritage | Option B — Ink-first | Option C — Evolved |
+| --- | --- | --- | --- |
+| Primary action color | brand-700 | neutral-900/950 | brightened brand (TBD) |
+| brand's role | Primary, everywhere | Accent only | Primary, richer |
+| Brand recognition | Highest | Lower in dense UI, higher in accents | High |
+| Best fit | Marketing site, customer-facing portal | Dense internal tools (dashboard) | Undecided — needs its own contrast pass |
+| Status in this repo | **Implemented today** | Not implemented — a 2-token swap | Not implemented — no values chosen |
+
+No option above is the ratified answer. This page exists so that decision can be made
+deliberately, with the real trade-offs on the table, rather than by default because Option A
+happened to ship first.

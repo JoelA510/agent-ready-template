@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "aspect-ratio",
+  "type": "registry:ui",
+  "title": "Aspect Ratio",
+  "description": "The Aspect Ratio component.",
+  "dependencies": [
+    "@radix-ui/react-aspect-ratio@^1"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/aspect-ratio.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as AspectRatioPrimitive from '@radix-ui/react-aspect-ratio'\n\nfunction AspectRatio({ ...props }: React.ComponentProps<typeof AspectRatioPrimitive.Root>) {\n  return <AspectRatioPrimitive.Root data-slot=\"aspect-ratio\" {...props} />\n}\n\nexport { AspectRatio }\n"
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Spacing & Layout" />
+
+# Spacing & Layout
+
+Spacing is the one foundation in this system with essentially no genuine fork in it — the
+engineering reality only supports one sane answer, and this page reflects that. There's no
+options menu here the way there is for color or typography. What follows is settled and safe
+to build against today.
+
+## One number drives everything
+
+`tokens/core/spacing.json` defines exactly one value:
+
+```json
+{
+  "spacing": {
+    "base": { "$value": "0.25rem" }
+  }
+}
+```
+
+That's 4px. Style Dictionary pipes it into `--spacing-base`, and `globals.css`'s `@theme
+inline` block maps it straight to Tailwind's own `--spacing` theme variable:
+
+```css
+--spacing: var(--spacing-base);
+```
+
+That one line is doing more work than it looks like. Tailwind v4 generates its *entire*
+numeric spacing scale — `p-1`, `p-2`, `gap-4`, `w-96`, `-mt-3`, all of it — as a multiple of
+whatever `--spacing` resolves to. Overriding that single variable means every spacing utility
+class in the system, existing and future, derives from Acme's own base unit rather than
+Tailwind's stock default. As it happens the stock default is also 0.25rem, so nothing visually
+changes today — but the point isn't today's value, it's that the number now belongs to this
+system's token source and can be changed in one place if it ever needs to.
+
+<div className="not-prose my-6 flex flex-wrap items-end gap-4 rounded-lg border border-neutral-200 p-6 dark:border-neutral-700">
+  {[1, 2, 3, 4, 6, 8, 12, 16].map((n) => (
+    <div key={n} className="text-center">
+      <div className={`bg-brand-600 w-8`} style={{ height: `calc(var(--spacing, 0.25rem) * ${n})` }} />
+      <p className="text-xs mt-2 font-mono text-neutral-500">p-{n}</p>
+      <p className="text-xs font-mono text-neutral-400">{n * 4}px</p>
+    </div>
+  ))}
+</div>
+
+| Class | Multiplier | Resolves to |
+| --- | --- | --- |
+| `p-1` / `gap-1` | ×1 | 4px |
+| `p-2` / `gap-2` | ×2 | 8px |
+| `p-4` / `gap-4` | ×4 | 16px |
+| `p-6` / `gap-6` | ×6 | 24px |
+| `p-8` / `gap-8` | ×8 | 32px |
+| `p-12` / `gap-12` | ×12 | 48px |
+| `p-16` / `gap-16` | ×16 | 64px |
+
+## Why a single base unit beats a named list
+
+A more common alternative design would be a short list of named sizes — `spacing.xs`,
+`spacing.sm`, `spacing.md`, `spacing.lg`, the same pattern this system uses for type sizes or
+shadow steps. That's a reasonable pattern in general, and it's exactly what this system does
+for typography and elevation. Spacing is different on purpose: a named list of five or six
+sizes forces every real-world gap in the product into the nearest bucket, and "nearest
+bucket" is exactly the kind of small, silent drift that makes an interface feel subtly
+inconsistent without anyone being able to say why.
+
+A single base-unit token removes that judgment call entirely. Every spacing value that ships
+is a literal multiple of one number, full stop — 4px, 8px, 12px, 20px, 44px, whatever the
+layout calls for — because the scale isn't five fixed stops, it's every multiple of the base
+unit at once. There's no "close enough": a spacing value is either some multiple of 4px, or
+it's a hardcoded pixel number that bypassed the token system, and the second case is a bug to
+fix, not a style choice to defend. That binary — on the grid or a bug — is the entire reason
+this is worth calling out as a real design decision rather than an implementation detail.
+
+This is also why `tokens/core/spacing.json` holds one value where `color.json` holds dozens:
+the base-unit approach only needs a foundation, not a menu, because the "options" are just
+arithmetic on that foundation rather than separate named choices to weigh against each other.
+
+## Practical guidance: 4/8pt grid conventions
+
+The base unit doesn't tell you *which* multiple to reach for in a given situation — that's a
+judgment call, and it's one most mature design systems converge on the same convention for:
+small multiples of 4 for tight, internal spacing; multiples of 8 or 16 for the space between
+larger structural pieces.
+
+- **Multiples of 4 (`p-1` / 4px through roughly `p-3` / 12px)** — the tightest spacing in the
+  system. Use it for the internal relationships inside a single small component: the gap
+  between an icon and its label, the padding inside a compact badge, the space between a form
+  field's border and the text inside it.
+- **Multiples of 8 (`p-2`, `p-4`, `p-6` / 8px, 16px, 24px)** — the default for most component
+  padding and the gaps between related elements: a button's internal padding, the gap between
+  form fields stacked in a group, spacing between items in a list.
+- **Multiples of 16 or more (`p-4` through `p-16`+ / 16px–64px+)** — structural spacing: the
+  padding around a card's edge, the gap between cards in a grid, the vertical rhythm between
+  sections on a page. The bigger the visual unit being separated, the bigger the multiple
+  should be — a page section needs more breathing room than a checkbox label.
+
+None of this is enforced by the tooling — Tailwind will happily let anyone write `p-[13px]`
+or `p-5` (20px, not on the tight/structural boundary either camp would pick first) if a
+designer's mockup says so. The convention above is a shared vocabulary for *why* a spacing
+value was chosen, useful in review ("this is tight internal spacing, so it should probably be
+`gap-1` or `gap-2`, not `gap-4`") more than a hard rule the build can check.
+
+## Breakpoints
+
+`tokens/core/breakpoint.json` documents five reference values, deliberately matched to
+Tailwind v4's own defaults:
+
+| Token | Value | Typical use |
+| --- | --- | --- |
+| `sm` | 640px | Small tablets, large phones in landscape |
+| `md` | 768px | Tablets |
+| `lg` | 1024px | Small laptops, the point most product layouts switch to a multi-column shell |
+| `xl` | 1280px | Standard desktop |
+| `2xl` | 1536px | Large / wide desktop displays |
+
+Matching Tailwind's stock breakpoints exactly is a deliberate choice, not an oversight: every
+Tailwind responsive prefix (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`) already means exactly what it
+says without translation, so a developer moving between this codebase and general Tailwind
+documentation or examples never has to remember "our `lg` isn't Tailwind's `lg`." Predictable
+beats novel here.
+
+These values are also exported as their own token file rather than only living implicitly
+inside Tailwind's generated CSS, and that's worth noting even though nothing in the repo
+consumes it that way today: a raw JSON breakpoint token can drive non-CSS consumers from the
+same source — a JS `matchMedia` query in a hook, a React Native or native-app layout
+condition — should Acme ever ship a client outside the browser. One number, one source
+of truth, whether the consumer is a stylesheet or not.
+
+## Reference systems this leans on
+
+- **The 4pt/8pt grid convention** — not unique to this system; it's the point size/spacing
+  convention most mature design systems (Material Design, Carbon, Polaris among them)
+  converge on independently, because it's the smallest unit that stays crisp across common
+  device pixel ratios while still giving enough granularity for tight UI.
+- **IBM Carbon** — Carbon's 2x grid documentation is a useful model for stating the
+  tight-vs-structural distinction explicitly rather than leaving it to be inferred from
+  examples alone.

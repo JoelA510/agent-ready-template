@@ -1,0 +1,88 @@
+{
+  "palette": {
+    "$description": "Raw color ramps. Named `palette.*` (not `color.*`) deliberately: it keeps the raw CSS variable (--palette-brand-500) distinct from the Tailwind-facing theme key (--color-brand-500) that globals.css maps it to, so @theme inline never has to reference a variable by its own name. The values below are a neutral PLACEHOLDER starter palette (a muted olive `brand` + a warm `accent`) — REPLACE them with your organization's brand ramp. See docs/foundations/colors.mdx for how to rebrand (swap the base hues, regenerate the 50–950 steps, then re-check contrast) and for the documented palette-strategy options.",
+    "brand": {
+      "$description": "Primary brand color — a muted olive/moss (hue ~64°) placeholder. brand-700 (#5c5d4b) is the default primary action color. Replace this ramp with your brand's primary hue.",
+      "50": { "$value": "#f9f9f5", "$type": "color" },
+      "100": { "$value": "#f3f3ec", "$type": "color" },
+      "200": { "$value": "#e6e7da", "$type": "color" },
+      "300": { "$value": "#d2d4bf", "$type": "color" },
+      "400": { "$value": "#b9bba0", "$type": "color" },
+      "500": { "$value": "#9da07e", "$type": "color" },
+      "600": { "$value": "#7d7f62", "$type": "color" },
+      "700": { "$value": "#5c5d4b", "$type": "color" },
+      "800": { "$value": "#454639", "$type": "color" },
+      "900": { "$value": "#31322a", "$type": "color" },
+      "950": { "$value": "#1e1e1a", "$type": "color" }
+    },
+    "accent": {
+      "$description": "Secondary accent. Warm tan/terracotta, muted to sit quietly alongside brand rather than compete with it — used sparingly for highlights, chart categories, and editorial accents. Never as the primary action color.",
+      "50": { "$value": "#f9f5f1", "$type": "color" },
+      "100": { "$value": "#f1e6da", "$type": "color" },
+      "200": { "$value": "#e6ceb3", "$type": "color" },
+      "300": { "$value": "#d9b387", "$type": "color" },
+      "400": { "$value": "#cc985c", "$type": "color" },
+      "500": { "$value": "#b87e3d", "$type": "color" },
+      "600": { "$value": "#956937", "$type": "color" },
+      "700": { "$value": "#765632", "$type": "color" },
+      "800": { "$value": "#5a442b", "$type": "color" },
+      "900": { "$value": "#3f3122", "$type": "color" },
+      "950": { "$value": "#261f17", "$type": "color" }
+    },
+    "neutral": {
+      "$description": "Warm-leaning gray scale (a subtle warm tint rather than a cold blue-gray) — used for text, surfaces, and borders. Also serves as the base for the \"Ink-first\" option: neutral-900/950 as the primary action color instead of brand — see the Foundations/Colors doc.",
+      "50": { "$value": "#fafaf9", "$type": "color" },
+      "100": { "$value": "#f5f6f4", "$type": "color" },
+      "200": { "$value": "#e9eae6", "$type": "color" },
+      "300": { "$value": "#d6d7d1", "$type": "color" },
+      "400": { "$value": "#b1b2a9", "$type": "color" },
+      "500": { "$value": "#8c8d81", "$type": "color" },
+      "600": { "$value": "#68695f", "$type": "color" },
+      "700": { "$value": "#4f5049", "$type": "color" },
+      "800": { "$value": "#373833", "$type": "color" },
+      "900": { "$value": "#242523", "$type": "color" },
+      "950": { "$value": "#151514", "$type": "color" }
+    }
+  },
+  "color": {
+    "$description": "Status/utility colors. Consumed mainly by alias (tokens/semantic/*.json → the destructive/success/warning/info semantic roles), and a few 600 steps are also referenced directly as raw --color-*-600 vars by the chart default palette (src/components/ui/chart.tsx). They never appear on the left-hand side of a @theme mapping, so no naming collision risk applies to this group.",
+    "success": {
+      "$description": "Status color: positive/complete states. Distinct hue from the brand color so brand and status meaning never collide.",
+      "100": { "$value": "#e7f8ed", "$type": "color" },
+      "300": { "$value": "#a8e6bf", "$type": "color" },
+      "500": { "$value": "#35b664", "$type": "color" },
+      "600": { "$value": "#2b9752", "$type": "color" },
+      "700": { "$value": "#207941", "$type": "color" },
+      "900": { "$value": "#163b24", "$type": "color" }
+    },
+    "warning": {
+      "$description": "Status color: caution/needs-attention states.",
+      "100": { "$value": "#fef1d7", "$type": "color" },
+      "300": { "$value": "#f8cd77", "$type": "color" },
+      "500": { "$value": "#f1ae27", "$type": "color" },
+      "600": { "$value": "#d89613", "$type": "color" },
+      "700": { "$value": "#ae7b13", "$type": "color" },
+      "900": { "$value": "#473615", "$type": "color" }
+    },
+    "danger": {
+      "$description": "Status color: destructive/error states.",
+      "100": { "$value": "#fde8e7", "$type": "color" },
+      "300": { "$value": "#f49f9a", "$type": "color" },
+      "500": { "$value": "#df423a", "$type": "color" },
+      "600": { "$value": "#cc2c24", "$type": "color" },
+      "700": { "$value": "#ab2821", "$type": "color" },
+      "900": { "$value": "#4f1a17", "$type": "color" }
+    },
+    "info": {
+      "$description": "Status color: neutral/informational states.",
+      "100": { "$value": "#e8f2fc", "$type": "color" },
+      "300": { "$value": "#9dc7f1", "$type": "color" },
+      "500": { "$value": "#3585d4", "$type": "color" },
+      "600": { "$value": "#2b70b6", "$type": "color" },
+      "700": { "$value": "#255c93", "$type": "color" },
+      "900": { "$value": "#172e45", "$type": "color" }
+    },
+    "white": { "$value": "#ffffff", "$type": "color" },
+    "black": { "$value": "#000000", "$type": "color" }
+  }
+}

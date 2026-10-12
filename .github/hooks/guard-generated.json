@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "matcher": "edit|create",
+        "cwd": ".",
+        "bash": "node scripts/guard-generated.mjs",
+        "powershell": "node scripts/guard-generated.mjs",
+        "timeoutSec": 15
+      }
+    ]
+  }
+}

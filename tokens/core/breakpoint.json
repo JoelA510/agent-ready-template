@@ -1,0 +1,10 @@
+{
+  "breakpoint": {
+    "$description": "Reference values only — matched to Tailwind v4's own defaults intentionally so component responsive classes (sm:/md:/lg:) stay predictable. Exported here so the same breakpoints can drive non-CSS consumers (JS matchMedia, native apps) from one source.",
+    "sm": { "$value": "640px", "$type": "dimension" },
+    "md": { "$value": "768px", "$type": "dimension" },
+    "lg": { "$value": "1024px", "$type": "dimension" },
+    "xl": { "$value": "1280px", "$type": "dimension" },
+    "2xl": { "$value": "1536px", "$type": "dimension" }
+  }
+}

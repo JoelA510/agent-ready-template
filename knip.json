@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "entry": ["src/components/ui/*.tsx", "scripts/guard-generated.mjs"],
+  "ignore": ["platforms/**", "scripts/*.d.mts"],
+  "ignoreDependencies": ["json5", "smol-toml"]
+}

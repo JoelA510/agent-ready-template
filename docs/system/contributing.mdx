@@ -1,0 +1,206 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Contributing" />
+
+# Contributing
+
+This page is the practical, step-by-step companion to **Governance** (see
+`docs/system/governance.mdx` / `GOVERNANCE.md`), which covers who owns what and how a change
+gets reviewed. This page covers what to actually type into a terminal. If you're proposing a
+change and don't know which review lane it falls into, read Governance first — then come back
+here to do the work.
+
+One framing note before you start: almost nothing in this system is locked in yet. Several
+foundational choices — the primary color, the type pairing — are documented as a strong
+recommendation with named alternatives, not a final ruling (see `docs/foundations/colors.mdx`
+for an example of the pattern: "Option A" stated plainly, "Option B" named as a
+real alternative, neither treated as sacred). If your contribution touches one of those open
+decisions, follow the same pattern: state what you're proposing and why, and name the
+alternative you considered, rather than treating either the old or new value as obviously
+correct.
+
+## 1. Local setup
+
+```bash
+npm install
+npm run storybook
+```
+
+Storybook runs at `http://localhost:6006`. It's the living documentation for this system —
+every component's props, states, and usage guidance, plus every page in **Foundations**,
+**Brand & Content**, and this **Contributing/Governance** section, all in one browsable place.
+When in doubt about whether something is "done" or how it's supposed to look, Storybook is the
+source of truth, not a screenshot in a chat thread.
+
+There's also a minimal Vite preview app for a fast, Storybook-independent sanity check:
+
+```bash
+npm run dev
+```
+
+This opens a single page (`src/App.tsx`) rendering a handful of components against the live
+token pipeline. It exists to answer one question quickly — "did the token build and the
+component actually wire up end-to-end?" — before you go looking for a bug in Storybook
+configuration instead of your change. It is not a second design surface and it's not where
+component states get documented; that's Storybook's job.
+
+## 2. Adding or changing a design token
+
+Tokens are the only place a raw value should ever live. Never hand-edit
+`src/styles/tokens/*.css` — those three files (`tokens-core.css`, `tokens-light.css`,
+`tokens-dark.css`) are generated output, regenerated wholesale on every build, and any manual
+edit will silently vanish the next time someone runs the build.
+
+1. Edit the source of truth instead:
+   - `tokens/core/*.json` for raw, context-free values — a specific hex, a spacing step, a
+     radius, a shadow. These files use the W3C Design Tokens Community Group (DTCG) format:
+     every token is an object with a `$value` and a `$type` (e.g.
+     `{ "$value": "#5c5d4b", "$type": "color" }`).
+   - `tokens/semantic/light.json` and `tokens/semantic/dark.json` for role tokens — what a
+     token *means* (`primary`, `muted-foreground`, `border`) rather than what it literally is.
+     Semantic tokens should alias a core token using `{group.token}` reference syntax rather
+     than repeating a literal value, for example:
+
+     ```json
+     "primary": { "$value": "{palette.brand.700}", "$type": "color" }
+     ```
+
+     This is what makes a theme swap a one-line change: `primary` can point at a different
+     palette step, or a dark-mode file can point the same semantic name at a different value
+     entirely, without touching a single component.
+2. Regenerate the CSS:
+
+   ```bash
+   npm run tokens:build
+   ```
+
+   (`npm run tokens:watch` will do this on every save while you're iterating.) This runs
+   `style-dictionary.config.mjs`, which reads every file under `tokens/**` and writes the three
+   generated CSS files under `src/styles/tokens/`.
+3. Verify the change shows up where you expect — in Storybook (restart `npm run storybook` if
+   it was already running, since token CSS isn't hot-reloaded the way component code is) or in
+   the `npm run dev` preview.
+
+**A naming detail worth understanding, not just following:** raw palette tokens are exposed as
+CSS custom properties named `--palette-*` (e.g. `--palette-brand-500`), while
+`src/styles/globals.css` maps them into Tailwind's theme namespace under a *different* name,
+`--color-*` (e.g. `--color-brand-500: var(--palette-brand-500);`). That's deliberate, not
+incidental. Tailwind v4's `@theme inline` block wires a CSS custom property to a `var()`
+reference so the reference stays live at runtime — which is exactly what lets a `.dark` class
+swap every semantic color without rebuilding any utility class. But a CSS custom property
+cannot reference itself (`--color-brand-500: var(--color-brand-500);` is invalid per the CSS
+custom properties spec — the property would just fail to resolve). Giving the raw value a name
+distinct from the Tailwind-facing name sidesteps the self-reference question entirely, rather
+than working around it after the fact. If you ever add a new palette ramp or a new semantic
+role, keep this two-name pattern: a `--palette-*` (or bare semantic, e.g. `--primary`) source
+name in the generated token CSS, and a separate `--color-*` name in the `@theme inline` block
+in `globals.css` that points at it.
+
+## 3. Adding a new component
+
+Before writing anything, read `src/components/ui/button.tsx` and `src/components/ui/card.tsx`
+in full. Nearly every convention this system expects is visible in those two files, and
+matching them is most of the review — a component that reinvents its own patterns instead of
+following theirs will bounce back for rework even if it works correctly.
+
+1. **Match the file shape.** A single named export of the primary component (plus any
+   sub-components a compound pattern needs, the way `card.tsx` exports `Card`, `CardHeader`,
+   `CardTitle`, etc.), a `data-slot="…"` attribute on the root element for stable
+   styling/testing hooks, and variants expressed with `class-variance-authority` (`cva`) when
+   the component has more than one visual variant or size — see `buttonVariants` in
+   `button.tsx` for the pattern.
+2. **Use `cn()` for every className, no exceptions.** Import it from `src/lib/utils.ts`. It
+   merges conditional classes via `clsx` and then resolves conflicting Tailwind utilities via
+   `tailwind-merge`, which is what lets a consumer override a default (`<Button
+   className="px-8" />`) without fighting specificity. Never concatenate class strings by hand.
+3. **Semantic tokens only.** Reach for `bg-primary`, `text-muted-foreground`, `border-border` —
+   never a raw palette class (`bg-brand-700`) and never an arbitrary hex or pixel value in the
+   className. This is the same rule as the introduction's "what done looks like" checklist, and
+   it's what keeps every future retheme a token-only change instead of a grep-and-replace across
+   every component.
+4. **Accessibility comes from the primitive, not from you re-deriving it.** Where Radix has a
+   primitive for what you're building (dialog, select, tabs, switch, tooltip, etc.), build on
+   top of it rather than assembling raw `div`s with ARIA attributes by hand — Radix has already
+   solved focus management, keyboard navigation, and screen-reader labeling for that pattern,
+   correctly and tested. Reserve raw HTML elements for genuinely simple cases (a card, a badge)
+   where there's no interaction to manage.
+5. **Ship a stories file next to the component**, named `component-name.stories.tsx`, with
+   `tags: ['autodocs']` in the meta export — that's what generates the component's Storybook
+   docs page automatically from its props and JSDoc. Cover every meaningful state: each visual
+   variant, each size, disabled, and any error/invalid state the component supports. Look at
+   `button.stories.tsx` for the shape (a `meta` object with `argTypes` and default `args`, then
+   one named story per state, plus an "All variants" and "All sizes" overview story for a
+   fast visual diff).
+
+   **A recurring TypeScript trap when a story uses a custom `render` function** (needed for
+   any compound/composed component — Dialog, Select, Combobox, Chart, and others all do
+   this): if the component has a *required* prop (`ChartContainer`'s `config`, `Combobox`'s
+   `options`, `ToggleGroup`'s `type`), `StoryObj<typeof meta>` still requires `args` to
+   satisfy that prop even though `render()` ignores `args` entirely and builds the example
+   inline. `tsc` will fail with "Property 'x' is missing" until you add a minimal
+   `args: { requiredProp: someValidValue }` alongside `render` — the value never actually
+   gets used, it only needs to type-check. This has bitten three separate components already
+   (`toggle-group.stories.tsx`, `chart.stories.tsx`, `combobox.stories.tsx`); look there for
+   the fix in practice before re-deriving it.
+6. **Meet the checklist in `docs/system/introduction.mdx`, "What done looks like for a
+   component"** — semantic tokens only, keyboard-operable and screen-reader-labeled, a story
+   for every meaningful state, WCAG 2.2 AA at minimum (contrast, target size, a single-pointer
+   alternative to dragging, focus never covered). That checklist is the actual bar; this
+   section is how to hit it.
+
+**Next.js App Router consumers, note this explicitly:** most interactive primitives in this
+library depend on React hooks and context via Radix (`useState`, `useContext`, event handlers).
+Acme's own production app, `acme-analytics`, is built on Next.js 16 App Router —
+and in App Router, any component using hooks must be a Client Component. If you import one of
+these components directly into a Server Component tree, add `'use client'` as the first line of
+the file that does the importing (or of a thin wrapper around the primitive, if you want the
+Server/Client boundary drawn further out). Leaving this off doesn't fail quietly — it's a build
+error — but it's worth stating up front so nobody loses time to it.
+
+## 4. Adding or changing brand/content guidance
+
+Content is not a second-class citizen here — a change to `docs/brand/*.mdx` goes through
+exactly the same pull request process as a code change, not a lighter-weight or informal one.
+In the PR description, say plainly what you're replacing and why: which existing guidance or
+example this supersedes, and the reasoning (a real ambiguity a writer hit, a new UI pattern the
+current guidance doesn't cover, a correction). "Because I preferred it" is not a reason a
+reviewer can evaluate; "the current empty-state copy doesn't cover a zero-results-from-a-filter
+case, here's the gap and a proposed line" is.
+
+## 5. Before opening a PR
+
+Run the gate locally — CI runs the same command, and a red CI run costs more of everyone's
+time than catching it yourself:
+
+```bash
+npm run check
+```
+
+That's tokens build → contrast check → typecheck → lint → unused code (knip) → app build →
+bundle budget → Storybook build → tests. CI adds three checks that need a browser, a committed tree, or the
+network. Run them too, the last two after committing:
+
+```bash
+npm run test:browser      # every story in Chromium, light and dark, axe after each render
+npm run check:generated   # committed generated files match their sources
+npm run check:audit       # no unwaived high/critical dependency advisories
+```
+
+`test:browser` needs Chromium once: `npx playwright install chromium`. It's the only gate that
+measures rendered contrast and WCAG 2.2 target size, so run it after any component, story, or
+token change.
+
+Beyond a clean run, verify:
+
+- Every new or changed component has stories covering its meaningful states (see §3.5 above) —
+  a component without a disabled-state story, for instance, is incomplete even if the disabled
+  prop works.
+- Any new copy follows `docs/brand/writing-principles.mdx` (plain language, active voice,
+  sentence case for UI text, and the rest of that page's guidance).
+
+## 6. Review expectations
+
+Acme uses a tiered review model depending on what changed — see
+`docs/system/governance.mdx` (or `GOVERNANCE.md`) for the full breakdown of who reviews tokens
+versus components versus content, and why. This page won't duplicate it; go there for the
+specifics.

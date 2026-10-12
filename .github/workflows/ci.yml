@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
+# These jobs only read the repository to build and test it: never a commit, a comment, or a release.
+permissions: {}
+
+# Cancel superseded runs on the same ref so a rapid push sequence doesn't queue up.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Each job's `name` is a required check in .github/rulesets/main.json. Renaming or adding a job
+# means updating that file (a test holds them equal) and re-importing it in Settings → Rules.
+jobs:
+  check:
+    name: Build, lint, typecheck, test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # A hung Storybook build or test shouldn't hold a runner for GitHub's 6-hour default.
+    timeout-minutes: 20
+    steps:
+      # v6 majors run on the node24 runtime. v4/v5 target node20, which runners now force
+      # onto node24 anyway and warn about on every run.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # the release tags, for the upgrade-path check
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Node bundles its own npm (Node 24 ships npm 11); use the one package.json pins instead.
+      - name: Use the pinned npm
+        run: npm install -g "npm@$(node -p "require('./package.json').packageManager.split('@')[1]")" # zizmor: ignore[adhoc-packages] -- the exact npm package.json pins
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The workflows themselves, the template's and the hub skeleton's: zizmor for their security
+      # (action pins, credentials, template injection; with the token, it also checks each pin is
+      # a real commit of its action), actionlint for their correctness (expressions, and shellcheck
+      # on every run script). Both pinned to a version; actionlint's download is checksummed.
+      # Policy: docs/adr/0017-actions-pinned-by-commit.md.
+      - name: Audit the workflows (zizmor)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: pipx run --spec 'zizmor==1.30.1' zizmor --format=github . # zizmor: ignore[adhoc-packages] -- pinned to one version
+
+      - name: Lint the workflows (actionlint)
+        run: |
+          curl -fsSLo "$RUNNER_TEMP/actionlint.tgz" https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tgz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml templates/hub/.github/workflows/*.yml
+
+      # The single aggregate gate: tokens:build -> check-contrast -> typecheck -> lint ->
+      # check:unused -> build -> check:bundle -> build-storybook -> test.
+      # Same command a contributor runs locally, so CI and local never disagree.
+      - name: Run checks
+        run: npm run check
+
+      # `check` rebuilds the tokens before using them, so it can't tell whether the COMMITTED
+      # generated files are current — and iOS/Android/RN consumers and the shadcn registry read
+      # the committed copies. On this clean checkout, regenerate and fail on any difference.
+      - name: Generated files are committed and current
+        run: npm run check:generated
+
+      # A repository that took the last release's process has to take this commit's cleanly:
+      # nothing parked that nobody edited, nothing left over.
+      - name: The last release upgrades cleanly
+        run: npm run check:upgrade-path
+
+  # package.json's engines promises the oldest supported Node as well as the pinned one. Without
+  # a run on it, a newer-only API would pass CI and break there. This is the one job that names
+  # a version rather than reading .nvmrc: exactly the engines floor, held equal by
+  # scripts/__tests__/repo-hygiene.test.ts.
+  floor:
+    name: Tests on the oldest supported Node
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node (the engines floor)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Use the pinned npm
+        run: npm install -g "npm@$(node -p "require('./package.json').packageManager.split('@')[1]")" # zizmor: ignore[adhoc-packages] -- the exact npm package.json pins
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build tokens and run the tests
+        run: npm run tokens:build && npm run test
+
+  # Every story in real Chromium, once per theme, with axe after each render: color contrast as
+  # rendered and WCAG 2.2 target size, which the jsdom run in `check` can't measure (no layout).
+  # Its own job because it needs a browser; a canary story fails it if the stories ever render
+  # unstyled or in the wrong theme.
+  browser:
+    name: Stories in a real browser
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Use the pinned npm
+        run: npm install -g "npm@$(node -p "require('./package.json').packageManager.split('@')[1]")" # zizmor: ignore[adhoc-packages] -- the exact npm package.json pins
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The Chromium build this Playwright version expects, with its system libraries.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # pretest:browser builds the tokens first.
+      - name: Run every story in Chromium with axe
+        run: npm run test:browser

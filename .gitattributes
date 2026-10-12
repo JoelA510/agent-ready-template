@@ -1,0 +1,20 @@
+# .editorconfig asks editors for LF; this makes git enforce it regardless of platform or a
+# contributor's core.autocrlf setting. Without it, a Windows checkout commits CRLF back and
+# every subsequent diff is the whole file.
+* text=auto eol=lf
+
+# Binary — never normalize, never diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Generated: collapse in review, and don't let a reviewer waste time on output.
+# Regenerate with `npm run tokens:build` (tokens) or `npm run registry:build` (registry).
+package-lock.json linguist-generated=true
+src/styles/tokens/** linguist-generated=true
+platforms/** linguist-generated=true
+public/r/*.json linguist-generated=true

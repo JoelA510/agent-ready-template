@@ -1,0 +1,999 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "acme-design-system",
+  "homepage": "https://joela510.github.io/agent-ready-template/",
+  "items": [
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "accordion",
+      "type": "registry:ui",
+      "title": "Accordion",
+      "description": "The Accordion component.",
+      "dependencies": [
+        "@radix-ui/react-accordion@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/accordion.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "alert",
+      "type": "registry:ui",
+      "title": "Alert",
+      "description": "The Alert component.",
+      "dependencies": [
+        "class-variance-authority@^0.7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/alert.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "alert-dialog",
+      "type": "registry:ui",
+      "title": "Alert Dialog",
+      "description": "The Alert Dialog component.",
+      "dependencies": [
+        "@radix-ui/react-alert-dialog@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/alert-dialog.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "aspect-ratio",
+      "type": "registry:ui",
+      "title": "Aspect Ratio",
+      "description": "The Aspect Ratio component.",
+      "dependencies": [
+        "@radix-ui/react-aspect-ratio@^1"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/aspect-ratio.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "avatar",
+      "type": "registry:ui",
+      "title": "Avatar",
+      "description": "The Avatar component.",
+      "dependencies": [
+        "@radix-ui/react-avatar@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/avatar.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "badge",
+      "type": "registry:ui",
+      "title": "Badge",
+      "description": "The Badge component.",
+      "dependencies": [
+        "@radix-ui/react-slot@^1",
+        "class-variance-authority@^0.7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/badge.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "breadcrumb",
+      "type": "registry:ui",
+      "title": "Breadcrumb",
+      "description": "The Breadcrumb component.",
+      "dependencies": [
+        "@radix-ui/react-slot@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/breadcrumb.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "button",
+      "type": "registry:ui",
+      "title": "Button",
+      "description": "The Button component.",
+      "dependencies": [
+        "@radix-ui/react-slot@^1",
+        "class-variance-authority@^0.7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/button.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "calendar",
+      "type": "registry:ui",
+      "title": "Calendar",
+      "description": "The Calendar component.",
+      "dependencies": [
+        "lucide-react@^1",
+        "react-day-picker@^10"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/calendar.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "card",
+      "type": "registry:ui",
+      "title": "Card",
+      "description": "The Card component.",
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/card.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "carousel",
+      "type": "registry:ui",
+      "title": "Carousel",
+      "description": "The Carousel component.",
+      "dependencies": [
+        "embla-carousel-react@^8",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/carousel.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "chart",
+      "type": "registry:ui",
+      "title": "Chart",
+      "description": "The Chart component.",
+      "dependencies": [
+        "recharts@^3"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/chart.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "checkbox",
+      "type": "registry:ui",
+      "title": "Checkbox",
+      "description": "The Checkbox component.",
+      "dependencies": [
+        "@radix-ui/react-checkbox@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/checkbox.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "collapsible",
+      "type": "registry:ui",
+      "title": "Collapsible",
+      "description": "The Collapsible component.",
+      "dependencies": [
+        "@radix-ui/react-collapsible@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/collapsible.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "combobox",
+      "type": "registry:ui",
+      "title": "Combobox",
+      "description": "The Combobox component.",
+      "dependencies": [
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/command.json",
+        "https://joela510.github.io/agent-ready-template/r/popover.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/combobox.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "command",
+      "type": "registry:ui",
+      "title": "Command",
+      "description": "The Command component.",
+      "dependencies": [
+        "cmdk@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/command.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "context-menu",
+      "type": "registry:ui",
+      "title": "Context Menu",
+      "description": "The Context Menu component.",
+      "dependencies": [
+        "@radix-ui/react-context-menu@^2",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/context-menu.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "data-table",
+      "type": "registry:ui",
+      "title": "Data Table",
+      "description": "The Data Table component.",
+      "dependencies": [
+        "@tanstack/react-table@^9",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/input.json",
+        "https://joela510.github.io/agent-ready-template/r/table.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/data-table.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "date-picker",
+      "type": "registry:ui",
+      "title": "Date Picker",
+      "description": "The Date Picker component.",
+      "dependencies": [
+        "date-fns@^4",
+        "lucide-react@^1",
+        "react-day-picker@^10"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/calendar.json",
+        "https://joela510.github.io/agent-ready-template/r/popover.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/date-picker.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "dialog",
+      "type": "registry:ui",
+      "title": "Dialog",
+      "description": "The Dialog component.",
+      "dependencies": [
+        "@radix-ui/react-dialog@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/dialog.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "drawer",
+      "type": "registry:ui",
+      "title": "Drawer",
+      "description": "The Drawer component.",
+      "dependencies": [
+        "vaul@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/drawer.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "dropdown-menu",
+      "type": "registry:ui",
+      "title": "Dropdown Menu",
+      "description": "The Dropdown Menu component.",
+      "dependencies": [
+        "@radix-ui/react-dropdown-menu@^2",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/dropdown-menu.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "form",
+      "type": "registry:ui",
+      "title": "Form",
+      "description": "The Form component.",
+      "dependencies": [
+        "@radix-ui/react-slot@^1",
+        "react-hook-form@^7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/label.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/form.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "hover-card",
+      "type": "registry:ui",
+      "title": "Hover Card",
+      "description": "The Hover Card component.",
+      "dependencies": [
+        "@radix-ui/react-hover-card@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/hover-card.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "input",
+      "type": "registry:ui",
+      "title": "Input",
+      "description": "The Input component.",
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/input.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "input-otp",
+      "type": "registry:ui",
+      "title": "Input Otp",
+      "description": "The Input Otp component.",
+      "dependencies": [
+        "input-otp@^1",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/input-otp.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "label",
+      "type": "registry:ui",
+      "title": "Label",
+      "description": "The Label component.",
+      "dependencies": [
+        "@radix-ui/react-label@^2"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/label.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "menubar",
+      "type": "registry:ui",
+      "title": "Menubar",
+      "description": "The Menubar component.",
+      "dependencies": [
+        "@radix-ui/react-menubar@^1",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/menubar.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "navigation-menu",
+      "type": "registry:ui",
+      "title": "Navigation Menu",
+      "description": "The Navigation Menu component.",
+      "dependencies": [
+        "@radix-ui/react-navigation-menu@^1",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/navigation-menu.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "pagination",
+      "type": "registry:ui",
+      "title": "Pagination",
+      "description": "The Pagination component.",
+      "dependencies": [
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/pagination.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "popover",
+      "type": "registry:ui",
+      "title": "Popover",
+      "description": "The Popover component.",
+      "dependencies": [
+        "@radix-ui/react-popover@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/popover.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "progress",
+      "type": "registry:ui",
+      "title": "Progress",
+      "description": "The Progress component.",
+      "dependencies": [
+        "@radix-ui/react-progress@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/progress.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "radio-group",
+      "type": "registry:ui",
+      "title": "Radio Group",
+      "description": "The Radio Group component.",
+      "dependencies": [
+        "@radix-ui/react-radio-group@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/radio-group.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "resizable",
+      "type": "registry:ui",
+      "title": "Resizable",
+      "description": "The Resizable component.",
+      "dependencies": [
+        "lucide-react@^1",
+        "react-resizable-panels@^4"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/resizable.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "scroll-area",
+      "type": "registry:ui",
+      "title": "Scroll Area",
+      "description": "The Scroll Area component.",
+      "dependencies": [
+        "@radix-ui/react-scroll-area@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/scroll-area.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "select",
+      "type": "registry:ui",
+      "title": "Select",
+      "description": "The Select component.",
+      "dependencies": [
+        "@radix-ui/react-select@^2",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/select.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "separator",
+      "type": "registry:ui",
+      "title": "Separator",
+      "description": "The Separator component.",
+      "dependencies": [
+        "@radix-ui/react-separator@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/separator.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "sheet",
+      "type": "registry:ui",
+      "title": "Sheet",
+      "description": "The Sheet component.",
+      "dependencies": [
+        "@radix-ui/react-dialog@^1",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/sheet.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "sidebar",
+      "type": "registry:ui",
+      "title": "Sidebar",
+      "description": "The Sidebar component.",
+      "dependencies": [
+        "@radix-ui/react-slot@^1",
+        "class-variance-authority@^0.7",
+        "lucide-react@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/button.json",
+        "https://joela510.github.io/agent-ready-template/r/input.json",
+        "https://joela510.github.io/agent-ready-template/r/separator.json",
+        "https://joela510.github.io/agent-ready-template/r/sheet.json",
+        "https://joela510.github.io/agent-ready-template/r/skeleton.json",
+        "https://joela510.github.io/agent-ready-template/r/tooltip.json",
+        "https://joela510.github.io/agent-ready-template/r/use-mobile.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/sidebar.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "skeleton",
+      "type": "registry:ui",
+      "title": "Skeleton",
+      "description": "The Skeleton component.",
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/skeleton.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "slider",
+      "type": "registry:ui",
+      "title": "Slider",
+      "description": "The Slider component.",
+      "dependencies": [
+        "@radix-ui/react-slider@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/slider.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "sonner",
+      "type": "registry:ui",
+      "title": "Sonner",
+      "description": "The Sonner component.",
+      "dependencies": [
+        "sonner@^2"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/sonner.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "switch",
+      "type": "registry:ui",
+      "title": "Switch",
+      "description": "The Switch component.",
+      "dependencies": [
+        "@radix-ui/react-switch@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/switch.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "table",
+      "type": "registry:ui",
+      "title": "Table",
+      "description": "The Table component.",
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/table.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "tabs",
+      "type": "registry:ui",
+      "title": "Tabs",
+      "description": "The Tabs component.",
+      "dependencies": [
+        "@radix-ui/react-tabs@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/tabs.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "textarea",
+      "type": "registry:ui",
+      "title": "Textarea",
+      "description": "The Textarea component.",
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/textarea.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "toggle",
+      "type": "registry:ui",
+      "title": "Toggle",
+      "description": "The Toggle component.",
+      "dependencies": [
+        "@radix-ui/react-toggle@^1",
+        "class-variance-authority@^0.7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/toggle.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "toggle-group",
+      "type": "registry:ui",
+      "title": "Toggle Group",
+      "description": "The Toggle Group component.",
+      "dependencies": [
+        "@radix-ui/react-toggle-group@^1",
+        "class-variance-authority@^0.7"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/toggle.json",
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/toggle-group.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "tooltip",
+      "type": "registry:ui",
+      "title": "Tooltip",
+      "description": "The Tooltip component.",
+      "dependencies": [
+        "@radix-ui/react-tooltip@^1"
+      ],
+      "registryDependencies": [
+        "https://joela510.github.io/agent-ready-template/r/utils.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/ui/tooltip.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "use-mobile",
+      "type": "registry:hook",
+      "title": "useIsMobile hook",
+      "description": "matchMedia-backed hook that reports whether the viewport is below the mobile breakpoint.",
+      "files": [
+        {
+          "path": "src/hooks/use-mobile.ts",
+          "type": "registry:hook"
+        }
+      ]
+    },
+    {
+      "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+      "name": "utils",
+      "type": "registry:lib",
+      "title": "cn() utility",
+      "description": "clsx + tailwind-merge class-name helper used by every component.",
+      "dependencies": [
+        "clsx@^2",
+        "tailwind-merge@^3"
+      ],
+      "files": [
+        {
+          "path": "src/lib/utils.ts",
+          "type": "registry:lib"
+        }
+      ]
+    }
+  ]
+}

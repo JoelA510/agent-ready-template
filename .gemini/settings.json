@@ -1,0 +1,24 @@
+{
+  "context": {
+    "fileName": [
+      "AGENTS.md",
+      "GEMINI.md"
+    ]
+  },
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "name": "guard-generated",
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/scripts/guard-generated.mjs\"",
+            "timeout": 10000,
+            "description": "Refuses an edit to a generated file"
+          }
+        ]
+      }
+    ]
+  }
+}

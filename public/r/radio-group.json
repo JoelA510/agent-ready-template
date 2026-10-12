@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "radio-group",
+  "type": "registry:ui",
+  "title": "Radio Group",
+  "description": "The Radio Group component.",
+  "dependencies": [
+    "@radix-ui/react-radio-group@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/radio-group.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as RadioGroupPrimitive from '@radix-ui/react-radio-group'\n\nimport { cn } from '@/lib/utils'\n\nfunction RadioGroup({\n  className,\n  ...props\n}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {\n  return (\n    <RadioGroupPrimitive.Root\n      data-slot=\"radio-group\"\n      className={cn('grid gap-2', className)}\n      {...props}\n    />\n  )\n}\n\nfunction RadioGroupItem({\n  className,\n  ...props\n}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {\n  return (\n    <RadioGroupPrimitive.Item\n      data-slot=\"radio-group-item\"\n      className={cn(\n        'aspect-square size-4 shrink-0 rounded-full border border-input shadow-sm outline-none transition-colors',\n        'focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring',\n        'disabled:pointer-events-none disabled:opacity-50',\n        'data-[state=checked]:border-primary',\n        'aria-invalid:ring-destructive/20 aria-invalid:border-destructive',\n        className,\n      )}\n      {...props}\n    >\n      <RadioGroupPrimitive.Indicator\n        data-slot=\"radio-group-indicator\"\n        className=\"flex items-center justify-center\"\n      >\n        <span className=\"size-2.5 rounded-full bg-primary\" />\n      </RadioGroupPrimitive.Indicator>\n    </RadioGroupPrimitive.Item>\n  )\n}\n\nexport { RadioGroup, RadioGroupItem }\n"
+    }
+  ]
+}

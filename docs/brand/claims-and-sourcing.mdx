@@ -1,0 +1,65 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Claims & Sourcing" />
+
+# Claims & Sourcing
+
+A **claim** is anything in the product or its marketing that a reader could hold you to:
+
+- a number ("cuts review time by 40%", "99.9% uptime");
+- a comparison or superlative ("faster than spreadsheets", "the easiest", "#1");
+- a guarantee or absolute ("never loses your work", "unlimited", "always on");
+- a security, privacy, or compliance status ("secure", "encrypted", "HIPAA compliant",
+  "SOC 2");
+- a testimonial, a quote, or a customer's logo;
+- what an automated or AI feature can do ("accurate", "understands your documents").
+
+Voice and tone decide how a sentence sounds. This page decides whether it's allowed to exist. A
+claim nobody can back is a bug: in the product it misleads the person relying on it, and in
+marketing it's a legal exposure. The rules below are the same standard the engineering side
+holds itself to (no success reported for work that didn't happen), applied to copy.
+
+## The rules
+
+1. **Every claim has a source you could show a skeptic.** That means a measurement with its
+   method and date, a signed certification or audit report, a contract term, or a customer's
+   written permission. If there's no source, rewrite the sentence as something you can back, or
+   cut it.
+2. **Every claim has an owner and a review date**, in the claims register below. Claims decay:
+   a benchmark from two releases ago isn't evidence now, and a certification lapses.
+3. **Security and compliance words are legal statements.** "Compliant", "certified",
+   "secure", "private", and the names of standards appear only when the control or
+   certification exists and its owner (legal, security) has signed off. Prefer saying what you
+   do ("files are encrypted at rest and in transit") over a label ("bank-grade security").
+4. **Numbers say what was measured, on what, and when.** Name the baseline ("2x faster than
+   exporting to CSV", not "2x faster"), round honestly ("about 40%"), and don't average away
+   the cases where it's worse.
+5. **Superlatives and absolutes need proof or go.** "Best", "fastest", "always", "never",
+   "guaranteed", and "unlimited" are claims; most can be replaced by the specific thing that's
+   true.
+6. **Describe what automated and AI features do, not how smart they are.** Say where they can
+   be wrong, and what the person should check ("Summaries can miss details. Check the source
+   before you send.").
+7. **Testimonials and logos need written permission**, a real quote, and attribution the
+   customer approved.
+
+| Do | Don't |
+| --- | --- |
+| Invoices sync every 15 minutes. | Real-time sync. *(it isn't)* |
+| Files are encrypted at rest and in transit. | Bank-grade security. *(no source, and it means nothing)* |
+| Teams in our 2026 pilot closed projects 30% faster (12 teams, measured over 8 weeks). | Close projects 30% faster. *(faster than what, for whom, measured how?)* |
+| Summaries are generated automatically. Check the source before you rely on one. | Our AI understands your documents. |
+| Trusted by 200 firms. *(with the count's source and date in the register)* | Trusted by thousands. |
+
+## The claims register
+
+Keep one table, owned by whoever owns the product copy, and add a row in the same change that
+adds a claim. The placeholder brand ships none: a real product starts with the claims on its
+first landing page and in its first onboarding screen.
+
+| Claim | Where it appears | Source | Owner | Verified | Review by |
+| --- | --- | --- | --- | --- | --- |
+| *Invoices sync every 15 minutes.* | *Settings → Integrations, pricing page* | *Sync scheduler config, `jobs/sync.ts`* | *Integrations lead* | *2026-09-01* | *2027-03-01* |
+
+A target project that isn't a fork of this repo gets the same register in the content-guide
+skeleton (`templates/project/docs/content-guide.md`).

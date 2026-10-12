@@ -1,0 +1,168 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Foundations/Elevation & Motion" />
+
+# Elevation & Motion
+
+Both foundations on this page share one rule, stated up front because it's easy to forget
+once a component actually needs a shadow or a transition: elevation and motion communicate
+**interactivity and stacking order**, not decoration. A shadow means "this is above the
+surface it's sitting on, for a reason." A transition means "state changed, and the change is
+worth the user's eye following it." Neither is there to make a screen feel more polished in
+the abstract — reach for a shadow or a transition because something specific needs one, not
+by default.
+
+## Elevation
+
+`tokens/core/shadow.json` defines four steps, each a pre-composed `box-shadow` value rather
+than separate blur/spread/color primitives — kept simple deliberately, since a shadow scale
+only needs to communicate "how far above the surface," not offer independently tunable shadow
+physics.
+
+<div className="not-prose my-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
+  <div className="text-center">
+    <div className="h-16 rounded-lg bg-white shadow-sm dark:bg-neutral-800" />
+    <p className="text-xs mt-2 font-mono text-neutral-500">shadow-sm</p>
+  </div>
+  <div className="text-center">
+    <div className="h-16 rounded-lg bg-white shadow-md dark:bg-neutral-800" />
+    <p className="text-xs mt-2 font-mono text-neutral-500">shadow-md</p>
+  </div>
+  <div className="text-center">
+    <div className="h-16 rounded-lg bg-white shadow-lg dark:bg-neutral-800" />
+    <p className="text-xs mt-2 font-mono text-neutral-500">shadow-lg</p>
+  </div>
+  <div className="text-center">
+    <div className="h-16 rounded-lg bg-white shadow-xl dark:bg-neutral-800" />
+    <p className="text-xs mt-2 font-mono text-neutral-500">shadow-xl</p>
+  </div>
+</div>
+
+| Token | Value | Use it for |
+| --- | --- | --- |
+| `shadow-sm` | `0 1px 2px 0 rgb(15 23 22 / 0.06)` | The most a resting, static element should ever carry — a card that isn't hovered or dragged. Often the right call is *no shadow at all*, relying on `border-border` instead (see below). |
+| `shadow-md` | `0 4px 8px -2px …, 0 2px 4px -2px …` | An element that's lifted above the page in a temporary, dismissible way: a dropdown menu, a popover, a hovered/dragged card. |
+| `shadow-lg` | `0 12px 24px -4px …, 0 4px 8px -4px …` | Modal-level overlays — a `Dialog` or sheet that needs to read as clearly separated from everything behind it. |
+| `shadow-xl` | `0 24px 48px -8px …, 0 8px 16px -8px …` | Reserved for the rare case that needs even more separation than a standard modal — a large image lightbox, a full-bleed overlay. Use sparingly; if `shadow-lg` reads as sufficient, it usually is. |
+
+### Resting elements: prefer a border to a shadow
+
+A card that isn't hovering, dragging, or floating above anything shouldn't reach for
+`shadow-sm` by reflex. The system's own `Card` primitive relies on `border-border` for
+resting-state separation and treats shadow as something added on interaction, not by default:
+
+<div className="not-prose my-6 flex flex-wrap gap-6">
+  <div className="text-center">
+    <div className="h-20 w-40 rounded-lg border border-border bg-card" />
+    <p className="text-xs mt-2 text-neutral-500">Resting — border only</p>
+  </div>
+  <div className="text-center">
+    <div className="h-20 w-40 rounded-lg border border-border bg-card shadow-md" />
+    <p className="text-xs mt-2 text-neutral-500">Hovered/lifted — shadow-md</p>
+  </div>
+</div>
+
+This is worth the discipline for a concrete reason, not just restraint for its own sake: if
+every card on a dense screen (an analytics dashboard is the real example here — rows of cards
+and panels on one view) carries a shadow at rest, elevation stops meaning anything, because
+nothing on the screen is at a different level from anything else. Reserving shadow for
+elements that are genuinely temporary or above the base layer — dropdowns, popovers, modals —
+keeps it meaningful for the handful of places it actually earns its keep.
+
+### Stacking order (z-index)
+
+Shadow says *this floats*; z-index decides *what floats over what* when two floating things
+overlap. Every overlay in this system pulls its `z-index` from one small, centralized scale
+in `tokens/core/z-index.json` — components never hand-pick a raw `z-50`, so the layering
+stays collision-free as the library grows. There are six tiers:
+
+| Tier (token) | Value | What sits here |
+| --- | --- | --- |
+| `--z-sticky` | 100 | In-page sticky UI — a sticky table header or toolbar. Deliberately far below every portalled overlay, so a modal covers it. |
+| `--z-overlay` | 1000 | The dimmed backdrop/scrim behind a modal. |
+| `--z-modal` | 1100 | The modal surface itself — Dialog, Sheet, Drawer. Sits just above its own scrim. |
+| `--z-popover` | 1200 | **Every interactive floating overlay** — Dropdown, Context menu, Menubar menu, Navigation menu, Select, Combobox, Popover. |
+| `--z-tooltip` | 1300 | Tooltips — above menus, because a tooltip can point at a menu item. |
+| `--z-toast` | 1400 | Toasts — top of everything, so a notification is never hidden behind an open dialog. |
+
+The one decision worth calling out is why **interactive overlays (`--z-popover`, 1200) sit
+*above* modals (`--z-modal`, 1100)**, rather than below them as a naïve "a menu is a small
+thing, a modal is a big thing" ordering would suggest. Radix renders every floating overlay
+into a portal at the end of `<body>`, and a Select, Dropdown, or Combobox is very often opened
+from *inside* a Dialog or Sheet — reassigning a project's owner from a dialog, say. If
+menus lived on a tier below the modal, that in-dialog menu would render *behind* the dialog
+and be impossible to use. Because the menu can always be triggered from within a modal, it
+must always be able to outrank one. (An earlier version of this scale had a separate
+`dropdown` tier below `modal` and hit exactly this bug; that tier was retired and its
+components folded into `popover`.) The `Dialog` component's Storybook page includes a "With a
+Select inside" story that exercises this directly.
+
+Like everything else in this system, the specific numbers are a starting point, not sacred —
+but the *ordering* (interactive overlays above modals, tooltips above those, toasts above all)
+is a deliberate, load-bearing decision, not an accident of authoring order.
+
+## Motion
+
+`tokens/core/motion.json` defines two small scales: duration and easing.
+
+| Token | Value | Use it for |
+| --- | --- | --- |
+| `duration-fast` | 120ms | Micro-interactions — a checkbox toggling, a switch flipping, an icon-button's pressed state. Fast enough to feel instant, not a "transition" the user consciously perceives. |
+| `duration-base` | 200ms | The default for most transitions — a dropdown opening, a tooltip fading in, a hover state changing. If unsure which duration to use, this is the answer. |
+| `duration-slow` | 320ms | Larger movements — a dialog or sheet animating into place, a panel expanding. Big enough visual changes benefit from slightly more time to read as intentional rather than abrupt. |
+
+| Token | Value | Use it for |
+| --- | --- | --- |
+| `easing-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | The default for most UI motion — anything that isn't specifically entering or leaving the screen (a color change, a size change in place). |
+| `easing-decelerate` | `cubic-bezier(0, 0, 0.2, 1)` | Elements **entering** — starts fast, eases to a stop. Feels like something arriving under its own momentum, which reads as natural for things appearing. |
+| `easing-accelerate` | `cubic-bezier(0.4, 0, 1, 1)` | Elements **leaving** — starts slow, speeds up on the way out. The mirror of decelerate, for anything being dismissed or removed. |
+
+A practical note on what's wired up today versus what still needs a small addition: these
+three easing curves aren't an arbitrary invention — they're the same standard curves that
+ship as Tailwind's own `ease-in-out`, `ease-out`, and `ease-in` utilities respectively
+(`standard` = `ease-in-out`, `decelerate` = `ease-out`, `accelerate` = `ease-in`), so those
+built-in Tailwind classes can be used directly today with no extra plumbing and they'll match
+these tokens exactly. Duration is a half-step behind: `duration-base` (200ms) happens to match
+Tailwind's own `duration-200` utility already, but `duration-fast` (120ms) doesn't line up with
+any of Tailwind's default duration steps (75/100/150/200/300/500/700/1000ms) — until
+`--duration-fast` is added to the `@theme inline` block in `globals.css`, reach for the
+arbitrary-value form, `duration-[120ms]`, to get the fast token exactly rather than rounding to
+the nearest built-in step.
+
+### The default is little to no motion
+
+State this plainly, because a token scale existing is easy to misread as an invitation to use
+it everywhere: **the right amount of animation in most of this product is none.** These values
+exist for the specific, real cases that benefit from motion — a menu opening, a dialog
+appearing, a toggle switching — not as a mandate to add a transition to everything that
+changes state. A data table that re-sorts, a form that submits, a page that navigates: none
+of these need an animation to feel correct, and adding one where it isn't earning its keep is
+how a serious B2B product starts to feel like a consumer app performing energy it doesn't
+need. When in doubt, ship the state change instantly
+and only add motion if its absence is genuinely jarring.
+
+### Reduced motion is not optional
+
+Every transition and animation in this system must respect a user's OS-level reduced-motion
+preference. The pattern is one line, and there's no excuse for skipping it:
+
+```
+motion-safe:transition-all motion-safe:duration-base
+```
+
+`motion-safe:` applies a utility only when the user hasn't requested reduced motion;
+`motion-reduce:` is its mirror, for explicitly stating what should happen instead (usually
+nothing, or an instant state change with no transition at all). Some users experience real
+physical discomfort — nausea, vertigo — from motion that others perceive as merely
+decorative, so this isn't a nice-to-have accessibility feature bolted on afterward; it's a
+baseline requirement for every transition that ships, the same tier as keyboard operability
+and screen-reader labeling described in the Introduction's "what done looks like" checklist.
+
+## Reference systems this leans on
+
+- **GOV.UK Design System** — the "state the reason, not just the rule" structure of this
+  page, and specifically GOV.UK's own guidance that motion should be minimal and purposeful
+  rather than a default expectation of modern UI.
+- **IBM Carbon's motion guidelines** — the entering/leaving/standard easing vocabulary used
+  here (productive vs. expressive motion, and pairing specific curves with specific
+  directions of movement) follows the same shape as Carbon's own motion tokens.

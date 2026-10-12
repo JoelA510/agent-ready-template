@@ -1,0 +1,195 @@
+{
+  "easing": {
+    "standard": [
+      0.4,
+      0,
+      0.2,
+      1
+    ],
+    "decelerate": [
+      0,
+      0,
+      0.2,
+      1
+    ],
+    "accelerate": [
+      0.4,
+      0,
+      1,
+      1
+    ]
+  },
+  "shadow": {
+    "sm": {
+      "shadowColor": "#0f1716",
+      "shadowOffset": {
+        "width": 0,
+        "height": 1
+      },
+      "shadowOpacity": 0.06,
+      "shadowRadius": 1,
+      "elevation": 1,
+      "boxShadow": "0px 1px 2px 0px rgba(15, 23, 22, 0.06)"
+    },
+    "md": {
+      "shadowColor": "#0f1716",
+      "shadowOffset": {
+        "width": 0,
+        "height": 4
+      },
+      "shadowOpacity": 0.1,
+      "shadowRadius": 4,
+      "elevation": 4,
+      "boxShadow": "0px 4px 8px -2px rgba(15, 23, 22, 0.1), 0px 2px 4px -2px rgba(15, 23, 22, 0.06)"
+    },
+    "lg": {
+      "shadowColor": "#0f1716",
+      "shadowOffset": {
+        "width": 0,
+        "height": 12
+      },
+      "shadowOpacity": 0.12,
+      "shadowRadius": 12,
+      "elevation": 12,
+      "boxShadow": "0px 12px 24px -4px rgba(15, 23, 22, 0.12), 0px 4px 8px -4px rgba(15, 23, 22, 0.08)"
+    },
+    "xl": {
+      "shadowColor": "#0f1716",
+      "shadowOffset": {
+        "width": 0,
+        "height": 24
+      },
+      "shadowOpacity": 0.18,
+      "shadowRadius": 24,
+      "elevation": 24,
+      "boxShadow": "0px 24px 48px -8px rgba(15, 23, 22, 0.18), 0px 8px 16px -8px rgba(15, 23, 22, 0.1)"
+    }
+  },
+  "fontFamily": {
+    "sans": [
+      "Inter Variable",
+      "Inter",
+      "ui-sans-serif",
+      "system-ui",
+      "sans-serif"
+    ],
+    "serif": [
+      "Fraunces Variable",
+      "Fraunces",
+      "ui-serif",
+      "Georgia",
+      "serif"
+    ],
+    "mono": [
+      "ui-monospace",
+      "SFMono-Regular",
+      "Menlo",
+      "Consolas",
+      "Liberation Mono",
+      "monospace"
+    ]
+  },
+  "lineHeight": {
+    "xs": {
+      "tight": 13.2,
+      "snug": 15.6,
+      "normal": 18,
+      "relaxed": 19.8
+    },
+    "sm": {
+      "tight": 15.4,
+      "snug": 18.2,
+      "normal": 21,
+      "relaxed": 23.1
+    },
+    "md": {
+      "tight": 17.6,
+      "snug": 20.8,
+      "normal": 24,
+      "relaxed": 26.4
+    },
+    "lg": {
+      "tight": 19.8,
+      "snug": 23.4,
+      "normal": 27,
+      "relaxed": 29.7
+    },
+    "xl": {
+      "tight": 22,
+      "snug": 26,
+      "normal": 30,
+      "relaxed": 33
+    },
+    "2xl": {
+      "tight": 26.4,
+      "snug": 31.2,
+      "normal": 36,
+      "relaxed": 39.6
+    },
+    "3xl": {
+      "tight": 33,
+      "snug": 39,
+      "normal": 45,
+      "relaxed": 49.5
+    },
+    "4xl": {
+      "tight": 39.6,
+      "snug": 46.8,
+      "normal": 54,
+      "relaxed": 59.4
+    },
+    "5xl": {
+      "tight": 52.8,
+      "snug": 62.4,
+      "normal": 72,
+      "relaxed": 79.2
+    }
+  },
+  "letterSpacing": {
+    "xs": {
+      "tight": -0.24,
+      "normal": 0,
+      "wide": 0.24
+    },
+    "sm": {
+      "tight": -0.28,
+      "normal": 0,
+      "wide": 0.28
+    },
+    "md": {
+      "tight": -0.32,
+      "normal": 0,
+      "wide": 0.32
+    },
+    "lg": {
+      "tight": -0.36,
+      "normal": 0,
+      "wide": 0.36
+    },
+    "xl": {
+      "tight": -0.4,
+      "normal": 0,
+      "wide": 0.4
+    },
+    "2xl": {
+      "tight": -0.48,
+      "normal": 0,
+      "wide": 0.48
+    },
+    "3xl": {
+      "tight": -0.6,
+      "normal": 0,
+      "wide": 0.6
+    },
+    "4xl": {
+      "tight": -0.72,
+      "normal": 0,
+      "wide": 0.72
+    },
+    "5xl": {
+      "tight": -0.96,
+      "normal": 0,
+      "wide": 0.96
+    }
+  }
+}

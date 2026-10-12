@@ -1,0 +1,39 @@
+/**
+ * Do not edit directly, this file was auto-generated.
+ */
+
+:root {
+  --background: #fafaf9;
+  --foreground: #151514;
+  --card: #ffffff;
+  --card-foreground: #151514;
+  --popover: #ffffff;
+  --popover-foreground: #151514;
+  --primary: #5c5d4b;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f6f4;
+  --secondary-foreground: #242523;
+  --muted: #f5f6f4;
+  --muted-foreground: #68695f;
+  --accent: #f1e6da;
+  --accent-foreground: #3f3122;
+  --destructive: #cc2c24;
+  --destructive-foreground: #ffffff;
+  --success: #207941;
+  --success-foreground: #ffffff;
+  --warning: #f1ae27;
+  --warning-foreground: #151514;
+  --info: #2b70b6;
+  --info-foreground: #ffffff;
+  --border: #e9eae6;
+  --input: #e9eae6;
+  --ring: #7d7f62;
+  --sidebar: #f5f6f4;
+  --sidebar-foreground: #151514;
+  --sidebar-primary: #5c5d4b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9eae6;
+  --sidebar-accent-foreground: #242523;
+  --sidebar-border: #e9eae6;
+  --sidebar-ring: #7d7f62;
+}

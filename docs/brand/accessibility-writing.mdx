@@ -1,0 +1,124 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Accessibility in Writing" />
+
+# Accessibility in Writing
+
+**Foundations → Accessibility** covers the visual and structural side of this problem —
+contrast, keyboard operability, focus states, ARIA on components. This page is the other
+half: the words themselves. A button with perfect contrast and a fully keyboard-operable
+dialog can still fail a screen reader user if the link text says "click here" or the
+heading structure skips around. Content accessibility isn't a lesser cousin of visual
+accessibility — it's the same bar, applied to sentences instead of pixels.
+
+Unlike **Foundations → Colors** or **Voice & Tone**, this isn't a menu of reasonable
+options to weigh. The guidance below follows [GOV.UK's content design
+guidance](https://www.gov.uk/guidance/content-design) — the most-tested plain-language,
+accessibility-first writing standard in production anywhere, refined against a userbase
+that includes people using screen readers, screen magnifiers, switch controls, and plain
+old bad lighting. Treat what follows as settled guidance, not a draft to reopen.
+
+## Link text that makes sense on its own
+
+Screen reader users routinely pull up a list of every link on a page, out of context, to
+scan and choose where to go — it's a standard navigation shortcut, not an edge case. A
+link that reads "click here" or "learn more" in that list is functionally unlabeled: there
+are ten of them and every one says the same nothing.
+
+Write link text that describes its destination well enough to stand completely alone,
+with no surrounding sentence for support.
+
+| Don't | Do |
+| --- | --- |
+| "Learn more" | "Learn more about usage-based billing" |
+| "Click here" to download the pricing sheet | "Download the pricing sheet (PDF)" |
+| "Read the article" | "Read how project archiving works" |
+
+The test: copy the link text alone into a blank document, with no other words around it.
+If it doesn't tell you where you're about to go, rewrite it.
+
+## Heading hierarchy discipline
+
+Screen reader users navigate a page primarily by its heading structure, jumping from `h2`
+to `h2` the way a sighted user's eye jumps down a page of bold subheads. That only works
+if the hierarchy is real and consistent — not chosen for how a heading looks, but for
+where a section actually sits in the page's structure.
+
+Two hard rules follow from that:
+
+- **Exactly one `h1` per page.** It's the page's title, announced once, and it's how a
+  screen reader user confirms they landed on the right page at all.
+- **Never skip a level for visual effect.** If an `h3` looks better than an `h4` in a
+  given spot, restyle it with CSS — don't renumber the heading to chase a look. A
+  structure that goes `h1` → `h2` → `h4` tells a screen reader user a section exists that
+  isn't there, or hides one that is.
+
+```
+Do:                          Don't:
+h1 Billing overview          h1 Billing overview
+  h2 Invoices                  h3 Invoices          (skips h2)
+    h3 Paid                      h2 Paid             (out of order)
+    h3 Outstanding                h4 Outstanding     (skips a level)
+  h2 Payment methods
+```
+
+If the visual design calls for something that looks smaller or larger than the correct
+semantic level, that's a styling problem, not a reason to reach for the wrong tag.
+
+## Alt text: describe content and purpose, not appearance
+
+Alt text answers one question: what is this image *for*, for someone who can't see it? Not
+what it literally depicts, and never the fact that it's an image — a screen reader already
+announces "image" before reading the alt text, so `alt="image of the company logo"` doubles
+up on information the user already has.
+
+- **Do:** `alt="Acme Inc."` on the logo in the site header — it names what the image
+  *represents*, which is what counts when it's functioning as a link home.
+- **Do:** `alt="Revenue rose 12% in Q2, driven by two new enterprise customers"` on a
+  chart — describe the takeaway the image is illustrating, not "bar chart screenshot."
+- **Don't:** `alt="logo.png"` or `alt="chart"` — this describes the file, not the content.
+
+Purely decorative images — a background texture, a divider graphic, an icon that repeats
+information already in adjacent text — get an empty `alt=""`. That's a deliberate signal
+to assistive technology to skip the image entirely, rather than forcing a user to sit
+through a meaningless announcement for every ornamental flourish on the page. Leaving alt
+text off decorative images entirely is worse than an empty string — some screen readers
+fall back to announcing the file path when `alt` is missing rather than empty.
+
+## Writing for cognitive accessibility
+
+Plain sentences aren't just a *Clear* voice attribute (see **Voice & Tone**) — they're an
+accessibility requirement for anyone with a cognitive disability, anyone reading in a
+second language, and honestly anyone reading quickly on a phone between meetings. The
+same habits serve all three:
+
+- **Short sentences, one idea at a time.** See **Writing Principles → One idea per
+  sentence** for the mechanics — it's the same rule, doing double duty here.
+- **Define jargon on first use.** If a technical or legal term of art is genuinely
+  necessary (see **Writing Principles**'s carve-out for terms like *personal data*),
+  define it in plain language the first time it appears on a page, even if a reader
+  elsewhere in the product has already seen it once. Each page should stand alone.
+- **Never rely on color alone to carry meaning.** A colorblind reader — or anyone on a
+  black-and-white printout — can't distinguish "red" from "not red." Pair color with a
+  text label or icon every time it's meaningfully signaling something.
+
+| Don't (color only) | Do (color + label) |
+| --- | --- |
+| Required fields shown only in red text | Required fields marked with an asterisk and "Required," in addition to any color |
+| A green dot to mean "active," no text | A green dot next to the word "Active" |
+
+## Avoid directional instructions
+
+Never describe an element by its position — "the button on the right," "see the box
+above," "the link in the top corner." Layout is not the same experience for everyone: a
+screen reader linearizes the page and position doesn't exist; a screen magnifier user may
+only ever see one corner of the layout at a time; a responsive layout moves elements
+between breakpoints so "right" and "above" stop being true on a phone.
+
+- **Don't:** "Click the button on the right to continue."
+- **Do:** "Select **Continue** to proceed."
+- **Don't:** "See the warning above for details."
+- **Do:** "See **Before you begin** for details."
+
+Refer to things by their visible label instead — the label is the one thing that's true
+regardless of screen size, layout, or how the page is being read.

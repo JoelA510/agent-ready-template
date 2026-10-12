@@ -1,0 +1,7 @@
+{
+  "$comment": "This repository's own record against the standards in standards/ (npm run check:conformance). The baseline holds what failed when the template adopted them; it only shrinks. Visibility is left out so a fork doesn't inherit this one's: pass --visibility, or set it in a fork's copy.",
+  "baseline": {
+    "recorded": "2026-10-07",
+    "standards": []
+  }
+}

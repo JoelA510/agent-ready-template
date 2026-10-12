@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "popover",
+  "type": "registry:ui",
+  "title": "Popover",
+  "description": "The Popover component.",
+  "dependencies": [
+    "@radix-ui/react-popover@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/popover.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as PopoverPrimitive from '@radix-ui/react-popover'\n\nimport { cn } from '@/lib/utils'\n\nfunction Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {\n  return <PopoverPrimitive.Root data-slot=\"popover\" {...props} />\n}\n\nfunction PopoverTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {\n  return <PopoverPrimitive.Trigger data-slot=\"popover-trigger\" {...props} />\n}\n\nfunction PopoverAnchor({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {\n  return <PopoverPrimitive.Anchor data-slot=\"popover-anchor\" {...props} />\n}\n\nfunction PopoverContent({\n  className,\n  align = 'center',\n  sideOffset = 4,\n  ...props\n}: React.ComponentProps<typeof PopoverPrimitive.Content>) {\n  return (\n    <PopoverPrimitive.Portal>\n      <PopoverPrimitive.Content\n        data-slot=\"popover-content\"\n        align={align}\n        sideOffset={sideOffset}\n        className={cn(\n          'z-[var(--z-popover)] w-72 rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md outline-none',\n          'duration-(--motion-duration-base)',\n          'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',\n          'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',\n          className,\n        )}\n        {...props}\n      />\n    </PopoverPrimitive.Portal>\n  )\n}\n\nexport { Popover, PopoverTrigger, PopoverAnchor, PopoverContent }\n"
+    }
+  ]
+}

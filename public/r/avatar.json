@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar",
+  "type": "registry:ui",
+  "title": "Avatar",
+  "description": "The Avatar component.",
+  "dependencies": [
+    "@radix-ui/react-avatar@^1"
+  ],
+  "registryDependencies": [
+    "https://joela510.github.io/agent-ready-template/r/utils.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "type": "registry:ui",
+      "content": "import * as React from 'react'\nimport * as AvatarPrimitive from '@radix-ui/react-avatar'\n\nimport { cn } from '@/lib/utils'\n\nfunction Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {\n  return (\n    <AvatarPrimitive.Root\n      data-slot=\"avatar\"\n      className={cn('relative flex size-9 shrink-0 overflow-hidden rounded-full', className)}\n      {...props}\n    />\n  )\n}\n\nfunction AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {\n  return (\n    <AvatarPrimitive.Image\n      data-slot=\"avatar-image\"\n      className={cn('size-full object-cover', className)}\n      {...props}\n    />\n  )\n}\n\nfunction AvatarFallback({\n  className,\n  ...props\n}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {\n  return (\n    <AvatarPrimitive.Fallback\n      data-slot=\"avatar-fallback\"\n      className={cn(\n        'flex size-full items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground',\n        className,\n      )}\n      {...props}\n    />\n  )\n}\n\nexport { Avatar, AvatarImage, AvatarFallback }\n"
+    }
+  ]
+}

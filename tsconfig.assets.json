@@ -1,0 +1,11 @@
+// The files the process tells a target to copy and adapt (the dependency-policy skeleton names
+// them), held to strict flags a new project reasonably turns on, so a copy typechecks there.
+// Everything else in the template is checked by tsconfig.test.json, without these flags.
+{
+  "extends": "./tsconfig.test.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "include": ["scripts/__tests__/check-audit.test.ts"]
+}

@@ -1,0 +1,7 @@
+{
+  "radius": {
+    "$description": "Base corner radius. Component-level radius steps (sm/md/lg/xl) are derived from this single value via calc() in globals.css, matching the shadcn/ui convention — change one number to retheme every component.",
+    "$value": "0.625rem",
+    "$type": "dimension"
+  }
+}

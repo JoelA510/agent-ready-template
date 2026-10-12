@@ -1,0 +1,5 @@
+{
+  "name": "template-process",
+  "description": "This template's workflow skills, loaded as a plugin so claude plugin eval can test them (evals/).",
+  "skills": ["./.claude/skills/"]
+}

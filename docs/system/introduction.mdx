@@ -1,0 +1,90 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# Acme Design System
+
+This is the shared source of truth for how Acme Inc. looks, sounds, and behaves
+across every product surface — the customer portal, internal tools, and marketing site.
+It has two halves that are meant to be read together:
+
+- **A visual and component system** — design tokens, accessible React primitives, and
+  the foundations (color, type, spacing, motion) they're built from. That's most of
+  what lives in this Storybook.
+- **Written brand and content guidelines** — voice and tone, grammar and mechanics,
+  terminology, and how we write UI copy. See the **Brand & Content** section in the
+  sidebar.
+
+Treat both as equally load-bearing. A perfectly accessible button with the wrong words
+on it still fails the user; beautifully written copy in an inaccessible dialog still
+fails them too.
+
+## Why both live in one place
+
+Most teams document components and writing guidelines separately, and the two drift —
+the component library adds a new "destructive" button variant, nobody updates the copy
+guidance on what a destructive confirmation should say, and six months later every
+product has a different flavor of "Are you sure?". Keeping design tokens, components,
+and content guidance in the same versioned, reviewed place is the whole point: a change
+to either is one pull request, reviewed by the same process, shipped together.
+
+## How it's organized
+
+The system is layered, following the vocabulary Brad Frost popularized as
+[Atomic Design](https://atomicdesign.bradfrost.com/) — not because the biology metaphor
+is precious, but because "atoms → molecules → organisms" gives everyone a shared,
+unambiguous word for "how big a piece of this are we talking about," which counts for more
+than it sounds like it should once a system has more than a handful of contributors.
+
+| Layer | What it means here | Where it lives |
+| --- | --- | --- |
+| **Design tokens** | The smallest decisions — a specific green, a spacing unit, a corner radius — expressed as named values, never hardcoded. | `tokens/**/*.json` |
+| **Primitives (atoms)** | Single-purpose, unopinionated building blocks: a button, an input, a label. Can't usefully be broken down further. | `src/components/ui/*.tsx` |
+| **Patterns (molecules/organisms)** | Primitives composed to do a job: a form field (label + input + error text), a confirmation dialog, a data table toolbar. | Documented per-pattern as the system grows |
+| **Content** | The words that go in and around all of the above, and the rules for choosing them. | `docs/brand/*.mdx` |
+
+Tokens are the foundation everything else is built on — see **Foundations** in the
+sidebar for the full palette, type scale, spacing, and motion values, and how they're
+piped from a single JSON source into Tailwind CSS via
+[Style Dictionary](https://styledictionary.com/).
+
+## How to use this system
+
+- **Building a screen?** Start in **Components** for the primitive you need. Reach for
+  a semantic token (`bg-primary`, `text-muted-foreground`) before a raw palette value
+  (`bg-brand-700`) — semantic tokens are what make retheming possible without touching
+  component code.
+- **Writing copy?** Start in **Brand & Content**. Voice & Tone sets the overall register;
+  UI Copy Patterns has ready-to-use phrasing for the situations that come up in almost
+  every product (errors, empty states, confirmations).
+- **Proposing a change to a token or component?** Read **Governance** first — it
+  explains who owns what and what review a change needs before it ships.
+
+## What "done" looks like for a component
+
+Every primitive in **Components** is expected to:
+
+1. Use semantic color, spacing, radius, and shadow tokens — no hardcoded hex values or
+   arbitrary pixel numbers.
+2. Be keyboard-operable and screen-reader-labeled out of the box (most primitives here
+   are built on [Radix primitives](https://www.radix-ui.com/primitives), which handle
+   the hard parts of this).
+3. Ship with a Storybook story for every meaningful state, including disabled and error
+   states where they apply.
+4. Meet WCAG 2.2 AA at minimum: contrast (verified for this palette by the contrast gate),
+   pointer targets of 24px or spaced as if they were, a single-pointer alternative to any
+   drag, and focus that nothing the component renders can cover. See **Foundations →
+   Accessibility** for how each is checked, and which ones only a person can check.
+
+If a component in this library doesn't meet all four, that's a bug — please file it
+rather than working around it in product code.
+
+## What "done" looks like for a feature
+
+The bar above governs a component. The bar for a *feature* built out of them — validation at
+every trust boundary, surfaced failure states, server-side authorization, tests including a
+meaningful edge case, observability, current docs — lives in `CONTRIBUTING.md` under
+**Definition of done**, alongside the build prompts in `prompts/` that walk a project from
+empty (or half-finished) to that state. Those are plain markdown in the repo rather than pages
+in this sidebar, because they're read while working in a terminal, not while browsing
+components.
