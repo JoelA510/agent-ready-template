@@ -76,3 +76,8 @@ matrix when it becomes the LTS pin.
   agree.
 - **Revisit** when Node 26 becomes LTS (2026-10-28) and when 22 reaches end of life
   (2027-04-30).
+
+**Follow-up, 2026-10-12.** The floor rises to `^22.22.2 || ^24.15.0 || >=26.0.0`: jsdom 30 declares
+`^22.22.2 || ^24.15.0 || >=26.0.0` and lint-staged 17 needs 22.22.1 or later, so the old floor
+promised versions two dev dependencies don't support. The floor job runs 22.22.2. The rule above
+is unchanged: the floor is what the dependencies need.
