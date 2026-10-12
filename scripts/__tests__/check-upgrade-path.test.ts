@@ -9,8 +9,11 @@ import { firstRelease, previousRelease } from '../check-upgrade-path.mjs'
 // the scratch copy, so its "previous release" is the scratch tag, not this repository's.
 const REPO = resolve(__dirname, '../..')
 let template: string
+// gc.auto=0 and maintenance.auto=false: a commit can start git's auto-maintenance in the
+// background, still writing .git/objects when afterEach removes the directory (ENOTEMPTY, seen
+// in CI).
 const git = (...args: string[]) => {
-  const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', ...args], { cwd: template, encoding: 'utf8' })
+  const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false', ...args], { cwd: template, encoding: 'utf8' })
   if (r.status !== 0) throw new Error(`git ${args.join(' ')}: ${r.stderr}`)
 }
 const check = (...args: string[]) => spawnSync(process.execPath, [join(template, 'scripts/check-upgrade-path.mjs'), ...args], { encoding: 'utf8' })
@@ -27,7 +30,7 @@ beforeEach(() => {
   writeFileSync(join(template, 'prompts/review.md'), `${readFileSync(join(template, 'prompts/review.md'), 'utf8')}\nA line the next release adds.\n`)
   git('commit', '-q', '--no-verify', '-am', 'next')
 })
-afterEach(() => rmSync(template, { recursive: true, force: true }))
+afterEach(() => rmSync(template, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }))
 
 describe('check-upgrade-path', () => {
   it('passes an upgrade that updates in place, naming what it did', () => {
@@ -96,7 +99,7 @@ describe('check-upgrade-path', () => {
       expect(r.status).toBe(2)
       expect(r.stderr).toContain('No release tag behind HEAD')
     } finally {
-      rmSync(clone, { recursive: true, force: true })
+      rmSync(clone, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
     }
   })
 })
