@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Docs that had gone stale.** The README's skills list now names `plan-change` and
+  `template-update`, its `npm run check` row names knip and the bundle budget, and it says
+  `v1.0.0-rc.2` is the first release tagged here. The AGENTS skeleton's hook guidance says the
+  template's hook runs `scripts/setup.sh`, which installs the `.nvmrc` Node, rather than "whatever
+  Node the container has". The Table story says DataTable pairs it with TanStack Table, and the
+  Command story points at Combobox instead of a follow-up round. ADR 0015 gets a follow-up noting
+  that `fleet:update` opens the pull requests. A project's copy of the AGENTS skeleton changes on
+  its next re-apply; nothing else to do.
 - **`check:upgrade-path` failed a CI re-run on a repository's first release commit.** With every
   `v*` tag on `HEAD` there's no earlier release to upgrade from, which is the same situation as no
   tag at all, so it now passes with "HEAD is the first release". A shallow clone, and tags that

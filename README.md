@@ -154,7 +154,7 @@ easing curves, which have no unambiguous native equivalent there. Colors may be 
 | `prompts/` | The build prompts — new-project bootstrap and existing-project audit — the day-to-day prompts (discovery, investigate, review, pre-PR, verify), the template-only harvest prompt, and the run log. Start here. |
 | `templates/` | Skeletons for every artifact the prompts require in a target project (AGENTS.md and CLAUDE.md, ADRs, dev plan, audit, remediation plan, env contract), the standards README a target receives, and the fleet hub repository. |
 | `AGENTS.md` | The rules every coding agent reads (Codex, Antigravity, Cursor, Copilot directly; Gemini CLI through `.gemini/settings.json`; Claude Code through `CLAUDE.md`'s import). |
-| `.agents/skills/` | The workflow skills (`bootstrap`, `complete`, `discovery`, `root-cause`, `review-change`, `pre-pr`, `verify`, and the template-only `harvest`) that run the prompts, in the Agent Skills format most agents read. `.claude/skills/` is the generated copy Claude Code reads. |
+| `.agents/skills/` | The workflow skills (`bootstrap`, `complete`, `discovery`, `plan-change`, `root-cause`, `review-change`, `pre-pr`, `verify`, `template-update`, and the template-only `harvest`) that run the prompts, in the Agent Skills format most agents read. `.claude/skills/` is the generated copy Claude Code reads. |
 | `standards/` | The standards catalog: one file per standard, each with a stable ID, grouped into packs (`core` for every repository, then one per stack), and scored by `npm run check:conformance`. |
 | `docs/adr/` | Architecture Decision Records. One per consequential choice; template included. |
 | `docs/foundations/` | Foundations prose: color, type, spacing, motion, iconography, accessibility. |
@@ -181,7 +181,7 @@ easing curves, which have no unambiguous native equivalent there. Colors may be 
 | `npm run storybook` | Starts Storybook locally at `http://localhost:6006`. |
 | `npm run build-storybook` | Builds static Storybook output, e.g. for hosting or review. |
 | `npm run tokens:build` | Compiles `tokens/**/*.json` into every platform output (CSS, JS/TS, JSON, Swift, Android XML). Runs automatically before `dev` and `build`. |
-| `npm run check` | The full gate: tokens build, contrast check, typecheck, lint, the app build, Storybook build, and tests. What CI runs. |
+| `npm run check` | The full gate: tokens build, contrast check, typecheck, lint, unused code (knip), the app build, the bundle budget, Storybook build, and tests. What CI runs. |
 | `npm run check:audit` | Fails on any high or critical dependency advisory without a current, reasoned waiver (`docs/security/`). Runs in CI per PR and weekly. |
 | `npm run check:generated` | Regenerates every generated output and fails if the committed copies differ (modified, orphaned, or new). It compares against the last commit, so it's not part of `check`: CI runs it on every PR, and you run it after committing a token or component change, before pushing. |
 | `npm run check:conformance` | Scores a repository (`-- --root <path>`, default this one) against `standards/`, with its own baseline and waivers from `docs/standards/conformance.json`. `--write-baseline` records the current failures when adopting; afterwards it only shrinks. |
@@ -245,8 +245,8 @@ settings.
 
 This is a starting point, not a finished product. The intended path is to **fork it** — once you
 do, it becomes your project. Replace the placeholder identity and palette as described above,
-then run the prompt that matches your situation. Template releases are tagged (`v1.0.0-rc.1` is
-the first); `init` records the one you started from as `templateVersion` in `package.json`, and
+then run the prompt that matches your situation. Template releases are tagged (`v1.0.0-rc.2` is
+the first here); `init` records the one you started from as `templateVersion` in `package.json`, and
 [Updating from the Template](./docs/system/updating-from-the-template.mdx) says how to take a
 later one.
 

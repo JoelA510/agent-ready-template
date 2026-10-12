@@ -20,7 +20,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "A plain styled semantic table — `<table>`/`<thead>`/`<tbody>`/`<tfoot>` wrapped in an overflow-x-auto container so wide tables scroll on small screens instead of breaking layout. This primitive intentionally has no sorting, filtering, or pagination logic of its own; it is the visual/semantic layer only. Recommended default, not yet wired up: once a table needs real sorting, filtering, or pagination behavior, pair this component with TanStack Table for the headless logic and keep this component's pieces (Table, TableHeader, TableRow, TableHead, TableCell, ...) as the rendering layer — that dependency isn't installed here, this doc is naming it as the path to reach for later rather than committing to it now.",
+          "A plain styled semantic table — `<table>`/`<thead>`/`<tbody>`/`<tfoot>` wrapped in an overflow-x-auto container so wide tables scroll on small screens instead of breaking layout. This primitive intentionally has no sorting, filtering, or pagination logic of its own; it is the visual/semantic layer only. Once a table needs real sorting, filtering, or pagination behavior, pair this component with TanStack Table for the headless logic and keep this component's pieces (Table, TableHeader, TableRow, TableHead, TableCell, ...) as the rendering layer, as DataTable does.",
       },
     },
   },
