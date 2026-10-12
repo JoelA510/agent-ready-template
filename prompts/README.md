@@ -8,7 +8,7 @@ Two take a project to a production-grade state, from opposite starting points:
 | Prompt | Use when | What it produces |
 | --- | --- | --- |
 | [`new-project.md`](./new-project.md) | The repo is empty or nearly so. | A verified reference table, one justified stack proposal, the guardrail files (agent rules, contributing, first ADR, tooling/CI, typed env), and a phased plan whose milestone 1 ends in a deployable walking skeleton. |
-| [`existing-project.md`](./existing-project.md) | Code exists and needs to reach production-grade. | A dated audit (`docs/audits/YYYY-MM-<slug>/audit.md`): a baseline run of every gate, then twelve areas scored with file-path evidence and severity, re-verified with refuted findings recorded; a remediation plan beside it that accounts for every finding; and executed milestone 1. Gap analysis, not a rewrite. |
+| [`existing-project.md`](./existing-project.md) | Code exists and needs to reach production-grade. | A dated audit (`docs/audits/YYYY-MM-<slug>/audit.md`): a baseline run of every gate, then thirteen areas scored, the last whether each promised flow works end to end, with file-path evidence and severity, re-verified with refuted findings recorded; a remediation plan beside it that accounts for every finding; and executed milestone 1. Gap analysis, not a rewrite. |
 
 Seven more cover the work that comes after, the day-to-day changes where most defects actually
 enter:

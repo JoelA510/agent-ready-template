@@ -51,7 +51,7 @@ id: node.strict-types # <pack>.<name>, equal to the file's path
 title: Types are strict, or checked as JavaScript # what a passing repository does, one line
 severity: high # blocker | high | medium | low: the audit skeleton's definitions
 enforcement: check # check: a probe in scripts/check-conformance.mjs; settings: scripts/check-settings.mjs; audit: a person
-audit-area: 2 # the existing-project audit area it belongs to (1-12)
+audit-area: 2 # the existing-project audit area it belongs to (1-13)
 ---
 ```
 

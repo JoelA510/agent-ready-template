@@ -1,6 +1,6 @@
 ---
 name: complete
-description: "Use when someone asks by name to bring existing code to production grade; it audits and then changes the repo, so don't start it unasked. Runs prompts/existing-project.md — baseline, twelve-area audit, a remediation plan that accounts for every finding, and milestone 1."
+description: "Use when someone asks by name to bring existing code to production grade; it audits and then changes the repo, so don't start it unasked. Runs prompts/existing-project.md — baseline, thirteen-area audit, a remediation plan that accounts for every finding, and milestone 1."
 metadata:
   invocation: explicit
   argument-hint: "<repo, current state, hosting, constraints, what complete means, known issues, repo visibility and GitHub plan>"
@@ -28,7 +28,7 @@ instruction set; this skill only wires it up. Then:
    codebase before writing a word of the audit.
 4. **Use the skeletons for the required artifacts.** They're in the skeletons directory:
    `<repo>/prompts/skeletons/` after `process:apply`, `<template>/templates/project/` in the template repo
-   itself. The audit skeleton (baseline gate table, twelve areas, file-path evidence, severity,
+   itself. The audit skeleton (baseline gate table, thirteen areas, file-path evidence, severity,
    verification labels, refuted findings, coverage limits) and the remediation-plan skeleton
    (item fields, fixed ordering, small independently shippable milestones, or the single-PR
    form for a small project) are copied into a dated folder, `docs/audits/YYYY-MM-<slug>/`, or a

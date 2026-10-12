@@ -91,7 +91,7 @@ describe('the catalog', () => {
     try {
       mkdirSync(join(dir, 'core'))
       writeFileSync(join(dir, 'core/README.md'), '---\npack: core\ntitle: Every repository\n---\nCore.\n')
-      writeFileSync(join(dir, 'core/one.md'), '---\nid: core.two\ntitle: A title\nseverity: urgent\nenforcement: check\naudit-area: 13\n---\n')
+      writeFileSync(join(dir, 'core/one.md'), '---\nid: core.two\ntitle: A title\nseverity: urgent\nenforcement: check\naudit-area: 14\n---\n')
       writeFileSync(join(dir, 'core/three.md'), 'No frontmatter.\n')
       mkdirSync(join(dir, 'web'))
       writeFileSync(join(dir, 'web/README.md'), '---\npack: web\ntitle: Web\n---\n')
@@ -100,7 +100,7 @@ describe('the catalog', () => {
         expect.arrayContaining([
           'core/one.md: "id" must be "core.one", its path',
           'core/one.md: "severity" must be one of blocker, high, medium, low',
-          'core/one.md: "audit-area" must be the existing-project audit area it belongs to, 1-12',
+          'core/one.md: "audit-area" must be the existing-project audit area it belongs to, 1-13',
           'core/one.md: the body must say what the standard requires and why',
           'core/one.md: enforcement is "check", but PROBES has no core.one',
           'core/three.md: no YAML frontmatter between --- lines',
