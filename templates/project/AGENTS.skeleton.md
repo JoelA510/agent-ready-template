@@ -44,12 +44,11 @@ else, wired up in [WHERE IT'S WIRED UP].
 <!-- GUIDANCE: For example a SessionStart hook in `.claude/settings.json` (Claude Code on the
      web) and the environment's setup script (Codex cloud). The template has a working hook to
      adapt: `.claude/hooks/session-start.sh` and its entry in `.claude/settings.json`, in a
-     template checkout. It runs `npm ci` (and points Playwright at a Chromium the container
-     ships), on whatever Node the container has. If this repo pins a Node major the container
-     lacks (compare `node --version` with `.nvmrc`), the hook has to install the pinned one
-     first and put it on the session's PATH (through the container's nvm, and
-     `$CLAUDE_ENV_FILE`), or every gate in a cloud session runs on a version CI and the host
-     don't use. nvm's script doesn't run under the hook's `set -euo pipefail` (a trial's hook
+     template checkout. It runs `scripts/setup.sh`, which installs the Node `.nvmrc` pins when
+     the container has another (through mise or nvm) and puts it on the session's PATH (through
+     `$CLAUDE_ENV_FILE`), then `npm ci`; it also points Playwright at a Chromium the container
+     ships. A hook written for this repo needs the same Node step, or every gate in a cloud
+     session runs on a version CI and the host don't use. nvm's script doesn't run under the hook's `set -euo pipefail` (a trial's hook
      exited 3 sourcing it): `set +eu` around the nvm lines, then restore the options. -->
 
 ## Workflows

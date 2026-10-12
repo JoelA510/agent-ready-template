@@ -111,6 +111,10 @@ list is required, because the dictionaries already pass common names (cspell 10.
 stopped `writing.prose-checks-in-ci` passing a run that checks nothing (`vale sync`, `cspell
 --version`).
 
+**Follow-up, 2026-10-12.** "Nothing opens the pull requests" above no longer holds:
+`npm run fleet:update -- --fleet <file>` proposes this template's process to each repository, one
+pull request apiece (`--apply`; a dry run without), and the hub's Fleet update workflow runs it.
+
 ## Alternatives considered
 
 ### Alternative: keep the standards as prose in the audit prompt

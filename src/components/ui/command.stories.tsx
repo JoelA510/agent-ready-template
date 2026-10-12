@@ -21,7 +21,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A cmdk-backed searchable list: type-ahead filtering, keyboard navigation, and grouped results over any set of items. Composed inside a Popover it becomes a Combobox (coming in a follow-up round); rendered on its own, unpopover-ed, it works as a persistent command palette or search block sitting directly in the page. This file wraps cmdk\'s own component tree — Command, CommandInput, CommandList, CommandGroup, CommandItem, and friends — 1:1, the same way this library\'s Radix wrappers stay close to their primitive\'s API, so it stays reusable as the shared base for both compositions rather than picking up Combobox-specific behavior here.',
+          'A cmdk-backed searchable list: type-ahead filtering, keyboard navigation, and grouped results over any set of items. Composed inside a Popover it becomes a Combobox (see Combobox); rendered on its own, unpopover-ed, it works as a persistent command palette or search block sitting directly in the page. This file wraps cmdk\'s own component tree — Command, CommandInput, CommandList, CommandGroup, CommandItem, and friends — 1:1, the same way this library\'s Radix wrappers stay close to their primitive\'s API, so it stays reusable as the shared base for both compositions rather than picking up Combobox-specific behavior here.',
       },
     },
   },
