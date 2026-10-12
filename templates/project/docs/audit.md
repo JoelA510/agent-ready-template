@@ -46,6 +46,9 @@ Complete means: [COMPLETE_MEANS — restated from the project inputs]
 | Build | `[COMMAND]` | [RESULT] | [FILL IN] |
 | Dependency audit | `[COMMAND]` | [RESULT] | [COUNTS BY SEVERITY; WAIVED?] |
 | Standards conformance | `[COMMAND]` | [RESULT] | [COUNTS BY STATUS; FAILING STANDARD IDS] |
+| Repository settings | `[COMMAND]` | [RESULT] | [SCORED / SKIPPED FOR LACK OF ACCESS; FAILING STANDARD IDS] |
+| Environment checks | `[COMMAND]` | [RESULT] | [FILL IN] |
+| Agent instructions | `[COMMAND]` | [RESULT] | [FILL IN] |
 
 Runtime: [VERSIONS — local, CI, and production, e.g. Node 22 / 20 / 24]
 

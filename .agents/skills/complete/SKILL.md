@@ -17,7 +17,8 @@ instruction set; this skill only wires it up. Then:
    assume private on GitHub Free for whatever can't be read, as the prompt's inputs say.
    `[COMPLETE_MEANS]`
    is the highest-leverage field — everything downstream is ordered against it — so if it's
-   missing, ask for the missing fields in one question before starting.
+   missing, derive it from the README, product docs, or spec and state it as an assumption.
+   Ask, in one question, only when the repository gives nothing to derive it from.
 2. **Honor the ground rules throughout:** the existing stack and conventions override this
    template and every reference; minimal diffs; flag refactors before making them; label
    every finding statically reviewed / executed / fully validated; never claim a test ran

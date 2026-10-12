@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   CheckError,
   conform,
+  formatCard,
   globMatcher,
   loadCatalog,
   migrationTables,
@@ -1133,6 +1134,26 @@ describe('node probes', () => {
     expect(probe('node.strict-types')).toMatchObject({ status: 'pass', evidence: ['tsconfig.json: checkJs (1 JavaScript files)'] })
     rmSync(join(root, 'tsconfig.json'))
     expect(probe('node.strict-types').evidence[0]).toContain('nothing typechecks the project')
+  })
+
+  it('strict-types: an unset strict is on from TypeScript 6, off before it, and unknown without a version', () => {
+    goodNode({ devDependencies: { typescript: '~6.0.2' } })
+    json('tsconfig.json', { compilerOptions: { noEmit: true }, include: ['src'] })
+    expect(probe('node.strict-types')).toMatchObject({ status: 'pass', evidence: [expect.stringContaining('tsconfig.json: strict by default under TypeScript 6 (1 TypeScript files)')] })
+    goodNode({ devDependencies: { typescript: '^5.9.3' } })
+    json('tsconfig.json', { compilerOptions: { noEmit: true }, include: ['src'] })
+    expect(probe('node.strict-types')).toMatchObject({ status: 'fail', evidence: ['tsconfig.json: strict is off for 1 TypeScript files (unset, which TypeScript 5 reads as off)'] })
+    // The installed compiler outranks the declared range.
+    write('node_modules/typescript/package.json', JSON.stringify({ name: 'typescript', version: '6.0.3' }))
+    expect(probe('node.strict-types').status).toBe('pass')
+    rmSync(join(root, 'node_modules'), { recursive: true, force: true })
+    goodNode({ devDependencies: { typescript: 'latest' } })
+    json('tsconfig.json', { compilerOptions: { noEmit: true }, include: ['src'] })
+    expect(probe('node.strict-types').evidence[0]).toContain("strict isn't set, and the project's TypeScript version couldn't be read")
+    // An explicit false is off whatever the version.
+    goodNode({ devDependencies: { typescript: '~6.0.2' } })
+    json('tsconfig.json', { compilerOptions: { strict: false, noEmit: true }, include: ['src'] })
+    expect(probe('node.strict-types')).toMatchObject({ status: 'fail', evidence: ['tsconfig.json: strict is off for 1 TypeScript files'] })
   })
 
   it('strict-types: follows references and extends, and skips what needs an install', () => {
@@ -2458,6 +2479,17 @@ describe('a run', { timeout: 60_000 }, () => {
     ])
     expect(card.undeclared).toEqual(['vite-spa'])
     expect(card.results.find((r) => r.key === 'node.strict-types@web')).toMatchObject({ status: 'fail', path: 'web' })
+  })
+
+  it("names a scored pack whose standards a repository that took the process doesn't carry", () => {
+    goodNode()
+    expect(conform(root, { today: TODAY }).undelivered).toEqual([]) // no manifest: the process isn't there to carry them
+    json('prompts/.apply-manifest.json', { files: {} })
+    const card = conform(root, { today: TODAY })
+    expect(card.undelivered).toEqual(['node', 'vite-spa'])
+    expect(formatCard(card)).toContain("Scored pack(s) whose standards this repository doesn't carry: node, vite-spa. Deliver them with the template's process:apply -- --target <this repository> --pack node --pack vite-spa")
+    write('prompts/standards/node/strict-types.md', 'delivered\n')
+    expect(conform(root, { today: TODAY }).undelivered).toEqual(['vite-spa'])
   })
 
   it.each([
