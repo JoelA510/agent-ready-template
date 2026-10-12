@@ -283,4 +283,16 @@ promise that the CHANGELOG tells them what to do.
    `git tag -a v<version> <merge-commit-sha> -m "v<version>"` and `git push origin v<version>`.
    Publish a GitHub release from the tag with the entry's text.
 4. **Use a release candidate** (`1.0.0-rc.1`) when a change needs a trial on a real new or
-   existing project before it's final. Record each trial in `prompts/run-log.md`.
+   existing project before it's final. Record each trial in `prompts/run-log.md`, with a link to
+   its findings.
+5. **What a trial has to show.** A trial runs the prompt as written, through the skill that wraps
+   it, on a repository the template wasn't developed against, and writes down each finding: where
+   it happened, what happened, what was expected, its cause (the template, the environment, or
+   the target), and its impact. A candidate becomes the release when the latest trial of each
+   kind, a new repository and an existing one, leaves:
+   - no finding the template caused still open, except ones recorded as accepted, with a reason;
+   - and none of these, accepted or not: a run, followed literally, that stops or writes a wrong
+     or unsafe artifact; a check or gate that passes without examining anything, or rejects what
+     the docs call valid; `process:apply` losing or overwriting a target's edit.
+
+   The fixes from a trial get a rerun of at least the steps they changed before the release.
