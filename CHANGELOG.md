@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`check:upgrade-path`'s test failed CI once on removing its scratch repository**
+  (`ENOTEMPTY` on `.git/objects`). A commit can leave git's auto-maintenance running in the
+  background; the scratch repositories now turn it off, and removal retries. The check's own
+  scratch directory gets the same. Nothing to do in a project.
+
 ## [1.0.0-rc.3] - 2026-10-12
 
 Fixes from the first existing-repository trial, run as far as it goes: an audit and remediation

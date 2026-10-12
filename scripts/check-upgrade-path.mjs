@@ -82,7 +82,8 @@ export function checkUpgrade(from) {
     writeFileSync(join(target, 'README.md'), '# A project that took the process\n')
     const first = apply(join(old, 'scripts/apply-process.mjs'), target)
     if (first.status !== 0) throw new CheckError(`${from}'s process:apply failed on an empty repository (exit ${first.status}):\n${first.stdout}${first.stderr}`)
-    const id = ['-c', 'user.name=upgrade-path', '-c', 'user.email=upgrade-path@example.com']
+    // No background auto-maintenance: it can still be writing when the scratch directory goes.
+    const id = ['-c', 'user.name=upgrade-path', '-c', 'user.email=upgrade-path@example.com', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false']
     git(target, ['add', '-A'])
     git(target, [...id, 'commit', '--quiet', '--no-verify', '-m', `process from ${from}`])
 
@@ -99,7 +100,7 @@ export function checkUpgrade(from) {
   } finally {
     // Best-effort cleanup of our own worktree and scratch directory.
     if (worktree) spawnSync('git', ['worktree', 'remove', '--force', old], { cwd: ROOT })
-    rmSync(scratch, { recursive: true, force: true })
+    rmSync(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })
   }
 }
 
