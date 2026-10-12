@@ -115,6 +115,12 @@ stopped `writing.prose-checks-in-ci` passing a run that checks nothing (`vale sy
 `npm run fleet:update -- --fleet <file>` proposes this template's process to each repository, one
 pull request apiece (`--apply`; a dry run without), and the hub's Fleet update workflow runs it.
 
+**Follow-up, 2026-10-12.** The audit has thirteen areas, not twelve: area 13, core flows, asks
+whether each flow the product promises works end to end, after an existing-repository trial found
+an unplayable configuration behind a green baseline and had no area to put it in. Appending it kept
+every existing area number and standard's `audit-area` valid; `audit-area` now accepts 1-13. No
+standard is in area 13 yet: whether a flow works is judgment, not a deterministic check.
+
 ## Alternatives considered
 
 ### Alternative: keep the standards as prose in the audit prompt

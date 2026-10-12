@@ -235,6 +235,17 @@ site has no server-side authz or database):
     agent reads them by default, and neither the scorecard nor
     `check:instructions` sees them, so check their paths and commands by hand
     and plan to merge them into AGENTS.md.
+13. Core flows - every flow the README, the spec, or [COMPLETE_MEANS] promises
+    (sign up, check out, play a game to the end): list them, then exercise
+    each one end to end, by running the app or driving it through its real
+    entry point in a test, and name the test that proves it, if any. The
+    other areas grade how the code is built; this one asks whether the
+    product does what it says, and a green baseline doesn't answer it. Try
+    the configurations the docs offer, not only the default one. A flow that
+    doesn't work is a blocker (the severity scale's "broken core flow"); a
+    flow that works but no test proves is a finding in this area, not only
+    in §6. Record every flow and how it was exercised, including the ones
+    that work, so the next audit can see what was tried.
 
 Separate executed findings from statically reviewed ones. Where sources or
 code paths conflict, name the conflict and which controls; do not merge

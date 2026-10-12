@@ -77,6 +77,7 @@ Runtime: [VERSIONS — local, CI, and production, e.g. Node 22 / 20 / 24]
 | 10 | Performance | [SEVERITY] | [FILL IN] |
 | 11 | Accessibility & UX completeness | [SEVERITY] | [FILL IN] |
 | 12 | Docs, operability & stated-rule conformance | [SEVERITY] | [FILL IN] |
+| 13 | Core flows | [SEVERITY] | [FILL IN] |
 
 <!-- GUIDANCE: Each failing standard in the conformance scorecard is a finding in the area the
      scorecard prints beside it, and carries the standard's ID, so the next audit's scorecard
@@ -241,6 +242,24 @@ Runtime: [VERSIONS — local, CI, and production, e.g. Node 22 / 20 / 24]
        reviewer can't see (from a template checkout: npm run check:instructions -- --root <repo>).
      - Both a CLAUDE.md and an AGENTS.md, with no @AGENTS.md import in CLAUDE.md: Claude Code
        reads only CLAUDE.md, so the AGENTS.md rules never reach it. -->
+
+- **Current state:** [FILL IN]
+- **Findings:** [FILL IN]
+- **Pattern that closes the gap:** [FILL IN]
+
+## 13. Core flows
+
+<!-- GUIDANCE: Whether the product does what it promises, which no other area asks: a repo can
+     pass every gate and still ship a flow nobody can finish. List each flow the README, the
+     spec, or "Complete means" promises, and exercise it end to end, by running the app or
+     driving it through its real entry point in a test, in the configurations the docs offer,
+     not only the default one. A flow that doesn't work is a blocker; one that works but no test
+     proves is a finding here as well as in §6. Keep the table even when every flow works: it's
+     what the next audit compares against. -->
+
+| Flow (as promised, with where) | How exercised | Result | Test that proves it |
+| --- | --- | --- | --- |
+| [FLOW — SOURCE] | [RAN THE APP / TEST THROUGH ENTRY POINT / NOT EXERCISED, WHY] | [WORKS / BROKEN / PARTIAL] | [TEST PATH OR NONE] |
 
 - **Current state:** [FILL IN]
 - **Findings:** [FILL IN]

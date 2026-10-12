@@ -30,6 +30,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the new floor. A project whose own workflows install npm that way on Node 22 should make the same
   change.
 
+- **The existing-project audit gains a thirteenth area, core flows.** For each flow the README,
+  spec, or definition of complete promises, the auditor lists it, exercises it end to end (in the
+  configurations the docs offer, not only the default), and names the test that proves it. A
+  broken flow is a blocker. The twelve areas grade how the code is built, so a product could pass
+  every gate and every area with a flow nobody can finish; an existing-repository trial found
+  exactly that and had to file it under accessibility. The audit skeleton gets the section and a
+  flow table, and a standard's `audit-area` accepts 1-13. Areas 1-12 keep their numbers, so earlier
+  audits and finding IDs still line up. A project picks up the prompt and skeleton on its next
+  re-apply.
+
 ### Fixed
 
 - **`node.strict-types` failed a TypeScript 6 project that is strict.** TypeScript 6 turned

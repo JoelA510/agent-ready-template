@@ -149,8 +149,8 @@ export function loadCatalog(dir = CATALOG) {
       if (typeof d.title !== 'string' || !d.title.trim()) problems.push(`${where}: "title" is required`)
       if (!SEVERITIES.includes(d.severity)) problems.push(`${where}: "severity" must be one of ${SEVERITIES.join(', ')}`)
       if (!ENFORCEMENTS.includes(d.enforcement)) problems.push(`${where}: "enforcement" must be check, audit, or settings`)
-      if (!Number.isInteger(d['audit-area']) || d['audit-area'] < 1 || d['audit-area'] > 12) {
-        problems.push(`${where}: "audit-area" must be the existing-project audit area it belongs to, 1-12`)
+      if (!Number.isInteger(d['audit-area']) || d['audit-area'] < 1 || d['audit-area'] > 13) {
+        problems.push(`${where}: "audit-area" must be the existing-project audit area it belongs to, 1-13`)
       }
       if (!parsed.body.trim()) problems.push(`${where}: the body must say what the standard requires and why`)
       standards.push({ id, pack, name, title: d.title, severity: d.severity, enforcement: d.enforcement, auditArea: d['audit-area'], file: where })

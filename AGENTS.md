@@ -12,7 +12,7 @@ template supplies the process, checks, and structure that keep that work honest.
 - **New repos start from it**, so the architecture is sound from the first commit: a verified
   stack decision, agent instructions, a typed env module, CI as a required check, and a phased
   plan that ends in a deployable walking skeleton.
-- **Existing repos measure against it** to reach production grade: a baseline, a twelve-area
+- **Existing repos measure against it** to reach production grade: a baseline, a thirteen-area
   audit, and a remediation plan. `process:apply` delivers the process into the repo without
   touching anything the repo owns.
 

@@ -41,7 +41,7 @@ prompt runs in the template repository, never in a target: the catalog lives her
 3. Choose the pack, or propose a new one. A new pack needs a `README.md` with `detect`
    markers; check them against at least two repositories, one that should match and one that
    shouldn't.
-4. Choose the severity on the audit skeleton's scale and the audit area (1-12) it belongs to.
+4. Choose the severity on the audit skeleton's scale and the audit area (1-13) it belongs to.
 
 ## Phase 3 - Write it
 

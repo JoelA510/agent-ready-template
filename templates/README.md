@@ -28,7 +28,7 @@ the process through `process:apply`, the same files are staged under `prompts/sk
 | `project/docs/product.md` | New-project Phase 2 — mission, users, non-goals, constraints: what every change is planned against | `docs/product.md` |
 | `project/docs/change-plan.md` | `plan-change.md` — one plan for a change large enough to agree before it's built | `docs/changes/YYYY-MM-DD-<slug>.md` |
 | `project/docs/dev-plan.md` | New-project Phase 3 — phased development plan | `docs/dev-plan.md` |
-| `project/docs/audit.md` | Existing-project Phase 1 — baseline, the twelve-area audit, refuted findings, coverage limits | `docs/audits/YYYY-MM-<slug>/audit.md` |
+| `project/docs/audit.md` | Existing-project Phase 1 — baseline, the thirteen-area audit, refuted findings, coverage limits | `docs/audits/YYYY-MM-<slug>/audit.md` |
 | `project/docs/lessons-learned.md` | Both project prompts and `investigate.md` — durable lessons, each ending in the check that enforces it | `docs/lessons-learned.md` (or the file the repo already keeps) |
 | `project/docs/remediation-plan.md` | Existing-project Phase 2 — ordered remediation (milestones, or the single-PR form) | `docs/audits/YYYY-MM-<slug>/remediation-plan.md` |
 
