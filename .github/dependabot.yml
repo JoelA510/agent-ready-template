@@ -11,6 +11,20 @@ updates:
     # be caught and pulled. Security updates ignore this and arrive at once.
     cooldown:
       default-days: 7
+    # Majors held back until what blocks them ships (checked 2026-10-12). Remove an entry when its
+    # blocker is gone; `npm view <package> peerDependencies` says.
+    ignore:
+      # eslint-plugin-jsx-a11y (6.10.2, the latest) accepts ESLint up to 9, and it's the lint half
+      # of the accessibility bar. @eslint/js 10 needs ESLint 10.
+      - dependency-name: eslint
+        versions: [">= 10"]
+      - dependency-name: "@eslint/js"
+        versions: [">= 10"]
+      # TypeScript 7 drops the JavaScript compiler API (readConfigFile, parseJsonConfigFileContent)
+      # that check-conformance and check-env parse tsconfig with, and typescript-eslint supports
+      # TypeScript below 6.1.
+      - dependency-name: typescript
+        versions: [">= 7"]
     groups:
       # Non-major bumps are almost always safe; batch them into a single PR.
       minor-and-patch:
