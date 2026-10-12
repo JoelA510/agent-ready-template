@@ -415,6 +415,12 @@ standards to each repository and telling it when it has drifted.
 
 ### Fixed
 
+- **`check:upgrade-path` failed every repository that had never released.** It exits 2 when no
+  release tag is behind `HEAD`, which a new template before its first release, and a project made
+  with GitHub's "Use this template" (which copies no tags), can never satisfy, so CI was red from
+  the first commit. A full clone with no `v*` tag at all now passes with "No release yet". A
+  shallow clone with no tags, and a repository whose tags exist but none is behind `HEAD`, still
+  exit 2. Nothing to do in a project; the next CI run picks it up.
 - **`writing.prose-checks-in-ci` passed a run that checks nothing.** A workflow whose only prose
   step was `vale sync` or `cspell --version` passed, because the check matched the tool's name. A
   version, help, or init flag alone no longer counts. Neither do the subcommands that don't lint:

@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { previousRelease } from '../check-upgrade-path.mjs'
+import { neverReleased, previousRelease } from '../check-upgrade-path.mjs'
 
 // A scratch template with its own history: a release tag, then a newer commit. The check runs from
 // the scratch copy, so its "previous release" is the scratch tag, not this repository's.
@@ -56,10 +56,37 @@ describe('check-upgrade-path', () => {
     expect(previousRelease(template)).toBe('v0.2.0')
   })
 
-  it("can't check without a release behind HEAD, and says so", () => {
+  it("can't check when releases exist but none is behind HEAD, and says so", () => {
+    // The only release is on a branch HEAD doesn't contain: tags exist, so this isn't a first release.
     git('tag', '-d', 'v0.1.0')
+    git('checkout', '-q', '-b', 'side', 'HEAD~1')
+    git('commit', '-q', '--no-verify', '--allow-empty', '-m', 'side release')
+    git('tag', 'v0.1.0')
+    git('checkout', '-q', '-')
     const r = check()
     expect(r.status).toBe(2)
     expect(r.stderr).toContain('No release tag behind HEAD')
+  })
+
+  it('passes a full clone that has never released, and says why', () => {
+    git('tag', '-d', 'v0.1.0')
+    const r = check()
+    expect(r.stderr).toBe('')
+    expect(r.status).toBe(0)
+    expect(r.stdout).toContain('No release yet')
+  })
+
+  it("can't check a shallow clone with no tags: they may not have been fetched", () => {
+    const clone = mkdtempSync(join(tmpdir(), 'upgrade-shallow-'))
+    try {
+      const c = spawnSync('git', ['clone', '-q', '--depth', '1', '--no-tags', `file://${template}`, clone], { encoding: 'utf8' })
+      expect(c.status, c.stderr).toBe(0)
+      expect(neverReleased(clone)).toBe(false)
+      const r = spawnSync(process.execPath, [join(clone, 'scripts/check-upgrade-path.mjs')], { encoding: 'utf8' })
+      expect(r.status).toBe(2)
+      expect(r.stderr).toContain('No release tag behind HEAD')
+    } finally {
+      rmSync(clone, { recursive: true, force: true })
+    }
   })
 })
