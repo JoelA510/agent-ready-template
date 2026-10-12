@@ -60,6 +60,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   commit isn't here now also names "a repository this template was copied from without its
   history". For a target applied before this repository existed, that's the case: expect the
   warning once, review the re-apply's diff, and the next re-apply records a commit from here.
+- **The existing-project prompt didn't say which commit the scorecard scores.** The delivery is
+  committed before the run, so scoring the working repository scored the delivery: its own
+  standards (`core.process-delivered`, and `core.instructions-resolve` over the delivered skills)
+  passed because of it. The prompt now records the commit before the delivery as the audited one,
+  scores the same clean clone the gates ran in, and says to note it when the delivery commit is
+  scored instead.
+- **`/complete` named one audit folder where the prompt lets the repository's convention win.** The
+  skill now says what the prompt says: `docs/audits/YYYY-MM-<slug>/`, or a dated folder wherever
+  the repository already keeps its plans and audits.
+- **`core.agent-rules` said "no agent rules found anywhere"** after looking only where agents read
+  by default. It now says "no agent rules in any file an agent reads by default". The prompt's
+  §12 tells the auditor to look for rules kept in ordinary docs (a handoff file, prompt packets),
+  check them by hand, and plan to merge them into AGENTS.md.
 - **Docs that had gone stale.** The README's skills list now names `plan-change` and
   `template-update`, its `npm run check` row names knip and the bundle budget, and it says
   `v1.0.0-rc.2` is the first release tagged here. The AGENTS skeleton's hook guidance says the

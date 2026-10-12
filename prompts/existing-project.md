@@ -124,7 +124,9 @@ Produce the audit in a dated folder, so a later audit doesn't overwrite this
 one: docs/audits/YYYY-MM-<slug>/ (or a dated folder wherever this repo already
 keeps its plans and audits - its convention wins). The audit (skeleton:
 docs/audit.md), the remediation plan, and this run's reference-verification
-record all go in that folder. Record the commit you audited.
+record all go in that folder. Record the commit you audited: the repo as it
+was before this run, so the last commit before the process delivery when the
+delivery is committed first.
 
 - Baseline first. Run every gate the repo claims (typecheck, lint, tests, E2E,
   build, dependency audit) in a separate clone or worktree, never by cleaning
@@ -136,10 +138,15 @@ record all go in that folder. Record the commit you audited.
   in the audit's baseline table. A gate that needs an undocumented flag,
   silently skips suites, or can't run here (mark it blocked (environment) and
   say what's missing) is a finding. From a template checkout, also run
-  `npm run check:conformance -- --root <repo> --visibility <public|private>`
-  with the visibility the inputs established (without it, the standards that
+  `npm run check:conformance -- --root <clone> --visibility <public|private>`
+  on the same clean clone of the audited commit the gates ran in, with the
+  visibility the inputs established (without it, the standards that
   depend on visibility are skipped; when detection misses a pack, pass every
   pack with `--pack`: it replaces detection) and record its scorecard there.
+  Scored on the delivery commit instead, the delivery's own standards
+  (`core.process-delivered`, and `core.instructions-resolve` over the
+  delivered skills) pass because of the delivery, not the repo; if you score
+  it, say so beside the scorecard.
   The standards it marks as repository settings are scored by
   `npm run check:settings -- --repo <owner/name>`, with a token that can read
   the repository's settings in `GITHUB_TOKEN`; run it too, and record a setting
@@ -223,7 +230,11 @@ site has no server-side authz or database):
     kept in a tool-specific form another agent can't read (Antigravity
     workflows, which stop working on 2026-10-19; Cursor `.mdc` rules) are a
     finding when the team uses more than one agent: move them to AGENTS.md or
-    a skill.
+    a skill. Look for agent instructions kept in ordinary docs too (a handoff
+    file, prompt packets, a docs folder agents are told to start from): no
+    agent reads them by default, and neither the scorecard nor
+    `check:instructions` sees them, so check their paths and commands by hand
+    and plan to merge them into AGENTS.md.
 
 Separate executed findings from statically reviewed ones. Where sources or
 code paths conflict, name the conflict and which controls; do not merge

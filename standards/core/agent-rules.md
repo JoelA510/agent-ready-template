@@ -19,4 +19,6 @@ into it.
 
 **The check:** whether `AGENTS.md` exists at the root, and which tool-specific rule locations exist
 beside it. Whether the files resolve is `core.instructions-resolve`; whether `CLAUDE.md` hides
-`AGENTS.md` from Claude Code is reported there too.
+`AGENTS.md` from Claude Code is reported there too. Rules kept in ordinary docs (a handoff file,
+prompt packets) aren't looked for: no agent reads them by default, so the audit finds them by
+reading (existing-project §12).

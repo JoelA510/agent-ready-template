@@ -401,6 +401,12 @@ describe('reading the repository', () => {
 
 describe('core probes', () => {
   it('agent-rules: AGENTS.md at the root, not only a tool-specific file', () => {
+    // Rules kept in ordinary docs aren't looked for, so the evidence claims only the default locations.
+    write('docs/HANDOFF.md', '# Agent rules\n')
+    expect(probe('core.agent-rules')).toMatchObject({
+      status: 'fail',
+      evidence: ['no AGENTS.md at the root', 'no agent rules in any file an agent reads by default'],
+    })
     write('CLAUDE.md', '# Rules\n')
     expect(probe('core.agent-rules')).toMatchObject({ status: 'fail', evidence: ['no AGENTS.md at the root', 'rules kept only in: CLAUDE.md'] })
     write('AGENTS.md', '# Rules\n')
