@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-10-12
+
+The first release published from this repository. `v1.0.0-rc.1` was never tagged here, so a
+project starts from this release; the rc.1 entry below is kept for its history.
+
 Fixes from the first trial of the candidate: the process alone, applied to an empty private
 repository and run through `/bootstrap`, then run again on the fixed process. And the start of a
 standards system: a catalog of standards with stable IDs, a check that scores any repository
