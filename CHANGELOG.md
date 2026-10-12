@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`check:upgrade-path` failed a CI re-run on a repository's first release commit.** With every
+  `v*` tag on `HEAD` there's no earlier release to upgrade from, which is the same situation as no
+  tag at all, so it now passes with "HEAD is the first release". A shallow clone, and tags that
+  exist with none behind or on `HEAD`, still exit 2. Nothing to do in a project.
+
 ## [1.0.0-rc.2] - 2026-10-12
 
 The first release published from this repository. `v1.0.0-rc.1` was never tagged here, so a

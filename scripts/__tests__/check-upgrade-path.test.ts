@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { neverReleased, previousRelease } from '../check-upgrade-path.mjs'
+import { firstRelease, previousRelease } from '../check-upgrade-path.mjs'
 
 // A scratch template with its own history: a release tag, then a newer commit. The check runs from
 // the scratch copy, so its "previous release" is the scratch tag, not this repository's.
@@ -76,12 +76,22 @@ describe('check-upgrade-path', () => {
     expect(r.stdout).toContain('No release yet')
   })
 
+  it('passes when every release tag is on HEAD: a re-run on the first release commit', () => {
+    git('tag', '-d', 'v0.1.0')
+    git('tag', 'v0.1.0')
+    expect(firstRelease(template)).toBe('head')
+    const r = check()
+    expect(r.stderr).toBe('')
+    expect(r.status).toBe(0)
+    expect(r.stdout).toContain('HEAD is the first release')
+  })
+
   it("can't check a shallow clone with no tags: they may not have been fetched", () => {
     const clone = mkdtempSync(join(tmpdir(), 'upgrade-shallow-'))
     try {
       const c = spawnSync('git', ['clone', '-q', '--depth', '1', '--no-tags', `file://${template}`, clone], { encoding: 'utf8' })
       expect(c.status, c.stderr).toBe(0)
-      expect(neverReleased(clone)).toBe(false)
+      expect(firstRelease(clone)).toBeNull()
       const r = spawnSync(process.execPath, [join(clone, 'scripts/check-upgrade-path.mjs')], { encoding: 'utf8' })
       expect(r.status).toBe(2)
       expect(r.stderr).toContain('No release tag behind HEAD')
