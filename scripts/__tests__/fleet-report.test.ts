@@ -169,6 +169,27 @@ describe('a report', { timeout: 120_000 }, () => {
     expect(md).toContain('- process: a `process:apply` re-run would change 1 file(s)')
   })
 
+  // An existing-repo trial: .claude/ was ignored and the delivery commit left the skills out. The
+  // report called them parked files or conflict markers, which a re-apply would clear; it can't.
+  it('names delivered files the .gitignore kept out of every commit, apart from the leftovers', async () => {
+    conforming('good')
+    write('good/.gitignore', '.claude/\n')
+    const apply = spawnSync(process.execPath, [resolve(__dirname, '../apply-process.mjs'), '--target', join(base, 'good')], { encoding: 'utf8' })
+    expect(apply.status).toBe(0)
+    const git = fixtureGit(() => join(base, 'good'))
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'delivery')
+    fleet([{ name: 'good', path: '../good', visibility: 'private' }])
+    const md = formatFleet(await scoreFleet(join(base, 'hub/fleet.json'), { today: TODAY }))
+    expect(md).toMatch(/\| good \|.*\| 0 to update, \d+ never committed \|/)
+    expect(md).toMatch(/- process: .*\d+ delivered file\(s\) are ignored by its \.gitignore and never committed/)
+    expect(md).not.toContain('left over')
+    // Positive control: force-added and committed, the process is current again.
+    git('add', '-f', '.claude')
+    git('commit', '-q', '--no-verify', '-m', 'skills')
+    expect(formatFleet(await scoreFleet(join(base, 'hub/fleet.json'), { today: TODAY }))).toMatch(/\| good \|.*\| current \|/)
+  })
+
   it('adds each repository\'s GitHub settings, and a settings failure fails the repository', async () => {
     conforming('good')
     fixtureGit(() => join(base, 'good'))('remote', 'add', 'origin', 'https://github.com/acme/good.git')

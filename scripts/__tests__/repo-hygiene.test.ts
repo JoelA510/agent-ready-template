@@ -291,6 +291,26 @@ describe('the ruleset skeleton requires every job of the CI skeleton', () => {
   })
 })
 
+// A new-repo trial copied the CI skeleton literally and lost its own Format step: the skeleton had
+// none, and its adapt line only took steps away. Phase 2.5's tooling (typecheck, lint, format, test,
+// build) each gets a step, so a literal copy keeps every gate the prompt asks CI to run.
+describe("the CI skeleton runs every gate Phase 2.5's tooling names", () => {
+  type Ci = { jobs: Record<string, { steps: { run?: string }[] }> }
+  const GATES = ['npm run typecheck', 'npm run lint', 'npm run format:check', 'npm test', 'npm run build']
+  const missing = (ci: Ci) => GATES.filter((g) => !ci.jobs.check.steps.some((st) => st.run === g))
+  const ci = parseYaml(readFileSync(join(REPO, 'templates/project/.github/workflows/ci.yml'), 'utf8')) as Ci
+
+  it('the prompt names the gates (so the list above is the prompt\'s, not invented here)', () => {
+    expect(readFileSync(join(REPO, 'prompts/new-project.md'), 'utf8')).toMatch(/typecheck \(strict\), lint, format, pre-commit hooks, and CI\s+\(typecheck \+ lint \+ test \+ build/)
+  })
+
+  it('has a step for each, and notices one taken away (positive control)', () => {
+    expect(missing(ci)).toEqual([])
+    const noFormat: Ci = { jobs: { ...ci.jobs, check: { steps: ci.jobs.check.steps.filter((st) => st.run !== 'npm run format:check') } } }
+    expect(missing(noFormat)).toEqual(['npm run format:check'])
+  })
+})
+
 describe.skipIf(!hasWorkflows)('the ruleset requires every pull-request check', () => {
   const RULESET = join(REPO, '.github/rulesets/main.json')
   type Workflow = { on?: unknown; jobs?: Record<string, { name?: string; strategy?: { matrix?: unknown } }> }

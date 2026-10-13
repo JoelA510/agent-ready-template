@@ -543,15 +543,9 @@ export function drift(target) {
   }
   // A delivered file the target's git ignores and doesn't track was never committed: a clone has
   // none of it, and its absence there reads like a file the target deleted on purpose.
+  // Kept apart from the leftovers: a re-apply doesn't fix it, committing does.
   const ignored = gitignored(target, Object.keys(previous.files))
-  if (ignored.length) {
-    leftovers.push(
-      `${ignored.length} delivered file(s) are ignored by the target's .gitignore and not committed, so a clone doesn't have them:\n` +
-        ignored.slice(0, 5).map((f) => `    ${f}`).join('\n') +
-        `${ignored.length > 5 ? `\n    ... and ${ignored.length - 5} more` : ''}\n  ${IGNORED_REMEDY}`,
-    )
-  }
-  return { delivered, templateCommit: previous.templateCommit ?? null, ahead: notInHistory(previous.templateCommit), held, heldBack, changes, leftovers }
+  return { delivered, templateCommit: previous.templateCommit ?? null, ahead: notInHistory(previous.templateCommit), held, heldBack, changes, leftovers, ignored }
 }
 
 /** Recorded packs this template ships, and those it doesn't. */
@@ -592,7 +586,7 @@ function notInHistory(commit) {
 const ELSEWHERE = 'a newer template, another branch, or a repository this template was copied from without its history'
 
 function check(target) {
-  const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers } = drift(target)
+  const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers, ignored } = drift(target)
   if (!delivered) {
     console.log(`Not delivered: ${target} has no ${MANIFEST}. Run process:apply first.`)
     process.exit(1)
@@ -610,9 +604,21 @@ function check(target) {
   }
   for (const l of leftovers) console.log(`! ${l}`)
   if (leftovers.length) console.log('')
-  const drifted = changes.length > 0 || leftovers.length > 0
-  console.log(drifted ? '✗ Drifted: re-run process:apply, merge what it parks, and commit.' : '✓ Current with this template.')
-  process.exit(drifted ? 1 : 0)
+  if (ignored.length) {
+    console.log(
+      `! ${ignored.length} delivered file(s) are ignored by the target's .gitignore and not committed, so a clone doesn't have them:\n` +
+        ignored.slice(0, 5).map((f) => `    ${f}`).join('\n') +
+        `${ignored.length > 5 ? `\n    ... and ${ignored.length - 5} more` : ''}\n  ${IGNORED_REMEDY}\n`,
+    )
+  }
+  // Each kind of drift has its own remedy: a re-apply for changes and leftovers, a commit for
+  // ignored files (a re-apply would only write them again where git can't see them).
+  const todo = [
+    ...(changes.length || leftovers.length ? ['re-run process:apply, merge what it parks, and commit'] : []),
+    ...(ignored.length ? ['commit the ignored delivered files (above)'] : []),
+  ]
+  console.log(todo.length ? `✗ Drifted: ${todo.join('; ')}.` : '✓ Current with this template.')
+  process.exit(todo.length ? 1 : 0)
 }
 
 function main() {

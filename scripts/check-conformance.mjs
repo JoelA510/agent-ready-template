@@ -885,6 +885,12 @@ function runTemplateCheck(script, root) {
 
 // The line a template check ends a clean run with (✓ ...), for a pass's evidence.
 const summaryLine = (run) => [...run.out, ...run.err].find((l) => l.startsWith('✓')) ?? 'clean'
+// A failed sub-check's own summary (`✗ N finding(s) in …`), and the skeleton note after it: the
+// last line alone is the note whenever the target holds delivered skeletons, and the count is lost.
+const failSummary = (run) => {
+  const lines = run.err.filter((l) => l.startsWith('✗') || l.startsWith('Left out as skeletons'))
+  return lines.length ? lines : run.err.slice(-1)
+}
 
 function packageAt(ctx) {
   const pkg = ctx.repo.pkg(ctx.path)
@@ -1231,7 +1237,7 @@ const actionMajor = (ctx, uses, file) =>
 function clientEnv(ctx) {
   const run = runTemplateCheck('check-env.mjs', join(ctx.repo.root, ctx.path))
   if (run.status === 0) return pass(summaryLine(run))
-  if (run.status === 1) return fail(...list(run.out), ...run.err.slice(-1))
+  if (run.status === 1) return fail(...list(run.out), ...failSummary(run))
   if (run.err.some((l) => l.startsWith('No environment variables found'))) return notApplicable('no environment variables anywhere')
   return errored(`check-env couldn't run: ${run.err.join(' ')}`)
 }
@@ -2117,7 +2123,7 @@ export const PROBES = {
   'core.instructions-resolve': (ctx) => {
     const run = runTemplateCheck('check-instructions.mjs', ctx.repo.root)
     if (run.status === 0) return pass(summaryLine(run))
-    if (run.status === 1) return fail(...list(run.out), ...run.err.slice(-1))
+    if (run.status === 1) return fail(...list(run.out), ...failSummary(run))
     if (run.err.some((l) => l.startsWith('No agent instruction files'))) return notApplicable('no agent instruction files to check')
     return errored(`check-instructions couldn't run: ${run.err.join(' ')}`)
   },

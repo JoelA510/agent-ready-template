@@ -80,17 +80,18 @@ export function withoutCredentials(url) {
   return parsed.href
 }
 
-// What a process:apply re-run would do here: { status, changes, leftovers }.
+// What a process:apply re-run would do here, and what it can't: { status, changes, leftovers, ignored }.
 function processDrift(root) {
   try {
     const d = drift(root)
-    if (!d.delivered) return { status: 'not delivered', changes: 0, leftovers: 0 }
+    if (!d.delivered) return { status: 'not delivered', changes: 0, leftovers: 0, ignored: 0 }
+    const counts = { changes: d.changes.length, leftovers: d.leftovers.length, ignored: d.ignored.length }
     // Applied from a commit this template doesn't have: its "changes" could be downgrades.
-    if (d.ahead) return { status: 'from a commit not in this template', changes: d.changes.length, leftovers: d.leftovers.length }
-    return { status: d.changes.length || d.leftovers.length ? 'behind' : 'current', changes: d.changes.length, leftovers: d.leftovers.length }
+    if (d.ahead) return { status: 'from a commit not in this template', ...counts }
+    return { status: counts.changes || counts.leftovers || counts.ignored ? 'behind' : 'current', ...counts }
   } catch (error) {
     if (!(error instanceof ManifestError)) throw error
-    return { status: 'manifest unreadable', changes: 0, leftovers: 0 }
+    return { status: 'manifest unreadable', changes: 0, leftovers: 0, ignored: 0 }
   }
 }
 
@@ -165,7 +166,8 @@ const SEVERITY = ['blocker', 'high', 'medium', 'low']
 const cell = (text) => String(text).replace(/\|/g, '\\|').replace(/\n/g, ' ')
 const outcome = (r) =>
   r.error || r.card.exitCode === 2 || r.settings?.error ? "couldn't check" : r.card.exitCode === 1 || r.settings?.card?.exitCode === 1 ? 'fails' : 'conforms'
-const processCell = (p) => (!p ? '' : p.status === 'behind' ? `${p.changes} to update${p.leftovers ? `, ${p.leftovers} left over` : ''}` : p.status)
+const processCell = (p) =>
+  !p ? '' : p.status === 'behind' ? `${p.changes} to update${p.leftovers ? `, ${p.leftovers} left over` : ''}${p.ignored ? `, ${p.ignored} never committed` : ''}` : p.status
 const settingsCell = (s) => {
   if (!s) return ''
   if (s.error) return "couldn't check"
@@ -239,7 +241,12 @@ export function formatFleet(fleet) {
     for (const x of shown) out.push(`- ${x.status === 'fail' ? '' : `${x.status}: `}\`${x.key}\` (${x.severity}): ${cell(firstEvidence(x.evidence) ?? x.title)}`)
     for (const p of r.card.problems) out.push(`- config: ${cell(p)}`)
     if (r.card.undeclared.length) out.push(`- detected but not declared: ${r.card.undeclared.join(', ')}`)
-    if (r.process?.status === 'behind') out.push(`- process: a \`process:apply\` re-run would change ${r.process.changes} file(s)${r.process.leftovers ? `, and ${r.process.leftovers} parked file(s) or conflict marker(s) are left over` : ''}`)
+    if (r.process?.status === 'behind') {
+      const parts = [`a \`process:apply\` re-run would change ${r.process.changes} file(s)`]
+      if (r.process.leftovers) parts.push(`${r.process.leftovers} leftover(s) need a hand (a parked file, a conflict marker, or a path that leads out through a symlink)`)
+      if (r.process.ignored) parts.push(`${r.process.ignored} delivered file(s) are ignored by its .gitignore and never committed, so a clone lacks them (commit them; a re-apply won't)`)
+      out.push(`- process: ${parts.join('; ')}`)
+    }
     if (r.settings?.error) out.push(`- settings couldn't be checked: ${cell(r.settings.error)}`)
     if (!shown.length && !r.card.problems.length && !r.settings?.error) out.push('Conforms.')
   }

@@ -1284,6 +1284,17 @@ describe('vite-spa.client-env', () => {
     expect(probe('vite-spa.client-env').status).toBe('n/a')
   })
 
+  // An existing-repo trial: in a target holding the delivered skeletons, the sub-check's last line
+  // is its "Left out as skeletons" note, and keeping only that line lost the finding count.
+  it('keeps the finding count beside the skeleton note in a target that holds the skeletons', () => {
+    write('prompts/skeletons/AGENTS.skeleton.md', '# skeleton\n')
+    write('.env.example', 'VITE_SERVICE_ROLE_KEY=\n')
+    const { status, evidence } = probe('vite-spa.client-env')
+    expect(status).toBe('fail')
+    expect(evidence).toContainEqual(expect.stringMatching(/^✗ 1 finding\(s\) in /))
+    expect(evidence).toContainEqual(expect.stringMatching(/^Left out as skeletons/))
+  })
+
   it('checks the pack path, not the whole repository, and passes with the summary as evidence', () => {
     write('web/src/main.ts', 'export const url = import.meta.env.VITE_API_URL\n')
     write('mobile/.env.example', 'EXPO_PUBLIC_SERVICE_ROLE_KEY=\n')

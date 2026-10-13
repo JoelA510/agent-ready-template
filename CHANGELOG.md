@@ -111,6 +111,19 @@ and the scorecard no longer fails a budget gate that works or passes a CI with n
   (`ENOTEMPTY` on `.git/objects`). A commit can leave git's auto-maintenance running in the
   background; the scratch repositories now turn it off, and removal retries. The check's own
   scratch directory gets the same. Nothing to do in a project.
+- **Delivered files a .gitignore kept out of every commit are named as such.** `process:apply
+  --check` reported them as leftovers and ended with "re-run process:apply, merge what it parks",
+  and the fleet report counted them as "parked file(s) or conflict marker(s)"; a re-apply fixes
+  neither. Both now say the files were never committed and that committing them (force-adding,
+  or a `.gitignore` exception) is the remedy, and keep that count apart from the leftovers.
+- **A failed `check:env` or `check:instructions` keeps its finding count in the scorecard.** The
+  scorecard kept only the sub-check's last line, which in a target holding the delivered skeletons
+  is the "Left out as skeletons" note. It now keeps the `✗ N finding(s)` line and the note.
+- **The CI skeleton has a format step.** The skeleton had none, and its adapt line only said to
+  remove steps, so a project that copied it literally lost its own format check while its
+  AGENTS.md still said CI ran it. The skeleton now runs the project's `format:check` script, and
+  the adapt line says every gate the repository's own check runs needs a step. A project built
+  from rc.3 whose CI has no format step: add one.
 
 ## [1.0.0-rc.3] - 2026-10-12
 

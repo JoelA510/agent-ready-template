@@ -641,6 +641,9 @@ describe('process:apply: gitignored deliveries', () => {
       expect(status, dir).toBe(1)
       expect(out).toMatch(/! \d+ delivered file\(s\) are ignored by the target's \.gitignore and not committed/)
       expect(out).toContain('    .claude/skills/')
+      // A re-apply doesn't commit anything: the remedy is the commit, not "merge what it parks".
+      expect(out).toContain('✗ Drifted: commit the ignored delivered files (above).')
+      expect(out).not.toContain('merge what it parks')
     }
     // Force-added and committed, they're tracked, so the clone has them and --check is current.
     gitTarget('add', '-f', '.claude/skills')
