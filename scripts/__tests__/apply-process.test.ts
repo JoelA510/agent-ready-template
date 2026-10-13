@@ -74,8 +74,10 @@ describe('process:apply: delivery', () => {
     expect(out).toContain('The skeletons are staged under prompts/skeletons/')
     // The report names the manifest it wrote, and the first step commits the delivery untouched.
     expect(out).toContain('Recorded prompts/.apply-manifest.json')
-    // Formatters are excluded first, so a pre-commit formatter can't rewrite the delivery.
-    expect(out).toMatch(/^ {2}1\. If this repo runs a formatter, a pre-commit one included, exclude prompts\//m)
+    // Formatters are excluded first, so a pre-commit formatter can't rewrite the delivery; one run
+    // by hand can wait for the first change, where a config edit is in scope.
+    expect(out).toMatch(/^ {2}1\. If this repo runs a formatter, keep it off prompts\//m)
+    expect(out).toContain('One that runs on commit (a pre-commit\n     hook, lint-staged) needs that before this delivery is committed. One run only by hand can wait')
     expect(out).toMatch(/^ {2}2\. Commit this delivery as it is, with prompts\/\.apply-manifest\.json/m)
     expect(out).not.toContain('Nothing to change.')
   })
@@ -609,6 +611,44 @@ describe('process:apply: gitignored deliveries', () => {
     // Positive control: an exception clears it.
     write(target, '.gitignore', '.claude/*\n!.claude/skills/\n')
     expect(apply().out).not.toContain(".gitignore covers")
+  })
+
+  it('offers a force-add for a target whose .gitignore is not to be edited', () => {
+    fixtureGit(() => target)('init', '-q')
+    write(target, '.gitignore', '.claude/\n')
+    expect(apply().out).toContain('force-add them (`git add -f <path>`)')
+  })
+
+  // An existing-repo trial: .claude/ was ignored, the delivery commit left the skills out, and
+  // --check called a fresh clone of it current, reading the missing files as deleted on purpose.
+  it('--check reports delivered files that are ignored and never committed, in the clone too', () => {
+    const gitTarget = fixtureGit(() => target)
+    gitTarget('init', '-q')
+    write(target, '.gitignore', '.claude/\n')
+    apply()
+    gitTarget('add', '-A')
+    gitTarget('commit', '-q', '--no-verify', '-m', 'delivery')
+    const clone = join(scratch('apply-clone-'), 'clone')
+    spawnSync('git', ['clone', '-q', target, clone], { encoding: 'utf8' })
+    expect(existsSync(join(clone, '.claude/skills'))).toBe(false)
+    expect(existsSync(join(clone, 'prompts/.apply-manifest.json'))).toBe(true) // positive control: it is a delivered clone
+    const checkAt = (dir: string) => {
+      const result = spawnSync(process.execPath, [join(template, 'scripts/apply-process.mjs'), '--target', dir, '--check'], { encoding: 'utf8' })
+      return { status: result.status, out: result.stdout + result.stderr }
+    }
+    for (const dir of [target, clone]) {
+      const { status, out } = checkAt(dir)
+      expect(status, dir).toBe(1)
+      expect(out).toMatch(/! \d+ delivered file\(s\) are ignored by the target's \.gitignore and not committed/)
+      expect(out).toContain('    .claude/skills/')
+    }
+    // Force-added and committed, they're tracked, so the clone has them and --check is current.
+    gitTarget('add', '-f', '.claude/skills')
+    gitTarget('commit', '-q', '--no-verify', '-m', 'skills')
+    expect(checkAt(target)).toMatchObject({ status: 0, out: expect.stringContaining('✓ Current with this template.') })
+    const clone2 = join(scratch('apply-clone-'), 'clone')
+    spawnSync('git', ['clone', '-q', target, clone2], { encoding: 'utf8' })
+    expect(checkAt(clone2)).toMatchObject({ status: 0, out: expect.stringContaining('✓ Current with this template.') })
   })
 
   it('names the manifest too: without it, every clone reads as never delivered', () => {

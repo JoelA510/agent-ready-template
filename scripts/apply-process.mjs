@@ -36,7 +36,8 @@
 // or an editor's whitespace trim doesn't count as an edit. A reformatting pass does.
 //
 // --check writes nothing and exits 1 when the target has drifted: a re-apply would change a file,
-// a parked .template is still there, or a delivered file holds a conflict marker.
+// a parked .template is still there, a delivered file holds a conflict marker, or a delivered file
+// is ignored by the target's git and not tracked (so a clone never gets it).
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -502,7 +503,13 @@ function outsideTarget(target, dest, kind) {
 const WRITES = ['copy', 'update', 'park', 'park-unrecorded', 'propose']
 const parked = (kind) => kind.startsWith('park') || kind === 'propose'
 
-// Delivered paths the target's git ignores: an apply writes them, and they're never committed.
+// What to do about delivered files the target's .gitignore covers: an exception, or, where
+// .gitignore isn't to be touched, a force-add (git keeps tracking a force-added file).
+const IGNORED_REMEDY =
+  'Add exceptions to .gitignore (for an ignored .claude/: `.claude/*` then `!.claude/skills/`), or, to leave .gitignore as it is, force-add them (`git add -f <path>`) and commit.'
+
+// Delivered paths the target's git ignores and doesn't track: an apply writes them, and they're
+// never committed. (check-ignore leaves out a tracked path, so a force-added file isn't listed.)
 function gitignored(target, paths) {
   if (!paths.length) return []
   try {
@@ -533,6 +540,16 @@ export function drift(target) {
     const abs = join(target, dest)
     const text = existsSync(abs) ? contentOf(abs) : null
     if (typeof text === 'string' && /^<{7} /m.test(text) && /^>{7} /m.test(text)) leftovers.push(`${dest} holds a merge conflict marker`)
+  }
+  // A delivered file the target's git ignores and doesn't track was never committed: a clone has
+  // none of it, and its absence there reads like a file the target deleted on purpose.
+  const ignored = gitignored(target, Object.keys(previous.files))
+  if (ignored.length) {
+    leftovers.push(
+      `${ignored.length} delivered file(s) are ignored by the target's .gitignore and not committed, so a clone doesn't have them:\n` +
+        ignored.slice(0, 5).map((f) => `    ${f}`).join('\n') +
+        `${ignored.length > 5 ? `\n    ... and ${ignored.length - 5} more` : ''}\n  ${IGNORED_REMEDY}`,
+    )
   }
   return { delivered, templateCommit: previous.templateCommit ?? null, ahead: notInHistory(previous.templateCommit), held, heldBack, changes, leftovers }
 }
@@ -711,7 +728,7 @@ function main() {
     const shown = ignored.slice(0, 5).map((f) => `  ! ${f}`).join('\n')
     console.log(
       `The target's .gitignore covers ${ignored.length} delivered file(s), so they'd never be committed:\n${shown}` +
-        `${ignored.length > 5 ? `\n  ... and ${ignored.length - 5} more` : ''}\nAdd exceptions to .gitignore (for an ignored .claude/: \`.claude/*\` then \`!.claude/skills/\`), and re-run to confirm.\n`,
+        `${ignored.length > 5 ? `\n  ... and ${ignored.length - 5} more` : ''}\n${IGNORED_REMEDY} \`process:apply --check\` confirms it.\n`,
     )
   }
   // Named so the report accounts for every file it wrote.
@@ -740,11 +757,14 @@ function main() {
   const parkedCount = files('park').length + files('park-unrecorded').length + files('propose').length
   const delivered = !list && first && files('copy').length > 0
   // Before the commit: a pre-commit formatter would otherwise rewrite the delivery as it's committed.
+  // One run by hand can wait for the first change the project makes, where a config edit is in scope.
   if (delivered) {
-    steps.push(`If this repo runs a formatter, a pre-commit one included, exclude prompts/, .agents/skills/,
-     and .claude/skills/ from it (for Prettier, add those three lines to .prettierignore). A reformat
-     makes every delivered file look edited, and re-applies then park the template's updates
-     instead of applying them.`)
+    steps.push(`If this repo runs a formatter, keep it off prompts/, .agents/skills/, and .claude/skills/
+     (for Prettier, those three lines in .prettierignore). One that runs on commit (a pre-commit
+     hook, lint-staged) needs that before this delivery is committed. One run only by hand can wait
+     for the project's first change (where a config edit is in scope) if, until then, it's run only
+     on the project's own paths. A reformat makes every delivered file look edited, and re-applies
+     then park the template's updates instead of applying them.`)
   }
   if (recorded) {
     const leaveOut = parkedCount ? ' Leave the *.template files out of it.' : ''

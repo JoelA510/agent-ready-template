@@ -10,9 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Fixes from the third new-repository trial (a process-only bootstrap on `1.0.0-rc.3`), and one from
-the latest existing-repository trial: the skeletons, followed literally, now produce what
-milestone 1's scorecard passes.
+Fixes from the third new-repository trial (a process-only bootstrap on `1.0.0-rc.3`), and from
+the latest existing-repository trial (an audit and plan for an existing Vite + Supabase app on
+`1.0.0-rc.3`): the skeletons, followed literally, now produce what milestone 1's scorecard passes,
+and the scorecard no longer fails a budget gate that works or passes a CI with no pin.
 
 ### Changed
 
@@ -39,8 +40,53 @@ milestone 1's scorecard passes.
   operating rules and the definition of done in `prettier-ignore` comments, which Phase 2.5 says
   to keep: Prettier rewrote `*before*` as `_before_`, so the blocks no longer matched. A project
   that formats its Markdown can add the same comments around both blocks.
+- **`process:apply`'s formatter step says what can wait.** A formatter that runs on commit has to
+  skip the delivered folders before the delivery is committed; one run only by hand can wait for
+  the project's first change, where a config edit is in scope, if it's run only on the project's
+  own paths until then. An audit run that may not touch config had no answer before. The ignored
+  files warning offers a force-add (`git add -f`) beside the `.gitignore` exception, and
+  `prompts/README.md` says both. Nothing to do in a project.
+- **The existing-project prompt says where three things go.** A `core.process-delivered` failure
+  from scoring the commit before the delivery goes under a new "Resolved before the plan" section
+  of the remediation plan, with the delivery commit (it isn't a deferral). A flow area 13 could only
+  exercise against a shared or production environment is recorded as not exercised with the
+  reason, and never run there. An item no automated check can cover (a documentation change, a
+  setting changed by hand) names a manual check as its gate: what, who, and where the result is
+  recorded. A plan in progress can adopt the section and the gate form as it is.
+- **`core.lf-line-endings` keeps a file marked `-text` as committed on purpose.** Its fix,
+  `git add --renormalize .`, would have edited applied database migrations, which the migration
+  tool never re-runs and a migration-history check rejects. The standard now says to mark such files
+  `-text` by name first, and the check lists them as kept rather than failing them. A catch-all
+  `* -text` excuses nothing. A project with applied migrations committed with CRLF: mark them
+  `-text` before renormalizing.
 
 ### Fixed
+
+- **`vite-spa.bundle-budget` failed a repository whose CI enforces a budget with its own script.**
+  The check knew only `size-limit`, `bundlesize`, `bundlewatch`, and the template's
+  `check-bundle-size.mjs`, so a project's `node scripts/check-bundle-size.js`, run through an npm
+  script piped into `tee` under `pipefail`, failed it. It now reads a script run with `node` whose
+  name says bundle, size or budget: one whose source names a budget and exits non-zero passes, and
+  any other is `skipped` with its path. A budget file nothing in CI runs still fails, as does a
+  step that can't fail the run. Nothing to do in a project.
+- **`node.ci-uses-pin` passed a CI with no pin**, because its only `setup-node` step named the
+  `engines` floor, which the standard exempts for a floor job. The exemption now holds only beside
+  a step that reads the pin; alone, the floor job is the only Node CI runs, and fails. A project
+  whose CI runs only the floor version: read `.nvmrc` in the main job and keep the floor job beside
+  it.
+- **`process:apply --check` called a clone current when its delivered skills were never
+  committed.** A `.gitignore` covering `.claude/` kept them out of the delivery commit, and
+  `--check` read their absence as files deleted on purpose. It now fails on any delivered file the
+  target's git ignores and doesn't track, in the original and in a clone, and so does the fleet
+  report's process column. A project in that state: add the `.gitignore` exception or force-add
+  the files, and commit.
+- **Evidence says only what was read.** `core.audit-waivers`'s `n/a` names the registers it reads,
+  instead of "no advisory is waived anywhere". `node.install-guards` says npm's defaults decide when
+  there's no `.npmrc`, or the setting is missing from it, instead of quoting a file that isn't there.
+  The "project may live below the root" hint names only a workspace folder with a `package.json`.
+  `check:settings`'s branch-protection remedy names where the ruleset is in a target
+  (`prompts/skeletons/.github/rulesets/main.json` after `process:apply`), not a path only the
+  template has. Nothing to do in a project.
 
 - **`process:apply` told a project with rules only in CLAUDE.md to merge the AGENTS skeleton into
   CLAUDE.md**, which `core.agent-rules` then failed as high. The advice now matches the standard,
