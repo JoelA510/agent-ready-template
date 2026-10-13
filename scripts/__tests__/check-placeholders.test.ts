@@ -60,9 +60,9 @@ describe('the skeletons follow the placeholder rule', () => {
     expect(escaped).toEqual([])
   })
 
-  it('every skeleton comment is a GUIDANCE comment or a synced-block marker', () => {
+  it('every skeleton comment is a GUIDANCE comment, a synced-block marker, or the Prettier guard around one', () => {
     const other = skeletons.flatMap((file) =>
-      [...read(file).matchAll(/<!--(?! GUIDANCE| [a-z-]+:(?:start|end) -->)/g)].map((m) => `${file}@${m.index}`),
+      [...read(file).matchAll(/<!--(?! GUIDANCE| [a-z-]+:(?:start|end) -->| prettier-ignore-(?:start|end) -->)/g)].map((m) => `${file}@${m.index}`),
     )
     expect(other).toEqual([])
   })

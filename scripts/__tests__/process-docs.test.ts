@@ -56,6 +56,15 @@ describe.each([
     expect(between(path, name)).toBe(between(copies[0], name))
   })
 
+  // A project runs its own formatter over the files it builds from the skeletons; Prettier
+  // rewrites `*before*` to `_before_`, and the block no longer matches. (Checked by running
+  // Prettier 3 over the skeleton with and without the markers.)
+  it.each(copies.filter((path) => path.startsWith('templates/project/')))('%s keeps Prettier out of it', (path) => {
+    const text = read(path)
+    expect(text).toContain(`<!-- prettier-ignore-start -->\n<!-- ${name}:start -->`)
+    expect(text).toContain(`<!-- ${name}:end -->\n<!-- prettier-ignore-end -->`)
+  })
+
   it('has no unmarked copy anywhere in the docs', () => {
     // A signature is an item's bold heading plus the first words after it, taken from the
     // canonical block itself, so rewording an item can't switch this check off (positive

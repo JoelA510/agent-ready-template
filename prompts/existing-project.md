@@ -200,10 +200,11 @@ site has no server-side authz or database):
    shape: the release-runbook skeleton, docs/release-runbook.md).
 8. Security - secrets in code/history, dependency audit (does it run in CI,
    block on high/critical, and run on a schedule; are waivers reasoned and
-   expiring - skeleton: docs/dependency-policy.md), input
-   sanitization, rate limiting on public endpoints, CORS/headers/CSP,
-   licensing, and what the client bundle carries: secrets behind a public
-   prefix, env reads the bundler doesn't inline, placeholder values
+   expiring - skeleton: docs/dependency-policy.md), whether updates arrive
+   on their own (skeleton: .github/dependabot.yml), input sanitization,
+   rate limiting on public endpoints, CORS/headers/CSP, licensing, and what
+   the client bundle carries: secrets behind a public prefix, env reads the
+   bundler doesn't inline, placeholder values
    (`npm run check:env -- --root <repo>` from a template checkout). Can
    someone report a vulnerability privately, and to whom (skeleton:
    SECURITY.md)?
@@ -228,10 +229,11 @@ site has no server-side authz or database):
     there. So is a repo that uses Gemini CLI without pointing it at AGENTS.md,
     a skill that breaks the Agent Skills spec, and an AGENTS.md over 24,000
     bytes (Antigravity's limit); `check:instructions` reports all three. Rules
-    kept in a tool-specific form another agent can't read (Antigravity
-    workflows, which stop working on 2026-10-19; Cursor `.mdc` rules) are a
-    finding when the team uses more than one agent: move them to AGENTS.md or
-    a skill. Look for agent instructions kept in ordinary docs too (a handoff
+    kept only in a tool-specific form other agents can't read (a lone
+    CLAUDE.md, Antigravity workflows, which stop working on 2026-10-19; Cursor
+    `.mdc` rules) are a finding (standard core.agent-rules, high): move them
+    to a root AGENTS.md, with CLAUDE.md importing it (`@AGENTS.md`), or to a
+    skill. Look for agent instructions kept in ordinary docs too (a handoff
     file, prompt packets, a docs folder agents are told to start from): no
     agent reads them by default, and neither the scorecard nor
     `check:instructions` sees them, so check their paths and commands by hand

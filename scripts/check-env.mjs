@@ -40,7 +40,10 @@
 //                    BRANCH, alone or after a prefix and an underscore) isn't reported;
 //   - placeholder:   a string value in a real env file (not *.example, *.sample, *.template) or
 //                    eas.json that is still a placeholder: `your-…`, `<…>`, `[UPPERCASE]`,
-//                    `changeme`, `xxxx`, `REPLACE_ME`. It passes a "non-empty" check and ships.
+//                    `changeme`, `xxxx`, `REPLACE_ME`, and in a URL any `<…>` or a `your-…`
+//                    user, password, or host label (`https://<your-key>@o0.ingest.sentry.io/0`).
+//                    A path segment like `/your-account` can be a real page and isn't reported.
+//                    It passes a "non-empty" check, and a URL check, and ships.
 //                    Only names are printed, never values;
 //   - unexpanded:    a `${VAR}` reference in an eas.json build profile's env (`env`,
 //                    `android.env`, `ios.env`). EAS passes the text through literally, and a
@@ -104,6 +107,10 @@ export function isPublicSecret(name) {
   return SECRET_MARKERS.test(rest) || SERVER_ONLY_VENDOR_KEYS.test(rest)
 }
 
+// A URL or connection string (`https://…`, `postgres://…`): where vendors document a value with
+// its placeholder inside it, as in `https://<your-key>@o0.ingest.sentry.io/0`.
+const URL_SHAPED = /^[a-z][a-z0-9+.-]*:\/\//i
+
 /** Whether a value is a leftover placeholder rather than a real value. */
 export function isPlaceholder(value) {
   const v = value.trim().replace(/^(['"])(.*)\1$/, '$2')
@@ -113,7 +120,11 @@ export function isPlaceholder(value) {
     /^<[^<>]+>$/.test(v) ||
     /^\[[A-Z][A-Z0-9 _/-]*\]$/.test(v) || // `[FILL IN]`, the skeletons' placeholder shape
     /^(change[-_]?me|replace[-_]?me|CHANGEME|CHANGE_ME|REPLACE_ME|TODO|TBD|FIXME|x{4,}|X{4,}|\*{4,})$/.test(v) ||
-    /(^|[-_.:/])(your[-_](api[-_])?(key|token|secret|project|url|password)|changeme|replace[-_]?me)([-_.:/]|$)/.test(v)
+    /(^|[-_.:/@])(your[-_](api[-_])?(key|token|secret|project|url|password)|changeme|replace[-_]?me)([-_.:/@]|$)/.test(v) ||
+    // Inside a URL, a real value can't hold `<` or `>` (they'd be percent-encoded), and `your-…`
+    // opening its user, password, or a host label is the vendor's example left in. The path is
+    // left to the rule above: `/your-account` can be a real page.
+    (URL_SHAPED.test(v) && (/<[^<>]*>/.test(v) || /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*\byour[-_][a-z0-9]/i.test(v)))
   )
 }
 
@@ -409,7 +420,18 @@ export const SELF_TEST = {
       'PUBLIC_DATABASE_URL',
       'REACT_APP_JWT_SECRET',
     ],
-    placeholder: ['your-anon-key', '<project-ref>', 'changeme', 'xxxxxxxx', 'REPLACE_ME', '[FILL IN]', 'https://your-project.supabase.co'],
+    placeholder: [
+      'your-anon-key',
+      '<project-ref>',
+      'changeme',
+      'xxxxxxxx',
+      'REPLACE_ME',
+      '[FILL IN]',
+      'https://your-project.supabase.co',
+      'https://<your-key>@o0.ingest.sentry.io/0',
+      'https://your-dsn@o0.ingest.sentry.io/0',
+      'postgres://app:changeme@localhost:5432/app',
+    ],
     unexpanded: ['${EXPO_PUBLIC_SUPABASE_URL}', 'https://${HOST}/api'],
     dynamic: [
       'const url = import.meta.env[key]',
@@ -433,7 +455,18 @@ export const SELF_TEST = {
   },
   pass: {
     publicSecret: ['VITE_SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_API_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'VITE_PRIVACY_POLICY_URL'],
-    placeholder: ['https://abcd.supabase.co', 'pk_test_51Habc', 'true', '', 'yourls-shortener-prod', '[::1]', '["https://a.com"]', 'Your Health Portal'],
+    placeholder: [
+      'https://abcd.supabase.co',
+      'pk_test_51Habc',
+      'true',
+      '',
+      'yourls-shortener-prod',
+      '[::1]',
+      '["https://a.com"]',
+      'Your Health Portal',
+      'https://help.example.com/your-account',
+      'https://0123456789abcdef0123456789abcdef@o4504000000000000.ingest.us.sentry.io/4504000000000001',
+    ],
     unexpanded: ['https://abcd.supabase.co', '$5 off', '{literal}'],
     dynamic: [
       'import.meta.env.VITE_API_URL',

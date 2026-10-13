@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Dependency audit gate: fails on any high or critical advisory in the installed tree (runtime,
 // dev, optional, and peer dependencies) that isn't covered by a current, reasoned waiver.
-// The policy and its reasoning: docs/security/dependency-policy.md and docs/adr/0005.
+// The policy it enforces is the repository's dependency policy page (in the template,
+// docs/security/dependency-policy.md, with the reasoning in its ADR 0005; a project that copied
+// this gate keeps its own, e.g. docs/dependency-policy.md).
 //
-// The register (docs/security/audit-waivers.json) is held to the same bar as the advisories: a
+// The register (DEFAULT_WAIVERS below, or --waivers <path>) is held to the same bar as the advisories: a
 // waiver covers one advisory in one package, it must expire within MAX_WAIVER_DAYS, an expired
 // waiver covers nothing, and a waiver for an advisory/package the audit no longer reports fails
 // (a stale entry would otherwise pre-approve the advisory if it ever came back).

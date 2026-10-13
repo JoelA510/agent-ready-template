@@ -250,6 +250,35 @@ function legacyLeftovers(target) {
   })
 }
 
+// What to tell a target that already has agent instructions, or null. Shared rules belong in one
+// AGENTS.md at the root, which every agent reads (the standard core.agent-rules fails rules kept
+// only in CLAUDE.md or another tool's format); CLAUDE.md imports it. Nothing to say when the root
+// AGENTS.md already carries the skeleton's operating rules (its markers): a re-apply after
+// /bootstrap or /complete would otherwise ask for a merge that's done.
+function instructionsAdvice(target, instructions) {
+  if (!instructions.length) return null
+  const has = (p) => instructions.includes(p)
+  const merged = has('AGENTS.md') && readFileSync(join(target, 'AGENTS.md'), 'utf8').includes('<!-- operating-rules:start -->')
+  if (merged) return null
+  const header = `The target already has agent instructions: ${instructions.join(', ')}.\n`
+  // CLAUDE.local.md is personal and usually untracked: never the place to merge shared rules.
+  const others = instructions.filter((p) => p !== 'AGENTS.md' && p !== 'CLAUDE.local.md')
+  if (!has('AGENTS.md') && !others.length) return header
+  const skeleton = 'prompts/skeletons/AGENTS.skeleton.md'
+  // With an AGENTS.md already there, whether CLAUDE.md imports it is agentsHiddenFromClaude's to say.
+  if (has('AGENTS.md')) return `${header}Don't add a second set of rules. Merge the rules from ${skeleton} into AGENTS.md.\n`
+  let advice =
+    `Agent rules belong in one AGENTS.md at the root, which every agent reads (the standard ` +
+    `core.agent-rules fails rules kept only in ${others.join(', ')}): create it from ${skeleton}, ` +
+    `and move the shared rules from ${others.join(', ')} into it.`
+  const claude = ['CLAUDE.md', '.claude/CLAUDE.md'].filter(has)
+  if (claude.length) {
+    const imports = claude.map((p) => `\`@${p === 'CLAUDE.md' ? '' : '../'}AGENTS.md\` as the first line of ${p}`).join(', and ')
+    advice += ` Then make Claude Code read it: ${imports}, keeping only what's specific to Claude Code there.`
+  }
+  return `${header}Don't add a second set of rules. ${advice}\n`
+}
+
 // --- Merge proposals ------------------------------------------------------------------------
 
 // The version of `src` this checkout committed at `commit`, if it's still here and hashes to what
@@ -701,21 +730,8 @@ function main() {
         `\nIf they're still unfilled, delete them; the skeletons are staged under prompts/skeletons/ now.\n`,
     )
   }
-  // CLAUDE.local.md is personal and usually untracked: never the place to merge shared rules.
-  const existing = instructions.find((p) => p !== 'CLAUDE.local.md')
-  if (instructions.length) {
-    let advice = ''
-    if (existing === 'AGENTS.md') advice = 'Merge the rules from prompts/skeletons/AGENTS.skeleton.md into AGENTS.md.'
-    else if (existing) {
-      advice =
-        `An existing project (/complete) merges the rules from prompts/skeletons/AGENTS.skeleton.md ` +
-        `into ${existing}; a new one (/bootstrap) folds ${existing} into a new AGENTS.md.`
-    }
-    console.log(
-      `The target already has agent instructions: ${instructions.join(', ')}.\n` +
-        (advice ? `Don't add a second set of rules. ${advice}\n` : ''),
-    )
-  }
+  const advice = instructionsAdvice(target, instructions)
+  if (advice) console.log(advice)
   const hidden = agentsHiddenFromClaude(target)
   if (hidden) console.log(`${hidden.file}: ${hidden.detail}\n`)
 

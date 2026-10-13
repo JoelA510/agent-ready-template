@@ -2648,3 +2648,51 @@ describe('this repository', { timeout: 120_000 }, () => {
     expect(card.summary.pass).toBeGreaterThan(10) // positive control: it checked something
   })
 })
+
+// A new project copies the CI and Dependabot skeletons as Phase 2.5 says (the adapt line deleted,
+// every script they run present), and milestone 1 holds it to a clean scorecard. So the skeletons,
+// as copied, pass every standard about workflows and updates; each planted gap fails its standard.
+describe('the project skeletons, copied literally', () => {
+  const SKELETONS = join(REPO, 'templates/project/.github')
+  const copied = (path: string) => readFileSync(join(SKELETONS, path), 'utf8').replace(/^# \[ADAPT, THEN DELETE THIS LINE:[^\n]*\n/, '')
+  const STANDARDS = [
+    'core.ci-on-pull-requests',
+    'core.workflows-audited',
+    'core.workflow-caches',
+    'core.dependency-updates',
+    'core.dependency-cooldown',
+    'node.ci-runs-gate',
+    'node.ci-uses-pin',
+    'node.unused-code',
+    'node.test-suites-in-ci',
+  ]
+  const ci = () => copied('workflows/ci.yml')
+  beforeEach(() => {
+    goodNode({ scripts: { 'test:e2e': 'playwright test' }, devDependencies: { '@playwright/test': '^1.60.0' } })
+    write('.github/workflows/ci.yml', ci())
+    write('.github/dependabot.yml', copied('dependabot.yml'))
+  })
+
+  it('pass the workflow and update standards milestone 1 holds a Node project to', () => {
+    expect(ci()).not.toContain('[ADAPT') // positive control: the adapt line came out
+    const results = STANDARDS.map((id) => [id, probe(id).status])
+    expect(results).toEqual(STANDARDS.map((id) => [id, 'pass']))
+  })
+
+  it.each([
+    ['core.workflows-audited', 'the zizmor step', /\n {6}# Every stack keeps this step[\s\S]*?zizmor --format=github[^\n]*\n/],
+    ['node.unused-code', 'the knip step', /\n {6}# Node pack \(standard node\.unused-code\)[\s\S]*?run: npm run check:unused\n/],
+  ])('fail %s without %s', (id, _label, step) => {
+    const without = ci().replace(step, '\n')
+    expect(without).not.toBe(ci()) // the planted defect took
+    write('.github/workflows/ci.yml', without)
+    expect(probe(id).status).toBe('fail')
+  })
+
+  it('fail core.dependency-updates without the Dependabot skeleton, and the cooldown without its wait', () => {
+    write('.github/dependabot.yml', copied('dependabot.yml').replace(/ {4}cooldown:\n {6}default-days: 7\n/, ''))
+    expect(probe('core.dependency-cooldown').status).toBe('fail')
+    rmSync(join(root, '.github/dependabot.yml'))
+    expect(probe('core.dependency-updates').status).toBe('fail')
+  })
+})

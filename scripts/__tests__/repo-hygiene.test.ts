@@ -234,6 +234,61 @@ describe.skipIf(!hasWorkflows)('workflow permissions', () => {
     const stale = pins(file).filter((p) => own.has(p.action) && own.get(p.action) !== p.sha)
     expect(stale.map((p) => `${p.action}@${p.sha} (the template uses ${own.get(p.action)})`)).toEqual([])
   })
+
+  // The same for zizmor, which runs from a pinned version Dependabot doesn't move.
+  const zizmor = (file: string) => [...readFileSync(file, 'utf8').matchAll(/zizmor==([\d.]+)/g)].map((m) => m[1])
+  const ownZizmor = new Set(readdirSync(WORKFLOWS).filter((f) => /\.ya?ml$/.test(f)).flatMap((f) => zizmor(join(WORKFLOWS, f))))
+
+  it('runs zizmor at the version the template runs (positive control: both are found)', () => {
+    expect(ownZizmor.size).toBe(1)
+    expect(skeletonFiles.flatMap(zizmor).length).toBeGreaterThan(0)
+    expect([...new Set(skeletonFiles.flatMap(zizmor))]).toEqual([...ownZizmor])
+  })
+})
+
+// The project skeletons: a literal reader fills the ruleset from the CI skeleton, so the ruleset
+// skeleton names every job the CI skeleton runs, under the same name. The audit's check comes from
+// its own workflow, which isn't a skeleton, so it stays a placeholder.
+describe('the ruleset skeleton requires every job of the CI skeleton', () => {
+  type Check = Record<string, unknown> & { context: string }
+  type Ruleset = { rules: { type: string; parameters?: { required_status_checks?: Check[] } }[] }
+  type Ci = { jobs: Record<string, { name?: string }> }
+  const isPlaceholder = (s: string) => /^\[[A-Z][^\]]*\]$/.test(s)
+  const jobNames = (ci: Ci) => Object.entries(ci.jobs).map(([id, job]) => job.name ?? id)
+  const required = (ruleset: Ruleset) => ruleset.rules.find((r) => r.type === 'required_status_checks')!.parameters!.required_status_checks!
+  // What the comparison reports: the jobs the ruleset doesn't require, and the reverse.
+  const mismatch = (ci: Ci, ruleset: Ruleset) => {
+    const jobs = jobNames(ci)
+    const contexts = required(ruleset).map((c) => c.context).filter((c) => !isPlaceholder(c))
+    return { notRequired: jobs.filter((j) => !contexts.includes(j)), noSuchJob: contexts.filter((c) => !jobs.includes(c)) }
+  }
+  const ci = parseYaml(readFileSync(join(REPO, 'templates/project/.github/workflows/ci.yml'), 'utf8')) as Ci
+  const ruleset = JSON.parse(readFileSync(join(REPO, 'templates/project/.github/rulesets/main.json'), 'utf8')) as Ruleset
+
+  it('finds the jobs and the required checks, and catches a job left out (positive control)', () => {
+    expect(jobNames(ci).length).toBeGreaterThanOrEqual(2)
+    expect(required(ruleset).length).toBeGreaterThanOrEqual(2)
+    const dropped: Ruleset = {
+      rules: ruleset.rules.map((r) =>
+        r.type === 'required_status_checks'
+          ? { ...r, parameters: { required_status_checks: required(ruleset).filter((c) => c.context !== 'End-to-end') } }
+          : r,
+      ),
+    }
+    expect(mismatch(ci, dropped)).toEqual({ notRequired: ['End-to-end'], noSuchJob: [] })
+  })
+
+  it("names exactly the CI skeleton's jobs, plus a placeholder for the audit workflow's", () => {
+    expect(mismatch(ci, ruleset)).toEqual({ notRequired: [], noSuchJob: [] })
+    expect(required(ruleset).map((c) => c.context).filter(isPlaceholder)).toEqual(['[AUDIT JOB NAME]'])
+  })
+
+  it('leaves only context and integration_id in each entry once its placeholders are deleted', () => {
+    for (const check of required(ruleset)) {
+      expect(Object.keys(check).filter((k) => !isPlaceholder(k)).sort()).toEqual(['context', 'integration_id'])
+      expect(check.integration_id).toBe(15368)
+    }
+  })
 })
 
 describe.skipIf(!hasWorkflows)('the ruleset requires every pull-request check', () => {
