@@ -52,8 +52,9 @@ milestone 1's scorecard passes.
   the operating rules' markers, `process:apply` says nothing about agent instructions.
 - **URL-shaped placeholders pass no longer.** `https://<your-key>@o0.ingest.sentry.io/0`, the
   shape vendors document a DSN in, passed both `check:env` and the env guide's example schema.
-  `check:env` now treats any `<…>` in a URL, and `your-…` opening its user, host, or a path
-  segment, as a placeholder (and `changeme` before an `@`); a real DSN still passes. The guide's
+  `check:env` now treats any `<…>` in a URL, and `your-…` opening its user, password, or a host
+  label, as a placeholder (and `changeme` before an `@`); a real DSN, and a real page such as
+  `https://help.example.com/your-account`, still pass. The guide's
   example refuses placeholders on every value, optional ones included, and says to test the rule
   with a placeholder that is otherwise well formed. A project's env module: refuse the same shapes.
 - **The audit gate's header named the template's paths** (`docs/security/dependency-policy.md`,

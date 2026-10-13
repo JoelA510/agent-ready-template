@@ -41,7 +41,8 @@
 //   - placeholder:   a string value in a real env file (not *.example, *.sample, *.template) or
 //                    eas.json that is still a placeholder: `your-…`, `<…>`, `[UPPERCASE]`,
 //                    `changeme`, `xxxx`, `REPLACE_ME`, and in a URL any `<…>` or a `your-…`
-//                    user, host, or path segment (`https://<your-key>@o0.ingest.sentry.io/0`).
+//                    user, password, or host label (`https://<your-key>@o0.ingest.sentry.io/0`).
+//                    A path segment like `/your-account` can be a real page and isn't reported.
 //                    It passes a "non-empty" check, and a URL check, and ships.
 //                    Only names are printed, never values;
 //   - unexpanded:    a `${VAR}` reference in an eas.json build profile's env (`env`,
@@ -121,8 +122,9 @@ export function isPlaceholder(value) {
     /^(change[-_]?me|replace[-_]?me|CHANGEME|CHANGE_ME|REPLACE_ME|TODO|TBD|FIXME|x{4,}|X{4,}|\*{4,})$/.test(v) ||
     /(^|[-_.:/@])(your[-_](api[-_])?(key|token|secret|project|url|password)|changeme|replace[-_]?me)([-_.:/@]|$)/.test(v) ||
     // Inside a URL, a real value can't hold `<` or `>` (they'd be percent-encoded), and `your-…`
-    // opening its user, password, host, or a path segment is the vendor's example left in.
-    (URL_SHAPED.test(v) && (/<[^<>]*>/.test(v) || /[/@:.]your[-_][a-z0-9]/i.test(v)))
+    // opening its user, password, or a host label is the vendor's example left in. The path is
+    // left to the rule above: `/your-account` can be a real page.
+    (URL_SHAPED.test(v) && (/<[^<>]*>/.test(v) || /^[a-z][a-z0-9+.-]*:\/\/[^/?#]*\byour[-_][a-z0-9]/i.test(v)))
   )
 }
 
@@ -462,6 +464,7 @@ export const SELF_TEST = {
       '[::1]',
       '["https://a.com"]',
       'Your Health Portal',
+      'https://help.example.com/your-account',
       'https://0123456789abcdef0123456789abcdef@o4504000000000000.ingest.us.sentry.io/4504000000000001',
     ],
     unexpanded: ['https://abcd.supabase.co', '$5 off', '{literal}'],

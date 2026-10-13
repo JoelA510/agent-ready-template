@@ -32,10 +32,17 @@ Adapt, don't paste — names and framework prefix depend on your stack:
 // src/env.ts — the only file allowed to read process.env
 import { z } from 'zod'
 
-// Refuses what an example file holds, anywhere in the value: a URL check alone accepts
-// `https://<your-key>@o0.ingest.sentry.io/0`, the shape vendors document a DSN in.
-const PLACEHOLDER = /<\w[^>]*>|(^|[/@:.])your[-_]|change[-_]?me|replace[-_]?me/i
-const real = (schema: z.ZodString) => schema.refine((v) => !PLACEHOLDER.test(v), 'still a placeholder')
+// Refuses what an example file holds: a URL check alone accepts
+// `https://<your-key>@o0.ingest.sentry.io/0`, the shape vendors document a DSN in. In a URL,
+// `your-` counts in the user or host, not the path (`/your-account` can be a real page).
+const PLACEHOLDER = /<\w[^>]*>|^your[-_]|change[-_]?me|replace[-_]?me/i
+const vendorSlot = (v: string) => {
+  if (!URL.canParse(v)) return false
+  const { username, hostname } = new URL(v)
+  return /^your[-_]/i.test(username) || /(^|\.)your[-_]/i.test(hostname)
+}
+const real = (schema: z.ZodString) =>
+  schema.refine((v) => !PLACEHOLDER.test(v) && !vendorSlot(v), 'still a placeholder')
 
 const server = z.object({
   DATABASE_URL: real(z.string().url()),
@@ -77,7 +84,7 @@ Three refinements, all from real incidents:
 - **Reject placeholder values, not just empty ones.** A copied `.env.example` passes
   `z.string().min(1)` with `your-api-key` in it, and ships; `z.string().url()` passes
   `https://<your-key>@o0.ingest.sentry.io/0`. Refuse the shapes your example file uses
-  (`your-…`, `<…>`, `changeme`) anywhere in the value, as `real()` above does, optional
+  (`your-…`, `<…>`, `changeme`), inside a URL too, as `real()` above does, optional
   variables included, and test it with a placeholder that is otherwise well formed: one the
   schema refuses as malformed anyway proves nothing about the placeholder rule.
 - **Fail the build, not the first request.** Where the platform builds on a remote service

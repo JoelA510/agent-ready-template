@@ -90,6 +90,9 @@ describe('detectors', () => {
     ['postgres://app:<password>@localhost:5432/app', true],
     ['https://0123456789abcdef0123456789abcdef@o4504000000000000.ingest.us.sentry.io/4504000000000001', false],
     ['postgres://app:s3cr3t@db.internal:5432/yourapp', false],
+    // A real page whose path happens to start with `your-`: only the user and host are vendor slots.
+    ['https://help.example.com/your-account', false],
+    ['https://app.your-org.example.com/', true],
     ['Use <b>bold</b> here', false],
     ['https://abc.supabase.co', false],
     ['[::1]', false],
