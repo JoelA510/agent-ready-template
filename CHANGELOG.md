@@ -10,10 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-Fixes from the third new-repository trial (a process-only bootstrap on `1.0.0-rc.3`), and from
-the latest existing-repository trial (an audit and plan for an existing Vite + Supabase app on
-`1.0.0-rc.3`): the skeletons, followed literally, now produce what milestone 1's scorecard passes,
-and the scorecard no longer fails a budget gate that works or passes a CI with no pin.
+## [1.0.0] - 2026-10-13
+
+The first release. `1.0.0-rc.3` went through a trial of each kind: a process-only bootstrap of a
+new repository, and an audit and plan for an existing Vite + Supabase app. Every template finding
+both raised is fixed here: 8 from the new repository, 10 from the existing one (two of them a
+never-acceptable kind: delivery advice the scorecard itself failed, and a budget gate that works
+scored as missing), and 3 more that the rerun of the changed steps found. The steps each fix
+changed were rerun on the fixed template, and none is open. The release bar (CONTRIBUTING.md §8,
+step 5) is met.
+
+For a project built from rc.3: the skeletons, followed literally, now produce what milestone 1's
+scorecard passes (zizmor, knip, Dependabot, a format step, a ruleset that names every CI job), and
+the scorecard no longer fails a budget gate that works or passes a CI with no pin. The entries
+below say what to change by hand.
 
 ### Changed
 
