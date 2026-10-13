@@ -829,6 +829,28 @@ const matching = (commands, re) => commands.filter((c) => commandForms(c.text).s
 // A command a probe found missing that does run, only where it can't fail the run: said in the failure.
 const silencedCopies = (ignored, re) => [...new Set(matching(ignored, re).map((c) => `"${c.text}" in ${c.where}, which can't fail the run`))]
 
+// A repository's own bundle-size script that a command runs with node (`node scripts/bundle-size.js`),
+// named for a bundle, a size or a budget, as { path, enforces, why }. It counts as a budget only when
+// its source names a budget and exits non-zero (`process.exit(1)`, `process.exitCode = 1`).
+function budgetScripts(ctx, c) {
+  const found = []
+  for (const form of commandForms(c.text)) {
+    const m = /^node\s+(?:-\S+\s+)*(['"]?)([\w./@-]+\.[cm]?js)\1(?:\s|$)/.exec(form)
+    if (!m || !/bundle|budget|size/i.test(posix.basename(m[2]))) continue
+    const path = joinDir(c.dir, m[2])
+    if (!path || found.some((f) => f.path === path)) continue
+    const text = ctx.repo.read(path)
+    if (text === null) {
+      found.push({ path, enforces: false, why: `${path} isn't in the repository` })
+      continue
+    }
+    const budget = /budget/i.test(text)
+    const exits = /process\.exit\(\s*[1-9]|process\.exitCode\s*=\s*[1-9]/.test(text)
+    found.push({ path, enforces: budget && exits, why: `${path} ${!budget ? 'names no budget' : 'never exits non-zero'}` })
+  }
+  return found
+}
+
 // --- Probes ------------------------------------------------------------------------------------
 
 const pass = (...evidence) => ({ status: 'pass', evidence })
@@ -876,8 +898,9 @@ function packageAt(ctx) {
 function pathHint(ctx, pkg) {
   if (ctx.path !== '.' || !pkg) return []
   const workspaces = Array.isArray(pkg.workspaces) ? pkg.workspaces : Array.isArray(pkg.workspaces?.packages) ? pkg.workspaces.packages : []
+  // Only a folder with a package.json of its own: a hint at one without is a guess.
   const below = workspaces.length
-    ? workspaces.filter((w) => typeof w === 'string' && !w.includes('*'))
+    ? workspaces.filter((w) => typeof w === 'string' && !w.includes('*')).map((w) => w.replace(/^\.\/|\/$/g, '')).filter((w) => ctx.repo.has(posix.join(w, 'package.json')))
     : Object.keys(deps(pkg)).length
       ? []
       : ctx.repo.files.filter((f) => /^[^/]+\/package\.json$/.test(f)).map((f) => f.split('/')[0])
@@ -2140,12 +2163,19 @@ export const PROBES = {
     }
     const entries = out.split('\0').filter(Boolean)
     if (!entries.length) return notApplicable('nothing committed yet')
-    const bad = entries
-      .map((e) => e.split('\t'))
-      .filter(([info]) => /^i\/(crlf|mixed)\b/.test(info))
-      .map(([info, path]) => `${path} (${info.split(/\s+/)[0].slice(2)})`)
-    if (bad.length) return fail(`${bad.length} of ${entries.length} tracked files have CRLF or mixed line endings:`, ...list(bad))
-    return pass(`${entries.length} tracked files, none with CRLF in the index`)
+    const crlf = entries.map((e) => e.split('\t')).filter(([info]) => /^i\/(crlf|mixed)\b/.test(info))
+    const label = ([info, path]) => `${path} (${info.split(/\s+/)[0].slice(2)})`
+    // A file .gitattributes marks -text (or binary) is kept byte for byte on purpose: an applied
+    // migration, say, that renormalizing would edit. Not when every path gets it, though: a
+    // catch-all `* -text` would excuse the whole repository.
+    const unset = /(^|\s)attr\/-text\b/
+    const catchAll = /: text: unset$/m.test(execFileSync('git', ['check-attr', 'text', '--', '.conformance-probe/any.file'], { cwd: ctx.repo.root, encoding: 'utf8' }))
+    const kept = catchAll ? [] : crlf.filter(([info]) => unset.test(info))
+    const bad = crlf.filter((e) => !kept.includes(e)).map(label)
+    const keptNote = kept.length ? [`${kept.length} kept as committed by a -text attribute in .gitattributes:`, ...list(kept.map(label))] : []
+    const catchAllNote = catchAll && crlf.some(([info]) => unset.test(info)) ? ['every path is -text (a catch-all rule), so it excuses none of them'] : []
+    if (bad.length) return fail(`${bad.length} of ${entries.length} tracked files have CRLF or mixed line endings:`, ...list(bad), ...catchAllNote, ...keptNote)
+    return pass(`${entries.length} tracked files, none with CRLF in the index${kept.length ? ' except the ones kept on purpose' : ''}`, ...keptNote)
   },
 
   'core.no-agent-workflows': (ctx) => {
@@ -2497,7 +2527,11 @@ export const PROBES = {
         }
       }
     }
-    if (!waived && !unreadable) return notApplicable('no advisory is waived anywhere')
+    if (!waived && !unreadable) {
+      return notApplicable(
+        'no advisory is waived in what this check reads: osv-scanner.toml, docs/security/audit-waivers.json, deny.toml, .cargo/audit.toml, and audit commands in workflows; a register in another form (a Markdown list, say) is not read',
+      )
+    }
     if (problems.length) return fail(...list(problems))
     const expiring = waived - noExpiry
     return pass(
@@ -2570,7 +2604,9 @@ export const PROBES = {
     const ok = []
     const bad = []
     const unknown = []
+    const floors = []
     let steps = 0
+    let pinned = 0
     for (const w of ctx.repo.workflows()) {
       for (const job of w.jobs) {
         for (const step of job.steps.filter((s) => /^actions\/setup-node@/.test(s.uses ?? ''))) {
@@ -2579,8 +2615,10 @@ export const PROBES = {
           const file = step.with['node-version-file']
           const version = step.with['node-version']
           if (file) {
-            if (ctx.repo.has(joinDir('.', String(file)))) ok.push(`${where}: node-version-file ${file}`)
-            else bad.push(`${where}: node-version-file ${file}, which doesn't exist`)
+            if (ctx.repo.has(joinDir('.', String(file)))) {
+              pinned++
+              ok.push(`${where}: node-version-file ${file}`)
+            } else bad.push(`${where}: node-version-file ${file}, which doesn't exist`)
           } else if (version === undefined || version === null || version === '') {
             bad.push(`${where}: setup-node with no version, so it uses the runner image's`)
           } else {
@@ -2595,7 +2633,7 @@ export const PROBES = {
             } else if (String(version).includes('${{')) {
               bad.push(`${where}: node-version ${version}, an expression this check can't read; use node-version-file`)
             } else if (floorVersion && sameVersion(version, floorVersion)) {
-              ok.push(`${where}: ${version}, exactly the engines floor`)
+              floors.push(`${where}: ${version}, exactly the engines floor`)
             } else if (!readable) {
               unknown.push(`${where}: node-version ${version}; it may be the engines floor, but ${unreadable}`)
             } else bad.push(`${where}: node-version ${version}, written into the workflow instead of read from the pin`)
@@ -2607,6 +2645,12 @@ export const PROBES = {
       const node = matching([...ctx.repo.ci(['pull_request', 'push']).commands], NODE_IN_CI)
       if (node.length) return fail(`CI runs Node with no actions/setup-node step, so it uses the runner image's version (${node[0].where})`)
       return notApplicable('no workflow runs Node')
+    }
+    // The floor job is the exception beside a job that reads the pin; alone, it's the only Node CI runs.
+    if (pinned) ok.push(...floors)
+    else {
+      const pin = nodePin(ctx)
+      bad.push(...floors.map((f) => `${f}, but no setup-node step reads ${pin ? `the pin (${pin.file})` : "a pin (there's none: node.runtime-pinned)"}, so the floor is the only Node CI runs`))
     }
     if (bad.length) return fail(...list(bad), ...ok.slice(0, 3))
     return unknown.length ? { status: 'skipped', evidence: [...list(unknown), ...ok.slice(0, 3)] } : pass(...list(ok))
@@ -2743,14 +2787,17 @@ export const PROBES = {
     const version = /^npm@(\d+)\.(\d+)\.\d+/.exec(pm) ?? /^\D*(\d+)\.(\d+)\.\d+$/.exec(dev?.name === 'npm' ? String(dev.version ?? '') : '')
     const [major, minor] = version ? [Number(version[1]), Number(version[2])] : [null, null]
     const problems = []
+    const present = ctx.repo.has(file)
+    // Who decides a setting: the file, or npm's default where the file (or the setting) is missing.
+    const source = (key) => (settings[key] !== undefined ? file : present ? `${file} doesn't set ${key}, so npm's default` : `there's no ${file}, so npm's default`)
     const days = Number(settings['min-release-age'])
     if (!(settings['min-release-age'] !== undefined && days >= DAYS)) {
-      problems.push(`${file} sets no min-release-age of ${DAYS} days or more${settings['min-release-age'] === undefined ? '' : ` (it's ${settings['min-release-age']})`}`)
+      problems.push(`${present ? `${file} sets no` : `there's no ${file}, so nothing sets a`} min-release-age of ${DAYS} days or more${settings['min-release-age'] === undefined ? '' : ` (it's ${settings['min-release-age']})`}`)
     }
     const git = settings['allow-git'] ?? (major !== null && major >= 12 ? 'none' : 'all') // npm 12 refuses git by default
-    if (git !== 'root' && git !== 'none') problems.push(`${file} lets a dependency bring in a git dependency of its own (allow-git=${git}; set it to root or none)`)
+    if (git !== 'root' && git !== 'none') problems.push(`${source('allow-git')} lets a dependency bring in a git dependency of its own (allow-git=${git}; set it to root or none)`)
     const remote = settings['allow-remote'] ?? (major !== null && major >= 12 ? 'none' : 'all') // and URL tarballs too
-    if (remote !== 'root' && remote !== 'none') problems.push(`${file} lets a dependency bring in a tarball from any URL (allow-remote=${remote}; set it to root or none)`)
+    if (remote !== 'root' && remote !== 'none') problems.push(`${source('allow-remote')} lets a dependency bring in a tarball from any URL (allow-remote=${remote}; set it to root or none)`)
     if (major === null) problems.push('nothing pins npm 11.15 or later (packageManager, or devEngines.packageManager with an exact version), and an older npm ignores these settings')
     else if (major < 11 || (major === 11 && minor < 15)) problems.push(`npm ${major}.${minor} is pinned, which ignores min-release-age (npm 11.10), allow-git (11.9), or allow-remote (11.14, fixed in 11.15)`)
     return problems.length ? fail(...problems) : pass(`${file}: min-release-age=${settings['min-release-age']}, allow-git=${git}, allow-remote=${remote}, npm ${major}.${minor}`)
@@ -2823,10 +2870,16 @@ export const PROBES = {
     const re = /^(size-limit|bundlesize|bundlewatch)(\s|$)|^node\s+(\S*\/)?check-bundle-size\.mjs\b/
     const hit = matching(forPath(commands, ctx.path), re)[0]
     if (hit) return pass(`"${hit.text}" in ${hit.where}`)
+    // A repository's own budget script, run by node: read, since its name alone proves nothing.
+    const own = forPath(commands, ctx.path).flatMap((c) => budgetScripts(ctx, c).map((s) => ({ ...s, c })))
+    const enforcing = own.find((s) => s.enforces)
+    if (enforcing) return pass(`"${enforcing.c.text}" in ${enforcing.c.where}: ${enforcing.path} reads a budget and exits non-zero`)
     // The size-limit action posts a comment; whether it fails the run isn't read here.
     const action = actionSteps(ctx, PR, /^andresz1\/size-limit-action@/)[0]
     if (action) return skip(`${action.uses} in ${action.where}: this check can't tell whether it fails the run`)
-    return fail('no pull_request workflow checks the bundle against a size budget where it can fail the run', ...silencedCopies(forPath(ignored, ctx.path), re))
+    if (own.length) return skip(...own.map((s) => `"${s.c.text}" in ${s.c.where}: ${s.why}, so this check can't tell whether it holds the bundle to a budget`))
+    const silenced = forPath(ignored, ctx.path).filter((c) => budgetScripts(ctx, c).length).map((c) => `"${c.text}" in ${c.where}, which can't fail the run`)
+    return fail('no pull_request workflow checks the bundle against a size budget where it can fail the run', ...silencedCopies(forPath(ignored, ctx.path), re), ...new Set(silenced))
   },
 
   'supabase.migration-names': (ctx) => {

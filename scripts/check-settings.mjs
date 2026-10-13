@@ -23,6 +23,10 @@ import { CheckError, loadCatalog } from './check-conformance.mjs'
 import { MISSING_DEPENDENCY } from './template-dependency.mjs'
 
 const API_VERSION = '2022-11-28'
+// Where the template's ruleset is in a repository: at its live path in one built from the template,
+// staged under prompts/skeletons/ in one process:apply delivered to. This script reads neither.
+const RULESET_REMEDY =
+  "add a ruleset requiring the CI job in Settings -> Rules -> Rulesets; the template's is .github/rulesets/main.json in a repository built from it, prompts/skeletons/.github/rulesets/main.json where process:apply delivered it (name its required checks after your CI jobs)"
 
 /** A GitHub API client over `fetch`: get(path) -> { status, body, message }. */
 export function githubApi({ token, fetch = globalThis.fetch, apiUrl = 'https://api.github.com' }) {
@@ -125,7 +129,7 @@ export const SETTINGS = {
     }
     if (classic.status !== 404) throw unexpected(classic)
     if (!repo.permissions?.admin) return needsAdmin // the 404 a token without admin sees, too
-    return fail(`no active ruleset or branch protection requires a status check on ${branch}`, 'import the ruleset from .github/rulesets/ in Settings -> Rules -> Rulesets, or add one requiring the CI job')
+    return fail(`no active ruleset or branch protection requires a status check on ${branch}`, RULESET_REMEDY)
   },
 
   'core.settings-private-reporting': async ({ get, slug, repo }) => {

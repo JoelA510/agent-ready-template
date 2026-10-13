@@ -71,6 +71,8 @@ describe('the settings standards', () => {
   it('branch-protected: a ruleset or classic protection that requires a check; n/a where Free can\'t enforce it', async () => {
     const none = { ...GOOD, [`/repos/${SLUG}/rules/branches/main`]: { status: 200, body: [] } }
     expect(status(await score(none), 'core.settings-branch-protected')?.evidence[0]).toBe('no active ruleset or branch protection requires a status check on main')
+    // The remedy names where the ruleset is in a target, not a path only the template has.
+    expect(status(await score(none), 'core.settings-branch-protected')?.evidence[1]).toContain('prompts/skeletons/.github/rulesets/main.json where process:apply delivered it')
     const classic = { ...none, [`/repos/${SLUG}/branches/main/protection`]: { status: 200, body: { required_status_checks: { contexts: ['ci'] } } } }
     expect(status(await score(classic), 'core.settings-branch-protected')).toMatchObject({ status: 'pass', evidence: ['branch protection requires status checks on main: ci'] })
     const noChecks = { ...none, [`/repos/${SLUG}/branches/main/protection`]: { status: 200, body: { enforce_admins: { enabled: true } } } }

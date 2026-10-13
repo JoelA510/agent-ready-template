@@ -467,6 +467,34 @@ describe('core probes', () => {
     expect(probe('core.lf-line-endings').status).toBe('pass')
   })
 
+  // An existing-repo trial on a Vite + Supabase app: renormalizing would have edited applied
+  // migrations, which the migration tool never re-runs and the repository's CI rejects a change to.
+  it('lf-line-endings: a file marked -text is kept on purpose, but a catch-all excuses nothing', () => {
+    git('init', '-q')
+    const migration = 'supabase/migrations/20260101000000_init.sql'
+    write(migration, 'create table t ();\r\n')
+    write('b.txt', 'one\r\n')
+    const commit = () => {
+      git('-c', 'core.autocrlf=false', 'add', '.')
+      git('commit', '-q', '--no-verify', '-m', 'files')
+    }
+    commit()
+    expect(probe('core.lf-line-endings')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('2 of 2'), 'b.txt (crlf)', `${migration} (crlf)`] })
+    // The migration is marked -text; b.txt, committed before the rule, still has CRLF in the index.
+    write('.gitattributes', `* text=auto eol=lf\n${migration} -text\n`)
+    commit()
+    expect(probe('core.lf-line-endings')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('1 of 3'), 'b.txt (crlf)', expect.stringContaining('1 kept'), `${migration} (crlf)`] })
+    write('b.txt', 'one\n')
+    commit()
+    expect(probe('core.lf-line-endings')).toMatchObject({
+      status: 'pass',
+      evidence: [expect.stringContaining('except the ones kept on purpose'), expect.stringContaining('1 kept as committed by a -text attribute'), `${migration} (crlf)`],
+    })
+    // A catch-all -text would excuse every file in the repository, so it excuses none.
+    write('.gitattributes', '* -text\n')
+    expect(probe('core.lf-line-endings')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('1 of 3'), `${migration} (crlf)`, expect.stringContaining('catch-all')] })
+  })
+
   it('no-agent-workflows: Antigravity workflows left behind', () => {
     write('.agent/workflows/review.md', '# Review\n')
     expect(probe('core.no-agent-workflows')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('2026-10-19'), '.agent/workflows/review.md'] })
@@ -732,7 +760,8 @@ describe('core probes', () => {
   })
 
   it('audit-waivers: a reason and an expiry within 90 days, in every register', () => {
-    expect(probe('core.audit-waivers', { today: TODAY })).toMatchObject({ status: 'n/a' })
+    // n/a names what it read: a register in another form is not evidence of no waiver.
+    expect(probe('core.audit-waivers', { today: TODAY })).toMatchObject({ status: 'n/a', evidence: [expect.stringContaining('no advisory is waived in what this check reads: osv-scanner.toml')] })
     const osv = (entries: string) => write('osv-scanner.toml', entries)
     osv('[[IgnoredVulns]]\nid = "GHSA-aaaa-bbbb-cccc"\nignoreUntil = 2026-11-01\nreason = "Only the build server parses this input, never a user."\n')
     expect(probe('core.audit-waivers', { today: TODAY })).toMatchObject({ status: 'pass', evidence: ['1 waiver(s), each with a reason', '1 with an expiry within 90 days'] })
@@ -817,10 +846,15 @@ describe('node probes', () => {
     expect(guards().evidence).toEqual([
       ".npmrc sets no min-release-age of 3 days or more (it's 2)",
       '.npmrc lets a dependency bring in a git dependency of its own (allow-git=all; set it to root or none)',
-      '.npmrc lets a dependency bring in a tarball from any URL (allow-remote=all; set it to root or none)',
+      ".npmrc doesn't set allow-remote, so npm's default lets a dependency bring in a tarball from any URL (allow-remote=all; set it to root or none)",
     ])
+    // With no .npmrc, the evidence says npm's defaults decide, not a file that isn't there.
     rmSync(join(root, '.npmrc'))
-    expect(guards().evidence[0]).toBe('.npmrc sets no min-release-age of 3 days or more')
+    expect(guards().evidence).toEqual([
+      "there's no .npmrc, so nothing sets a min-release-age of 3 days or more",
+      "there's no .npmrc, so npm's default lets a dependency bring in a git dependency of its own (allow-git=all; set it to root or none)",
+      "there's no .npmrc, so npm's default lets a dependency bring in a tarball from any URL (allow-remote=all; set it to root or none)",
+    ])
     write('.npmrc', ok)
     // An npm too old for the settings ignores them; npm 12 refuses git by default.
     json('package.json', { ...pkg(), packageManager: 'npm@11.12.0' })
@@ -890,7 +924,7 @@ describe('node probes', () => {
     expect(guards({ path: 'apps/api' })).toMatchObject({ status: 'pass', evidence: ['pnpm-workspace.yaml: minimumReleaseAge 10080 minutes, blockExoticSubdeps'] })
     // pnpm excludes what a negation matches, wherever it stands.
     write('pnpm-workspace.yaml', 'packages:\n  - "!apps/api"\n  - apps/*\nminimumReleaseAge: 10080\nblockExoticSubdeps: true\n')
-    expect(guards({ path: 'apps/api' }).evidence[0]).toBe('apps/api/.npmrc sets no min-release-age of 3 days or more') // its own
+    expect(guards({ path: 'apps/api' }).evidence[0]).toBe("there's no apps/api/.npmrc, so nothing sets a min-release-age of 3 days or more") // its own
     write('pnpm-workspace.yaml', 'packages:\n  - apps/*\n  - "!apps/api/*"\nminimumReleaseAge: 10080\nblockExoticSubdeps: true\n')
     expect(guards({ path: 'apps/api' }).status).toBe('pass')
     rmSync(join(root, 'apps'), { recursive: true })
@@ -997,8 +1031,16 @@ describe('node probes', () => {
     const literal = (v: string) => workflow(`      - uses: actions/setup-node@v7\n        with:\n          node-version: ${v}\n      - run: npm run check\n`)
     write('.github/workflows/ci.yml', literal('24'))
     expect(probe('node.ci-uses-pin')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('written into the workflow instead of read from the pin')] })
+    // The floor job passes beside a job that reads the pin, and fails alone: then it's the only Node
+    // CI runs (an existing-repo trial on a Vite + Supabase app passed this with no pin at all).
     write('.github/workflows/ci.yml', literal('22.12.0'))
-    expect(probe('node.ci-uses-pin')).toMatchObject({ status: 'pass', evidence: [expect.stringContaining('exactly the engines floor')] })
+    expect(probe('node.ci-uses-pin')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('exactly the engines floor, but no setup-node step reads the pin (.nvmrc)')] })
+    rmSync(join(root, '.nvmrc'))
+    expect(probe('node.ci-uses-pin')).toMatchObject({ status: 'fail', evidence: [expect.stringContaining("reads a pin (there's none: node.runtime-pinned), so the floor is the only Node CI runs")] })
+    write('.nvmrc', '24\n')
+    const floorBesidePin = literal('22.12.0').replace('      - run: npm run check\n', `      - run: npm run check\n  pinned:\n    runs-on: ubuntu-latest\n    steps:\n${SETUP_NODE}      - run: npm run check\n`)
+    write('.github/workflows/ci.yml', floorBesidePin)
+    expect(probe('node.ci-uses-pin')).toMatchObject({ status: 'pass', evidence: expect.arrayContaining([expect.stringContaining('exactly the engines floor')]) })
     write('.github/workflows/ci.yml', literal("${{ env.NODE }}"))
     expect(probe('node.ci-uses-pin').evidence[0]).toContain("an expression this check can't read")
   })
@@ -1102,6 +1144,9 @@ describe('node probes', () => {
   it('ci-runs-gate: hints at a project below a workspace root', () => {
     json('package.json', { name: 'root', private: true, workspaces: ['mobile-app'], scripts: { postinstall: 'patch-package' } })
     write('.github/workflows/ci.yml', workflow('      - run: echo nothing\n'))
+    // A listed workspace with no package.json of its own isn't a project to point at.
+    expect(probe('node.ci-runs-gate').evidence.join('\n')).not.toContain('may live below the root')
+    json('mobile-app/package.json', { name: 'mobile-app' })
     expect(probe('node.ci-runs-gate').evidence).toEqual(
       expect.arrayContaining([expect.stringContaining('declare { "pack": "node", "path": "mobile-app" }')]),
     )
@@ -1188,6 +1233,36 @@ describe('vite-spa.bundle-budget', () => {
     expect(budget().status).toBe('fail') // named, not run
     write('.github/workflows/ci.yml', workflow('      - uses: andresz1/size-limit-action@v1\n'))
     expect(budget().status).toBe('skipped')
+  })
+
+  // An existing-repo trial on a Vite + Supabase app: its own script, run through an npm script and
+  // piped into tee under pipefail, failed the run over budget; the probe knew only the tools by name.
+  it("the repository's own budget script, read to see that it can fail", () => {
+    const budget = () => probe('vite-spa.bundle-budget')
+    json('package.json', { name: 'app', scripts: { build: 'vite build', 'check:bundle': 'node scripts/check-bundle-size.js' } })
+    json('config/bundle-budget.json', { rules: [{ match: 'assets/index-*.js', gzipBytes: 90000 }] })
+    const enforcing = "const budget = JSON.parse(read('config/bundle-budget.json'))\nif (over(budget)) process.exit(1)\n"
+    write('scripts/check-bundle-size.js', enforcing)
+    // Positive control: the script and its budget exist, but no pull_request workflow runs them.
+    write('.github/workflows/ci.yml', workflow('      - run: npm run build\n'))
+    expect(budget()).toMatchObject({ status: 'fail', evidence: ['no pull_request workflow checks the bundle against a size budget where it can fail the run'] })
+    const piped = (pipefail: boolean) =>
+      workflow(`      - run: npm run build\n      - name: Bundle budget\n        run: |\n${pipefail ? '          set -o pipefail\n' : ''}          npm run check:bundle | tee bundle-report.txt\n`)
+    write('.github/workflows/ci.yml', piped(true))
+    expect(budget()).toMatchObject({ status: 'pass', evidence: [expect.stringContaining('scripts/check-bundle-size.js reads a budget and exits non-zero')] })
+    // Without pipefail tee's exit status is the step's, so the budget can't fail the run.
+    write('.github/workflows/ci.yml', piped(false))
+    expect(budget()).toMatchObject({ status: 'fail', evidence: [expect.stringContaining('no pull_request workflow'), expect.stringContaining("which can't fail the run")] })
+    // A script named for the bundle that only reports, or names no budget, is undecided, not passed.
+    write('.github/workflows/ci.yml', piped(true))
+    write('scripts/check-bundle-size.js', "const budget = JSON.parse(read('config/bundle-budget.json'))\nconsole.log(report(budget))\n")
+    expect(budget()).toMatchObject({ status: 'skipped', evidence: [expect.stringContaining('scripts/check-bundle-size.js never exits non-zero')] })
+    write('scripts/check-bundle-size.js', 'if (tooBig()) process.exit(1)\n')
+    expect(budget()).toMatchObject({ status: 'skipped', evidence: [expect.stringContaining('scripts/check-bundle-size.js names no budget')] })
+    // A node script with an unrelated name is not read as a budget at all.
+    json('package.json', { name: 'app', scripts: { build: 'vite build', 'check:bundle': 'node scripts/lint-copy.js' } })
+    write('scripts/lint-copy.js', enforcing)
+    expect(budget().status).toBe('fail')
   })
 })
 
