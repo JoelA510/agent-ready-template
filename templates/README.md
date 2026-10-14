@@ -23,6 +23,7 @@ the process through `process:apply`, the same files are staged under `prompts/sk
 | `project/docs/adr/` | New-project Phase 2.3 — decision records (the template, copied unchanged; the index; the stack ADR skeleton) | `docs/adr/` |
 | `project/docs/dependency-policy.md` | New-project Phase 2.5 / existing-project audit §8 — the dependency audit gate and waiver register | `docs/dependency-policy.md` |
 | `project/docs/env-validation.md` | New-project Phase 2.6 — the typed env module pattern, and what client bundlers ship | Not kept: the env module is built from it |
+| `project/docs/free-tier.md` | New-project Phase 2.5 / existing-project audit §7, for a project on a free plan — what each push spends, the agent working rules, and the Vercel, GitHub, Dependabot, and Supabase settings that keep it inside the limits | `docs/free-tier.md` |
 | `project/docs/release-runbook.md` | New-project milestone 1 (Phase 3) / existing-project audit §7 — environments, release, verifying the shipped artifact, rollback | `docs/release-runbook.md` |
 | `project/docs/content-guide.md` | Optional, for a product with user-facing copy / existing-project audit §12 — voice, terminology, and the claims register | `docs/content-guide.md` |
 | `project/docs/postmortem.md` | The release runbook and `investigate.md` — one per incident | `docs/postmortems/YYYY-MM-DD-<slug>.md` |

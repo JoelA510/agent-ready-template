@@ -262,7 +262,10 @@ Create, as actual files in the repo:
    advisories, runs weekly as well as per PR, and honors only expiring,
    reasoned waivers (skeleton: docs/dependency-policy.md). Build and deploy
    settings live in the repo (vercel.json, netlify.toml, eas.json, workflow files), not only in a
-   hosting dashboard. The runtime is pinned once (`.nvmrc` or equivalent):
+   hosting dashboard. Where the constraints input puts a repository, host, or
+   backend on a free plan, keep docs/free-tier.md (skeleton: docs/free-tier.md):
+   its deployment and update settings go into those files, and its agent
+   working rules into AGENTS.md. The runtime is pinned once (`.nvmrc` or equivalent):
    CI reads that file instead of naming a version, the host is set to the
    same version (before a host account exists, list that as a milestone 1
    settings item), the package declares the supported range (`engines`), and

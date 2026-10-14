@@ -200,7 +200,10 @@ site has no server-side authz or database):
    upstream; config keys dead after a tool upgrade; preview
    deploys; rollback path; is the shipped artifact ever checked; build
    settings that live only in a hosting dashboard (yardstick: ixartz; target
-   shape: the release-runbook skeleton, docs/release-runbook.md).
+   shape: the release-runbook skeleton, docs/release-runbook.md); on a free
+   plan, what each push spends (CI minutes, deployments, preview branches)
+   and whether agents' and bots' pushes stay inside it (skeleton:
+   docs/free-tier.md).
 8. Security - secrets in code/history, dependency audit (does it run in CI,
    block on high/critical, and run on a schedule; are waivers reasoned and
    expiring - skeleton: docs/dependency-policy.md), whether updates arrive
