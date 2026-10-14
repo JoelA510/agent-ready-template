@@ -44,6 +44,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PROCEDURE, SELECTION_FILE } from './agent-platforms.mjs'
 import { INSTRUCTION_PATHS, agentsHiddenFromClaude } from './check-instructions.mjs'
 import { enginesNode, satisfies } from './runtime.mjs'
 
@@ -65,6 +66,7 @@ export const PROCESS_PROMPTS = [
   'verify.md',
   'plan-change.md',
   'template-update.md',
+  'agent-platforms.md',
   'run-log.md',
 ]
 export const PROCESS_SKILLS = ['bootstrap', 'complete', 'discovery', 'plan-change', 'root-cause', 'review-change', 'pre-pr', 'verify', 'template-update']
@@ -757,6 +759,10 @@ function main() {
   if (advice) console.log(advice)
   const hidden = agentsHiddenFromClaude(target)
   if (hidden) console.log(`${hidden.file}: ${hidden.detail}\n`)
+  // The target's own choice: never delivered, so only recommended.
+  if (!existsSync(join(target, SELECTION_FILE))) {
+    console.log(`No ${SELECTION_FILE} records which coding agents this repo uses, so its instruction files are checked against every agent's strictest limit. Record them there (${PROCEDURE} lists the ids, and how to research one that isn't listed).\n`)
+  }
 
   const steps = []
   const first = Object.keys(previous.files).length === 0

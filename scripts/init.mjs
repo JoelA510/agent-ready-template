@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // Rebrand this template for a new client project. See usage() below, or run with no args.
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PLATFORMS, PROCEDURE, SELECTION_FILE, selectionText, unknownIds } from './agent-platforms.mjs';
 import { buildEntry, isGenerated } from './generated.mjs';
 import { isSite, PLACEHOLDER_HOMEPAGE, siteBase, TEMPLATE_HOMEPAGE } from './homepage.mjs';
 import { listRepoFiles } from './repo-files.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const FLAGS = new Set(['name', 'slug', 'scope', 'homepage']);
+const FLAGS = new Set(['name', 'slug', 'scope', 'homepage', 'platforms']);
 // A line containing this marker is left as written: it describes the placeholder itself
 // ("ships with a placeholder brand, Acme Inc."), which a rebrand would make false.
 const KEEP = 'init:keep';
@@ -29,6 +30,10 @@ function usage() {
               Written to package.json "homepage"; the registry points there. Without it, the
               template's own homepage is removed (any other is kept), and until one is set the
               registry uses a placeholder.
+  --platforms Optional comma-separated ids of the coding agents the project uses
+              (${PLATFORMS.map((p) => p.id).join(', ')}), written to ${SELECTION_FILE}: its
+              instruction files are wired and sized for those. Another agent is researched into
+              that file's "custom" list instead (${PROCEDURE}).
 
 It also renames the package in package-lock.json and regenerates the registry, so the fork
 starts with no generated file out of date. On the first run it records the template's version as
@@ -85,6 +90,15 @@ if (SCOPE !== null && !/^@[a-z0-9][a-z0-9._-]*$/.test(SCOPE)) fail(`--scope "${S
 // A new identity containing "acme" would be replaced again on a re-run.
 for (const [flag, value] of [['--name', NAME], ['--slug', SLUG], ['--scope', SCOPE]]) {
   if (value && /acme/i.test(value)) fail(`${flag} "${value}" can't contain "acme": a re-run couldn't tell it from the placeholder`);
+}
+let PLATFORM_IDS = null;
+if (typeof args.platforms === 'string') {
+  PLATFORM_IDS = [...new Set(args.platforms.split(',').map((id) => id.trim()).filter(Boolean))];
+  if (!PLATFORM_IDS.length) fail('--platforms needs at least one platform id');
+  const unknownPlatforms = unknownIds(PLATFORM_IDS);
+  if (unknownPlatforms.length) {
+    fail(`--platforms: ${unknownPlatforms.join(', ')} isn't a platform the template knows (${PLATFORMS.map((p) => p.id).join(', ')}). Research another into ${SELECTION_FILE}'s "custom" list as ${PROCEDURE} says.`);
+  }
 }
 let HOMEPAGE = null;
 if (typeof args.homepage === 'string') {
@@ -168,6 +182,7 @@ if (existsSync(join(ROOT, 'package-lock.json'))) {
   if (lock.packages?.['']) Object.assign(lock.packages[''], { name: PKG_NAME, version: pkg.version });
   edits.push({ abs: join(ROOT, 'package-lock.json'), after: serialize(lock) });
 }
+if (PLATFORM_IDS) edits.push({ abs: join(ROOT, SELECTION_FILE), after: selectionText(ROOT, PLATFORM_IDS) });
 let registryEntry;
 try {
   registryEntry = buildEntry(ROOT, 'registry:build');
@@ -175,7 +190,10 @@ try {
   fail(error.message);
 }
 
-for (const { abs, after } of edits) writeFileSync(abs, after);
+for (const { abs, after } of edits) {
+  mkdirSync(dirname(abs), { recursive: true });
+  writeFileSync(abs, after);
+}
 
 // The registry is named after package.json and points at its homepage: rebuild it now, so the
 // fork's first `npm run check:generated` isn't already red.
@@ -197,7 +215,21 @@ console.log(`Rebrand complete: ${totalReplacements} replacement(s) across ${edit
 console.log(`  package.json name -> "${PKG_NAME}", version ${pkg.version} (package-lock.json too); from template ${pkg.templateVersion}`);
 console.log(`  registry          -> "${built.name}" at ${built.homepage}${placeholderHomepage ? ' (a placeholder until --homepage is set)' : ''}`);
 console.log(`  index.html title  -> "${NAME} — Design System Template"`);
+if (PLATFORM_IDS) console.log(`  agent platforms   -> ${SELECTION_FILE}: ${PLATFORM_IDS.join(', ')}`);
 if (NAME !== args.name.trim()) console.log(`  (the apostrophe in --name was written as \u2019, which is safe inside code strings)`);
+// Which agents the fork's selection names, when --platforms didn't just set it: the template's.
+let recorded = null;
+try {
+  recorded = JSON.parse(readFileSync(join(ROOT, SELECTION_FILE), 'utf8')).platforms;
+} catch (error) {
+  if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error; // absent or unreadable: said below
+}
+const platformStep = PLATFORM_IDS
+  ? ''
+  : `
+  6. Record the coding agents this project uses: re-run with --platforms <ids>, or edit
+     ${SELECTION_FILE}, which ${Array.isArray(recorded) ? `still holds the template's own choice (${recorded.join(', ')})` : "doesn't record one yet"}.
+     ${PROCEDURE} lists the ids, and says how to research an agent that isn't listed.`;
 console.log(`
 Next steps:
   1. Replace public/brand-mark.svg (and its two hardcoded hex colors) with the client's real mark.
@@ -209,8 +241,8 @@ Next steps:
   4. Review docs/brand/terminology.mdx — its example vocabulary (projects/customers/invoices) is
      pinned to a B2B SaaS billing domain; adjust for the client's actual domain.
   5. Replace SECURITY.md with the project's own policy (skeleton: templates/project/SECURITY.md):
-     the one here describes the template, and GitHub shows it to anyone reporting a problem.${placeholderHomepage ? `
-  6. When the site that serves public/r/ is deployed, set package.json "homepage" to its URL and
+     the one here describes the template, and GitHub shows it to anyone reporting a problem.${platformStep}${placeholderHomepage ? `
+  ${PLATFORM_IDS ? 6 : 7}. When the site that serves public/r/ is deployed, set package.json "homepage" to its URL and
      run npm run registry:build. On GitHub Pages that's https://<owner>.github.io/<repo>/; the
      Pages workflow refuses to deploy a registry that points anywhere else.` : ''}
 `);

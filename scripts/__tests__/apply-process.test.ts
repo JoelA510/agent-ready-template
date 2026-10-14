@@ -27,7 +27,7 @@ function scratch(prefix: string) {
 beforeEach(() => {
   template = scratch('apply-template-')
   target = scratch('apply-target-')
-  for (const path of ['scripts/apply-process.mjs', 'scripts/check-instructions.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
+  for (const path of ['scripts/apply-process.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
     cpSync(join(REPO, path), join(template, path), { recursive: true })
   }
 })
@@ -100,6 +100,21 @@ describe('process:apply: delivery', () => {
     expect(lint.stderr).toContain('npm ci --ignore-scripts')
     expect(lint.stderr).not.toMatch(/^\s+at /m) // no stack trace
     expect(lint.status).toBe(2)
+  })
+
+  it("recommends recording the platform selection, and never writes, records, or removes the target's own", () => {
+    const first = apply()
+    expect(first.out).toContain('No .agents/platforms.json records which coding agents this repo uses')
+    expect(first.out).toContain('prompts/agent-platforms.md')
+    expect(existsSync(join(target, '.agents/platforms.json'))).toBe(false)
+    const selection = '{"platforms": ["codex"]}\n'
+    write(target, '.agents/platforms.json', selection)
+    const again = apply()
+    expect(again.out).not.toContain('No .agents/platforms.json')
+    expect(read(target, '.agents/platforms.json')).toBe(selection)
+    expect(Object.keys(JSON.parse(read(target, 'prompts/.apply-manifest.json')).files)).not.toContain('.agents/platforms.json')
+    // The guide the recommendation points at is delivered.
+    expect(existsSync(join(target, 'prompts/agent-platforms.md'))).toBe(true)
   })
 
   it('stages the skeletons where the checks recognize them as skeletons, not the repo\'s files', () => {

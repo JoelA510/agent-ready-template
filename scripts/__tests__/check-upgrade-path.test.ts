@@ -20,7 +20,7 @@ const check = (...args: string[]) => spawnSync(process.execPath, [join(template,
 
 beforeEach(() => {
   template = mkdtempSync(join(tmpdir(), 'upgrade-template-'))
-  for (const path of ['scripts/apply-process.mjs', 'scripts/check-upgrade-path.mjs', 'scripts/check-instructions.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
+  for (const path of ['scripts/apply-process.mjs', 'scripts/check-upgrade-path.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
     cpSync(join(REPO, path), join(template, path), { recursive: true })
   }
   git('init', '-q')

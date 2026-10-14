@@ -153,7 +153,7 @@ easing curves, which have no unambiguous native equivalent there. Colors may be 
 | --- | --- |
 | `prompts/` | The build prompts — new-project bootstrap and existing-project audit — the day-to-day prompts (discovery, investigate, review, pre-PR, verify), the template-only harvest prompt, and the run log. Start here. |
 | `templates/` | Skeletons for every artifact the prompts require in a target project (AGENTS.md and CLAUDE.md, ADRs, dev plan, audit, remediation plan, env contract), the standards README a target receives, and the fleet hub repository. |
-| `AGENTS.md` | The rules every coding agent reads (Codex, Antigravity, Cursor, Copilot directly; Gemini CLI through `.gemini/settings.json`; Claude Code through `CLAUDE.md`'s import). |
+| `AGENTS.md` | The rules every coding agent reads (Codex, Antigravity, Cursor, Copilot directly; Gemini CLI through `.gemini/settings.json`; Claude Code through `CLAUDE.md`'s import), sized for the agents `.agents/platforms.json` selects. A project records its own there ([`prompts/agent-platforms.md`](./prompts/agent-platforms.md)). |
 | `.agents/skills/` | The workflow skills (`bootstrap`, `complete`, `discovery`, `plan-change`, `root-cause`, `review-change`, `pre-pr`, `verify`, `template-update`, and the template-only `harvest`) that run the prompts, in the Agent Skills format most agents read. `.claude/skills/` is the generated copy Claude Code reads. |
 | `standards/` | The standards catalog: one file per standard, each with a stable ID, grouped into packs (`core` for every repository, then one per stack), and scored by `npm run check:conformance`. |
 | `docs/adr/` | Architecture Decision Records. One per consequential choice; template included. |

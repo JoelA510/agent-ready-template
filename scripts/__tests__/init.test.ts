@@ -190,6 +190,23 @@ describe('init', () => {
     expect(readFileSync(join(outside, 'elsewhere.md'), 'utf8')).toBe('Acme Inc.\n')
   }, 60_000)
 
+  it('records the agent platforms given with --platforms, and leaves the step out of the checklist', () => {
+    const { status, stdout } = init(...REBRAND, '--platforms', 'codex, cursor,codex')
+    expect(status).toBe(0)
+    expect(JSON.parse(read('.agents/platforms.json'))).toEqual({ platforms: ['codex', 'cursor'] })
+    expect(stdout).toContain('agent platforms   -> .agents/platforms.json: codex, cursor')
+    expect(stdout).not.toContain('Record the coding agents this project uses')
+  }, 60_000)
+
+  it('without --platforms, puts the platform choice on the checklist, naming the selection the fork inherited', () => {
+    const inherited = JSON.parse(read('.agents/platforms.json')).platforms as string[]
+    const { status, stdout } = init(...REBRAND)
+    expect(status).toBe(0)
+    expect(stdout).toContain('Record the coding agents this project uses')
+    expect(stdout).toContain(`still holds the template's own choice (${inherited.join(', ')})`)
+    expect(stdout).toContain('prompts/agent-platforms.md')
+  }, 60_000)
+
   it('is a no-op the second time, and says so', () => {
     expect(init(...REBRAND).status).toBe(0)
     git('add', '-A')
@@ -217,6 +234,8 @@ describe('init', () => {
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--homepage', 'https://github.com/client/design#readme'], 'has a query or fragment'],
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--homepag', 'https://x.example'], 'unknown option --homepag'],
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--scope'], '--scope needs a value'],
+    [['--name', 'Client Inc.', '--slug', 'clientinc', '--platforms', 'codex,windsurf'], "windsurf isn't a platform the template knows"],
+    [['--name', 'Client Inc.', '--slug', 'clientinc', '--platforms', ','], '--platforms needs at least one platform id'],
   ])('rejects %j before writing anything', (args, message) => {
     const { status, stderr } = init(...args)
     expect(status).toBe(1)

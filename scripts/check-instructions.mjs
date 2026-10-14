@@ -54,19 +54,32 @@
 //              other, so a fix made in one copy silently doesn't reach half the agents. The
 //              frontmatter may differ (Claude Code's copy lifts its own settings out of
 //              metadata), and so may the "Claude Code's copy of" notice line;
-//   - size:    an AGENTS.md or GEMINI.md over 24,000 bytes, Antigravity's per-file limit
-//              (antigravity.google/docs/rules; Codex reads 32 KiB by default), so its end may
-//              never reach the agent.
+//   - size:    a shared instruction file over the smallest hard limit among the platforms that
+//              read it, of those the repo selects in .agents/platforms.json (scripts/agent-
+//              platforms.mjs holds each platform's files and documented limit, with its source),
+//              so its end may never reach that agent. A file no selected platform limits has no
+//              budget. With no selection, the AGENTS.md and GEMINI.md budget is the strictest of
+//              every platform the template knows: 24,000 bytes, Antigravity's;
+//   - platforms: a .agents/platforms.json that selects a platform the template doesn't know,
+//              has a field it doesn't define, selects nothing, or has a custom (researched) entry
+//              without its files, its limit (a number or null), or sources with a url and a
+//              checked date (prompts/agent-platforms.md has the format).
+//
+// Notes, on stderr, never a finding: a repo with no .agents/platforms.json is told to record one;
+// and a file over a selected platform's documented guidance length (Claude Code's 200 lines,
+// counting what the file imports, since imports load too) is pointed at it.
 //
 // Run: node scripts/check-instructions.mjs [--root <repo>] [file...]
 //   With no files, finds the instruction files under --root (default: the current directory).
-//   Exit 0 clean, 1 on findings, 2 on bad arguments, when there was nothing to examine, or when
-//   a skill needs parsing and the template's dependencies aren't installed.
+//   Exit 0 clean, 1 on findings, 2 on bad arguments, when there was nothing to examine, when
+//   .agents/platforms.json isn't valid JSON (no budget can be known), or when a skill needs
+//   parsing and the template's dependencies aren't installed.
 // scripts/__tests__/check-instructions.test.ts runs each finding kind against a planted defect.
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PLATFORMS, PROCEDURE, SELECTION_FILE, budgetFor, readSelection } from './agent-platforms.mjs'
 import { SKELETON_MARKER, SKIP_DIRS, inSkeletonDir, listRepoFiles as listFiles, skeletonDirs, toPosix, walk } from './repo-files.mjs'
 import { parseSkill } from './skills.mjs'
 import { MISSING_DEPENDENCY } from './template-dependency.mjs'
@@ -100,7 +113,8 @@ export const INSTRUCTION_PATHS = [
 // each SKILL.md checked against the specification. Not rules: process:apply delivers skills here,
 // so they don't count as a target's own instructions.
 export const SKILL_PATHS = ['.agents/skills', '.agent/skills', '.claude/skills', '.github/skills', '.cursor/skills', '.gemini/skills', '.codex/skills']
-export const MAX_RULES_BYTES = 24_000
+// Without a selection, the files sized before platforms could be selected, for every platform.
+const LEGACY = { platforms: PLATFORMS, legacy: true, files: new Set(['AGENTS.md', 'GEMINI.md']) }
 const NESTED = new Set(['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'])
 // Inside an instruction directory, only these are instructions; a skill's images and scripts
 // aren't.
@@ -428,8 +442,33 @@ export function skillCopiesThatDiffer(root) {
   return out
 }
 
+/**
+ * How a repo's instruction files are sized: the platforms it selects (every known one, legacy,
+ * when it records none), or { error } when the selection can't be read.
+ */
+export function sizingFor(root) {
+  const selection = readSelection(root)
+  if (selection.absent) return LEGACY
+  if (selection.error) return { error: selection.error }
+  return { platforms: selection.platforms, legacy: false, files: new Set(selection.platforms.flatMap((p) => p.files)), problems: selection.problems }
+}
+
+const nameOf = (platforms) => platforms.map((p) => p.name).join(' and ')
+const sourceOf = (platform) => platform.sources?.[0]?.url.replace(/^https?:\/\//, '') ?? 'no source recorded'
+
+function sizeFinding(bytes, budget, sizing) {
+  const effect = budget.by[0].hardEffect?.split(':')[0]
+  const scope = sizing.legacy
+    ? `every platform the template knows, since no ${SELECTION_FILE} records which this repo uses`
+    : `the platforms ${SELECTION_FILE} selects (${sizing.platforms.map((p) => p.id).join(', ')})`
+  return (
+    `${bytes} bytes; ${nameOf(budget.by)} ${budget.by.length > 1 ? 'read' : 'reads'} at most ${budget.bytes}` +
+    `${effect ? ` (${effect} past it)` : ''}, the strictest limit among ${scope}, so the end may never reach the agent`
+  )
+}
+
 /** Findings for one instruction file: [{ file, line, kind, detail }], plus what was examined. */
-export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsFor = scriptsLookup(root)) {
+export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsFor = scriptsLookup(root), sizing = sizingFor(root)) {
   const rel = toPosix(relative(root, abs))
   const text = readFileSync(abs, 'utf8')
   const dir = dirname(abs)
@@ -491,11 +530,10 @@ export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsF
     const strict = rel.startsWith('.agents/skills/')
     for (const problem of parseSkill(text, skill[1], { strict }).problems) report(1, 'skill', problem)
   }
-  if (/(^|\/)(AGENTS|GEMINI)\.md$/.test(rel)) {
+  const budget = sizing.files?.has(basename(rel)) ? budgetFor(basename(rel), sizing.platforms) : null
+  if (budget) {
     const bytes = Buffer.byteLength(text)
-    if (bytes > MAX_RULES_BYTES) {
-      report(1, 'size', `${bytes} bytes; Antigravity reads at most ${MAX_RULES_BYTES} of a rules file (Codex, 32 KiB), so the end may never reach the agent`)
-    }
+    if (bytes > budget.bytes) report(1, 'size', sizeFinding(bytes, budget, sizing))
   }
   if (/(^|\/)(CLAUDE(\.local)?|AGENTS)\.md$/.test(rel) || rel.startsWith('.claude/rules/')) {
     for (const imp of importsOf(abs, text)) {
@@ -504,6 +542,45 @@ export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsF
     }
   }
   return { findings, examined }
+}
+
+// Lines in a file plus, where the platform expands them, the files its `@` imports pull in
+// (recursively, each counted once), as { lines, imported: [rel] }.
+function linesLoaded(root, rels, expandsImports) {
+  const seen = new Set()
+  const imported = []
+  let lines = 0
+  const visit = (abs, depth) => {
+    if (!existsSync(abs) || !statSync(abs).isFile()) return
+    const real = realpathSync(abs)
+    if (seen.has(real)) return
+    seen.add(real)
+    const text = readFileSync(abs, 'utf8')
+    lines += text.split(/\r?\n/).length - (/\n$/.test(text) ? 1 : 0)
+    if (depth > 0) imported.push(toPosix(relative(root, abs)))
+    // Claude Code follows imports four hops deep.
+    if (expandsImports && depth < 4) for (const imp of importsOf(abs, text)) visit(imp.abs, depth + 1)
+  }
+  for (const rel of rels) visit(join(root, rel), 0)
+  return { lines, imported }
+}
+
+/** Advisory notes: each selected platform's documented guidance length, where a file passes it. */
+export function guidanceNotes(root, platforms) {
+  const notes = []
+  for (const p of platforms.filter((x) => x.guidanceLines)) {
+    let entry = (p.loads ?? []).filter((rel) => existsSync(join(root, rel)))
+    if (!entry.length) entry = (p.loadsOtherwise ?? []).filter((rel) => existsSync(join(root, rel)))
+    if (!entry.length) continue
+    const { lines, imported } = linesLoaded(root, entry, p.expandsImports)
+    if (lines <= p.guidanceLines) continue
+    notes.push(
+      `${p.name}'s documented guidance is under ${p.guidanceLines} lines (${sourceOf(p)}); ${entry.join(' and ')} ` +
+        `${entry.length > 1 ? 'are' : 'is'} ${lines}${imported.length ? ` with what ${entry.length > 1 ? 'they import' : 'it imports'} (${imported.join(', ')})` : ''}. ` +
+        `Keep the rules in AGENTS.md and move reference detail into docs/ with a pointer. Advisory, not a finding.`,
+    )
+  }
+  return notes
 }
 
 function parseArgs(argv) {
@@ -544,12 +621,18 @@ function main(argv) {
     return 2
   }
 
+  const sizing = sizingFor(root)
+  if (sizing.error) {
+    // Without a readable selection no budget is known, and a guess would be a silent pass.
+    console.error(`${sizing.error}, so the instruction files' size budget can't be known. Fix it (${PROCEDURE} has the format) and run again.`)
+    return 2
+  }
   const total = { links: 0, imports: 0, paths: 0, scripts: 0 }
   const findings = []
   const index = repoPaths(listed)
   const scriptsFor = scriptsLookup(root)
   for (const file of files) {
-    const result = lintFile(root, file, index, scriptsFor)
+    const result = lintFile(root, file, index, scriptsFor, sizing)
     findings.push(...result.findings)
     for (const k of Object.keys(total)) total[k] += result.examined[k]
   }
@@ -559,7 +642,17 @@ function main(argv) {
       if (hidden) findings.push({ file: hidden.file, line: 1, kind: 'hides-agents', detail: hidden.detail })
     }
     for (const copy of skillCopiesThatDiffer(root)) findings.push({ file: copy.file, line: 1, kind: 'skill-copy', detail: copy.detail })
+    for (const problem of sizing.problems ?? []) findings.push({ file: SELECTION_FILE, line: 1, kind: 'platforms', detail: problem })
   }
+  const notes = []
+  if (sizing.legacy) {
+    notes.push(
+      `no ${SELECTION_FILE} records which coding agents this repo uses, so AGENTS.md and GEMINI.md are held to ` +
+        `${budgetFor('AGENTS.md', PLATFORMS).bytes} bytes, the strictest limit of any platform the template knows. Record yours there, ` +
+        `e.g. {"platforms": ["claude-code", "codex"]}, from ${PLATFORMS.map((p) => p.id).join(', ')}; ${PROCEDURE} says how, ` +
+        `and how to research one that isn't listed.`,
+    )
+  } else if (!args.files.length) notes.push(...guidanceNotes(root, sizing.platforms))
   for (const f of findings) console.log(`${f.file}:${f.line}: ${f.kind}: ${f.detail}`)
   const summary =
     `${files.length} file(s): ${total.links} link(s), ${total.imports} import(s), ` +
@@ -567,11 +660,13 @@ function main(argv) {
   // Said out loud, so a skipped directory is never mistaken for a checked one.
   const skipped = skeletonDirs(listed)
   const skippedNote = skipped.length ? `\nLeft out as skeletons (marked by ${SKELETON_MARKER}): ${skipped.join(', ')}` : ''
+  const noted = notes.map((n) => `\nNote: ${n}`).join('')
   if (findings.length) {
-    console.error(`\n✗ ${findings.length} finding(s) in ${summary}.${skippedNote}`)
+    console.error(`\n✗ ${findings.length} finding(s) in ${summary}.${skippedNote}${noted}`)
     return 1
   }
   console.log(`✓ Checked ${summary}.${skippedNote}`)
+  if (noted) console.error(noted.slice(1))
   return 0
 }
 
