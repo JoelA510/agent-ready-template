@@ -10,6 +10,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **A guide to staying inside free plans, and a Dependabot skeleton tuned for them.** On a free
+  plan every push is spent somewhere: on one project built this way, parallel agent branches used
+  a Vercel Hobby team's 100 deployments for the day in under 13 hours, most of them previews
+  nobody looked at, from agent, notes, and Dependabot branches. The new skeleton
+  `docs/free-tier.md` gives the budget (what counts, the limit, the lever), agent working rules
+  (at most two agent pull requests in flight, one push per pull request after the local gates,
+  throwaway and notes branches kept local or deployment-disabled, previews on request), the
+  `vercel.json` `git.deploymentEnabled` pattern, the GitHub, Dependabot, and Supabase settings,
+  and which facts were checked on 2026-10-14 and which are unverified. New-project Phase 2.5 and
+  the existing-project audit's area 7 point to it for a project on a free plan. The Dependabot
+  skeleton now runs monthly, never rebases (`rebase-strategy: disabled`), opens at most 3 pull
+  requests per ecosystem, keeps its 7-day cooldown, and groups majors into one pull request beside
+  the minor-and-patch group, with every action bump in one more. A project on free plans: copy the
+  guide to `docs/free-tier.md`, add the `deploymentEnabled` block to `vercel.json` for its agent
+  and notes branch prefixes, and take the new Dependabot settings.
+
 ## [1.0.0] - 2026-10-13
 
 The first release. `1.0.0-rc.3` went through a trial of each kind: a process-only bootstrap of a
