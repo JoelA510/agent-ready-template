@@ -43,7 +43,7 @@ Don't write one for a choice a reader can reconstruct from the code in under a m
 | [0008](./0008-supported-node-versions.md) | Pin the active Node LTS, support the maintained lines, and test the floor | Accepted |
 | [0009](./0009-wcag-2-2-aa.md) | WCAG 2.2 AA is the accessibility bar, with each new criterion's coverage stated | Accepted (extended by 0012) |
 | [0010](./0010-token-pipeline-colors-and-native-shapes.md) | One color grammar, React Native shapes from authored values, and no partial builds | Accepted |
-| [0011](./0011-agent-portable-workflows.md) | Workflows are Agent Skills, and this repo's rules live in AGENTS.md | Accepted |
+| [0011](./0011-agent-portable-workflows.md) | Workflows are Agent Skills, and this repo's rules live in AGENTS.md | Accepted (size budget refined by 0020) |
 | [0012](./0012-stories-in-a-real-browser.md) | Every story runs in a real browser, with axe as a gate | Accepted |
 | [0013](./0013-registry-on-pages.md) | The component registry is published with Storybook, and its items link by URL | Accepted |
 | [0014](./0014-tagged-releases-and-template-version.md) | Projects take template updates from tagged releases | Accepted |
@@ -52,3 +52,4 @@ Don't write one for a choice a reader can reconstruct from the code in under a m
 | [0017](./0017-actions-pinned-by-commit.md) | Workflows pin every action by commit, and CI audits them with zizmor and actionlint | Accepted |
 | [0018](./0018-a-guard-and-a-setup-for-every-agent.md) | Every agent with hooks runs the generated-file guard, and every cloud agent sets up the same way | Accepted |
 | [0019](./0019-npm-install-guards.md) | Pin npm 11, and make npm wait for releases to age and refuse a dependency's git dependencies | Accepted |
+| [0020](./0020-instructions-sized-for-selected-platforms.md) | Instruction files are wired and sized for the agents a project selects | Accepted |

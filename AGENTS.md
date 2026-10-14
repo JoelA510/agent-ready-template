@@ -2,7 +2,8 @@
 
 Instructions for every coding agent working in this repository. Codex, Antigravity, Cursor, and
 GitHub Copilot read this file directly, Gemini CLI through `.gemini/settings.json`, and Claude
-Code through the `@AGENTS.md` import in `CLAUDE.md`. Keep every rule here, not in a per-tool file.
+Code through the `@AGENTS.md` import in `CLAUDE.md`. Keep every rule here, not in a per-tool file,
+within the budget of the agents `.agents/platforms.json` selects (Agent setup, below).
 
 ## What this is
 
@@ -98,8 +99,11 @@ prompt is the instruction set, so an agent without skills can follow the prompt 
 - **Generated files are guarded.** A pre-edit hook refuses an edit to one and names the source to
   edit, in every agent with hooks once it trusts the project (ADR 0018). A shell write gets past
   it; `npm run check:generated` fails the PR.
-- **This file stays under 24,000 bytes**, Antigravity's per-file limit (Codex reads 32 KiB). A
-  test enforces it; move detail into `docs/` with a pointer rather than growing it.
+- **This file is sized for the maintainers' agents**, recorded in `.agents/platforms.json`
+  (Claude Code and Codex): under Codex's 32 KiB, which `check:instructions` enforces, and as
+  near Claude Code's 200-line guidance as the rules allow (a note, not a failure). Move detail
+  into `docs/` with a pointer rather than growing it. The template still ships wiring for all
+  six agents; `prompts/agent-platforms.md` is how a project chooses its own.
 
 ## Commands
 
@@ -108,7 +112,7 @@ prompt is the instruction set, so an agent without skills can follow the prompt 
 | `npm run check` | The gate: tokens build → contrast check → typecheck → lint → unused code → app build → bundle budget → Storybook build → tests. Run this before you consider a change done; CI also runs `test:browser` and `check:generated`. Before each commit (`verify`): `lint`, `typecheck`, `test`, and the build for any generated output whose source changed. |
 | `npm run check:audit` | Dependency gate: fails on any high/critical `npm audit` advisory (runtime or dev) without a current waiver in `docs/security/audit-waivers.json`; expired or stale waivers fail too. Runs in its own CI workflow per PR and weekly. Policy: `docs/security/dependency-policy.md`. |
 | `npm run check:env` | Env checks for a target whose app reads environment variables (`-- --root <path>`; this repo's tooling reads only CI, token, and browser-path variables): a secret behind a client-exposed prefix (`VITE_`, `NEXT_PUBLIC_`, `EXPO_PUBLIC_`, …), an env read or Vite `define` that bundles more than it names, placeholder values, and `${VAR}` in `eas.json`; the full list heads `scripts/check-env.mjs`. It self-tests its detectors and exits 2 rather than pass when they fail. |
-| `npm run check:instructions` | Lints agent instruction files and skills (CLAUDE.md, AGENTS.md, Cursor/Copilot/Gemini/Antigravity rules, `*/skills/*/SKILL.md`) for links, `@` imports, code-span paths, and `npm run` scripts that don't resolve; an AGENTS.md that Claude Code or Gemini CLI never reads; a skill that breaks the Agent Skills spec; an AGENTS.md over 24,000 bytes; and hidden characters (control, bidi, zero-width, variation selectors, Unicode tags). `-- --root <path>` checks another repo. Runs in `test` for this repo. |
+| `npm run check:instructions` | Lints agent instruction files and skills (CLAUDE.md, AGENTS.md, Cursor/Copilot/Gemini/Antigravity rules, `*/skills/*/SKILL.md`) for links, `@` imports, code-span paths, and `npm run` scripts that don't resolve; an AGENTS.md that Claude Code or Gemini CLI never reads; a skill that breaks the Agent Skills spec; an AGENTS.md over the strictest limit of the agents `.agents/platforms.json` selects (24,000 bytes without one), and that file's own mistakes; and hidden characters (control, bidi, zero-width, variation selectors, Unicode tags). `-- --root <path>` checks another repo. Runs in `test` for this repo. |
 | `npm run check:conformance` | Scores a repo (`-- --root <path>`) against the standards catalog in `standards/`: `core` plus the packs it detects or its `docs/standards/conformance.json` declares, with that file's baseline and expiring waivers. Exit 1 on a failure, 2 when a probe couldn't run. `npm run fleet:report -- --fleet <file>` scores every repo in a fleet file; `fleet:update` proposes this template's process to each, one PR apiece (`--apply`; a dry run without). Adding a standard: `standards/README.md`. |
 | `npm run check:settings` | Scores a repo's GitHub settings over the API (`-- --repo <owner/name>`, with a token that can read its admin settings in `GITHUB_TOKEN`): the `settings` standards in `standards/core/`. `fleet:report -- --settings` adds them to the fleet table. |
 | `npm run check:generated` | Drift gate: regenerates tokens, the registry, and the Claude Code skill copies, and fails if any committed generated file differs (modified, orphaned, or new). It compares against the last commit, so it's not part of `check`: CI runs it on every PR, and you run it after committing a token or component change, before pushing. |

@@ -33,6 +33,13 @@ describe('this repo', () => {
     expect(result.stdout + result.stderr).toMatch(/Checked [1-9]\d* file\(s\): \d+ link\(s\), \d+ import\(s\), [1-9]\d* path\(s\), [1-9]\d* script/)
     expect(result.status).toBe(0)
   })
+
+  it("its AGENTS.md is sized for its own selection: Codex's 32 KiB binds, Claude Code's 200 lines advise", () => {
+    expect(JSON.parse(readFileSync(join(REPO, '.agents/platforms.json'), 'utf8'))).toEqual({ platforms: ['claude-code', 'codex'] })
+    const result = spawnSync(process.execPath, [SCRIPT], { cwd: REPO, encoding: 'utf8' })
+    expect(result.stderr).not.toContain('no .agents/platforms.json')
+    expect(Buffer.byteLength(readFileSync(join(REPO, 'AGENTS.md')))).toBeLessThanOrEqual(32 * 1024)
+  })
 })
 
 describe('finds', () => {
@@ -186,9 +193,9 @@ describe('finds', () => {
     },
   )
 
-  it('an AGENTS.md over 24,000 bytes', () => {
+  it('an AGENTS.md over 24,000 bytes, with no platform selection (the legacy budget)', () => {
     write('AGENTS.md', `# Rules\n\n${'Keep it short. '.repeat(1700)}\n`)
-    expect(findings()).toEqual([expect.stringMatching(/^AGENTS\.md:1: size: 25\d{3} bytes; Antigravity reads at most 24000 /)])
+    expect(findings()).toEqual([expect.stringMatching(/^AGENTS\.md:1: size: 25\d{3} bytes; Antigravity reads at most 24000 .*every platform the template knows/)])
   })
 
   it.each([
@@ -243,6 +250,114 @@ describe('finds', () => {
     expect(findings().map((f) => f.split(':')[0]).sort()).toEqual(
       ['.cursor/rules/style.mdc', '.github/copilot-instructions.md', 'GEMINI.md', 'packages/api/AGENTS.md'].sort(),
     )
+  })
+})
+
+describe('the platform selection', () => {
+  const big = `# Rules\n\n${'Keep it short. '.repeat(2000)}\n` // 30,010 bytes: over Antigravity's 24,000, under Codex's 32 KiB
+  const select = (selection: unknown) => write('.agents/platforms.json', typeof selection === 'string' ? selection : JSON.stringify(selection))
+  const notes = () => run().stderr.split('\n').filter((l) => l.startsWith('Note: '))
+  const custom = {
+    name: 'Example Agent',
+    files: ['AGENTS.md'],
+    agentsMd: 'native',
+    hardBytes: 28_000,
+    sources: [{ url: 'https://example.com/docs/rules', checked: '2026-10-14' }],
+  }
+
+  it('sizes AGENTS.md for the selected platforms: 30,000 bytes fit Codex alone', () => {
+    write('AGENTS.md', big)
+    select({ platforms: ['codex'] })
+    expect(Buffer.byteLength(big)).toBeGreaterThan(30_000)
+    expect(findings()).toEqual([])
+    expect(run().status).toBe(0)
+  })
+
+  it('fails the same file when a stricter platform is selected, and names it and the selection', () => {
+    write('AGENTS.md', big)
+    select({ platforms: ['codex', 'antigravity'] })
+    expect(findings()).toEqual([
+      expect.stringMatching(/^AGENTS\.md:1: size: 30010 bytes; Antigravity reads at most 24000 .*selects \(codex, antigravity\)/),
+    ])
+    expect(run().status).toBe(1)
+  })
+
+  it('fails the same file with no selection, at the legacy 24,000, and recommends recording one', () => {
+    write('AGENTS.md', big)
+    expect(findings()).toEqual([expect.stringMatching(/^AGENTS\.md:1: size: 30010 bytes; Antigravity reads at most 24000 /)])
+    expect(run().stderr).toContain('Note: no .agents/platforms.json records which coding agents this repo uses')
+  })
+
+  it('holds a file to the strictest limit of a custom platform as well', () => {
+    write('AGENTS.md', big)
+    select({ platforms: ['codex'], custom: [custom] })
+    expect(findings()).toEqual([expect.stringMatching(/^AGENTS\.md:1: size: 30010 bytes; Example Agent reads at most 28000, .*\(codex, Example Agent\)/)])
+  })
+
+  it('has no size finding for a file no selected platform limits', () => {
+    write('AGENTS.md', `# Rules\n\n${'Keep it short. '.repeat(3000)}\n`) // 45,000 bytes
+    select({ platforms: ['cursor', 'copilot', 'gemini-cli'] })
+    expect(findings()).toEqual([])
+  })
+
+  it.each([
+    ['an unknown platform id', { platforms: ['codex', 'windsurf'] }, '"windsurf" isn\'t a platform the template knows'],
+    ['an unknown field', { platforms: ['codex'], agents: [] }, 'has an unknown field "agents"'],
+    ['a selection of nothing', { platforms: [] }, 'selects no platform'],
+    ['a custom entry with no sources', { platforms: ['codex'], custom: [{ ...custom, sources: [] }] }, 'needs "sources"'],
+    ['a custom source with no checked date', { platforms: ['codex'], custom: [{ ...custom, sources: [{ url: 'https://example.com/docs' }] }] }, 'sources[0] needs a "url"'],
+    ['a custom source with no url', { platforms: ['codex'], custom: [{ ...custom, sources: [{ checked: '2026-10-14' }] }] }, 'sources[0] needs a "url"'],
+    ['a custom entry with an unknown field', { platforms: ['codex'], custom: [{ ...custom, maxBytes: 1 }] }, 'unknown field "maxBytes"'],
+    ['a custom entry whose limit is a guess in words', { platforms: ['codex'], custom: [{ ...custom, hardBytes: 'about 30k' }] }, 'needs "hardBytes"'],
+  ])('reports %s', (_label, selection, detail) => {
+    write('AGENTS.md', '# Rules\n')
+    select(selection)
+    const found = findings()
+    expect(found).toEqual([expect.stringContaining('.agents/platforms.json:1: platforms: ')])
+    expect(found[0]).toContain(detail)
+    expect(run().status).toBe(1)
+  })
+
+  it('accepts a custom entry with every fact sourced, and a limit recorded as unknown (null)', () => {
+    write('AGENTS.md', '# Rules\n')
+    select({ platforms: ['codex'], custom: [{ ...custom, hardBytes: null, notes: 'No limit documented on the page consulted.' }] })
+    expect(findings()).toEqual([])
+  })
+
+  it("can't size anything from a selection that isn't JSON, and says so with exit 2", () => {
+    write('AGENTS.md', '# Rules\n')
+    select('{ "platforms": ["codex", }')
+    const result = run()
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain("isn't valid JSON")
+  })
+
+  it("notes Claude Code's 200-line guidance, counting what CLAUDE.md imports, without changing the exit code", () => {
+    write('AGENTS.md', `# Rules\n${'- a rule\n'.repeat(195)}`)
+    write('CLAUDE.md', '@AGENTS.md\n\n## Claude Code\n\n- one note\n')
+    select({ platforms: ['claude-code'] })
+    expect(notes()).toEqual([expect.stringMatching(/^Note: Claude Code's documented guidance is under 200 lines .*CLAUDE\.md is 201 with what it imports \(AGENTS\.md\)/)])
+    expect(findings()).toEqual([])
+    expect(run().status).toBe(0)
+    // Positive control for the boundary: two lines fewer, and there's nothing to say.
+    write('AGENTS.md', `# Rules\n${'- a rule\n'.repeat(193)}`)
+    expect(notes()).toEqual([])
+  })
+
+  it("doesn't apply Claude Code's guidance when Claude Code isn't selected", () => {
+    write('AGENTS.md', `# Rules\n${'- a rule\n'.repeat(400)}`)
+    write('CLAUDE.md', '@AGENTS.md\n')
+    select({ platforms: ['codex'] })
+    expect(notes()).toEqual([])
+  })
+
+  it('keeps the guidance note beside a failing finding, and the exit code is the finding\'s', () => {
+    write('AGENTS.md', `# Rules\n${'- a rule\n'.repeat(250)}See \`src/db/gone.ts\`.\n`)
+    write('CLAUDE.md', '@AGENTS.md\n')
+    select({ platforms: ['claude-code'] })
+    const result = run()
+    expect(result.status).toBe(1)
+    expect(result.stderr).toMatch(/\nNote: Claude Code's documented guidance/)
   })
 })
 

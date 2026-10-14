@@ -3,7 +3,7 @@ name: bootstrap
 description: "Use when someone asks by name to bootstrap a new or empty repo; it writes many files, so don't start it unasked. Runs prompts/new-project.md end to end — reference verification, stack ADR, guardrail files, typed env, and a phased plan ending in a deployable walking skeleton."
 metadata:
   invocation: explicit
-  argument-hint: "<project name, what it does and for whom, platform targets, constraints, repo visibility and GitHub plan, security contact if private>"
+  argument-hint: "<project name, what it does and for whom, platform targets, constraints, coding agents it will use, repo visibility and GitHub plan, security contact if private>"
 ---
 
 Run the new-project bootstrap process, exactly as written in `prompts/new-project.md`. Read
@@ -12,10 +12,14 @@ up. Then:
 
 1. **Assemble the project inputs.** Parse whatever was given with the request, and map what you
    can onto the prompt's input fields (project name, description and target users, platform
-   targets, constraints, stack preferences, repository visibility and GitHub plan, and a private
-   repository's security contact). Visibility and plan never block: read them from the host, and
+   targets, constraints, stack preferences, the coding agents it will use, repository visibility
+   and GitHub plan, and a private repository's security contact). Visibility and plan never block: read them from the host, and
    assume private on GitHub Free for whatever can't be read, as the prompt's inputs say. Nor does
-   the security contact: without one, follow the prompt's fallback rather than guess. Ask, in one question, only for what
+   the security contact: without one, follow the prompt's fallback rather than guess. The coding
+   agents decide what AGENTS.md is wired and sized for, so include them in the question when the
+   request doesn't name them, and record the answer in `<repo>/.agents/platforms.json`; one
+   that `prompts/agent-platforms.md` doesn't list is researched from its vendor's documentation,
+   as that page says. Ask, in one question, only for what
    neither the request, the host, nor a safe default supplies — vague inputs produce vague
    plans, and the prompt permits at most one blocking question thereafter.
 2. **Execute the phases in order.** Phase 0 (reference verification) is mandatory and comes
@@ -24,7 +28,8 @@ up. Then:
 3. **Use the skeletons for every artifact the prompt requires.** They're in the skeletons
    directory: `<repo>/prompts/skeletons/` after `process:apply`,
    `<template>/templates/project/` in the template repo itself. `AGENTS.skeleton.md` becomes
-   `AGENTS.md`, `CLAUDE.skeleton.md` becomes `CLAUDE.md` (and the prompt gives the one-line
+   `AGENTS.md`, and, only for the agents the selection names, `CLAUDE.skeleton.md` becomes
+   `CLAUDE.md` for Claude Code (and the prompt gives the one-line
    `<repo>/.gemini/settings.json` that points Gemini CLI at AGENTS.md); CONTRIBUTING.md,
    SECURITY.md, `.env.example`, and the docs/ set keep their paths: reference-verification,
    the ADR index and the stack ADR, the ADR template (0000-template, copied unchanged:
@@ -42,7 +47,8 @@ up. Then:
    `node <template checkout>/scripts/check-placeholders.mjs <each artifact>`, which catches a
    half-deleted guidance comment the grep can't see. If the repo already has agent rules
    (Cursor rules, a Copilot instructions file, …), fold them into AGENTS.md rather than keep
-   two sets, as the prompt's Phase 2.1 says; CLAUDE.md imports AGENTS.md.
+   two sets, as the prompt's Phase 2.1 says, sized for the selected agents; a CLAUDE.md imports
+   AGENTS.md.
 4. **If the new project should also use the template's interface foundation** (it's a fork of
    the template repo), follow the rebrand workflow in the template's `AGENTS.md` (init script →
    palette swap → tokens rebuild → contrast re-check) before building features on top.

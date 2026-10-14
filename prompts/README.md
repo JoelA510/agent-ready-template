@@ -61,6 +61,12 @@ Codex, Antigravity, Gemini CLI, Cursor, and Copilot read skills from `.agents/sk
 Code reads the copies in `.claude/skills/`. Invoke one as `/complete` in Claude Code or
 Antigravity, `$complete` in Codex, or ask for it by name in any other agent.
 
+Which of those agents a project uses is its own choice, recorded in `.agents/platforms.json`:
+the two project prompts ask for it, and it decides which instruction files are wired up and how
+large AGENTS.md may grow, since each agent stops reading at a different size.
+[`agent-platforms.md`](./agent-platforms.md) lists the agents the template knows, with each
+one's documented limits and sources, and the procedure for researching one it doesn't.
+
 ## Artifact skeletons
 
 Every file the prompts require — AGENTS.md and the CLAUDE.md that imports it, CONTRIBUTING.md,

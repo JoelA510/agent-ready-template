@@ -99,7 +99,8 @@ available.
   - A skill edit needs `npm run skills:build`, like a token edit.
   - In a target, where there's no build, the two copies are kept identical by hand, and the
     skeleton says so.
-  - `AGENTS.md` has a byte budget.
+  - `AGENTS.md` has a byte budget. (Since ADR 0020, the budget is the strictest limit among the
+    agents a project selects in `.agents/platforms.json`; 24,000 bytes only without a selection.)
 - **Revisit** when Claude Code reads `.agents/skills/`: then the generated copy goes. Also
   revisit when another agent's repository hooks are verified: the guard can be wired up there
   too. (Done for every agent with hooks: ADR 0018.)

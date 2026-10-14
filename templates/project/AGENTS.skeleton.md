@@ -1,15 +1,22 @@
 # AGENTS.md
 
-Guidance for coding agents working in this repository.
+Guidance for coding agents working in this repository. [SELECTED AGENTS AND HOW EACH READS IT]
+Keep every rule here, not in a per-tool file, and this file under [SIZE BUDGET AND WHOSE LIMIT].
 
-<!-- GUIDANCE: The one instruction file every agent reads: Codex, Antigravity, Cursor, and
-     Copilot read it directly, Gemini CLI through `.gemini/settings.json` (new-project Phase 2.1
-     gives its content), and Claude Code through the `@AGENTS.md` import in CLAUDE.md (skeleton:
-     CLAUDE.skeleton.md). Keep every rule here, not in a second file per tool. Fill in every
+<!-- GUIDANCE: The one instruction file every agent reads. The agents this repo uses are recorded in
+     `.agents/platforms.json`, and `prompts/agent-platforms.md` says how each one reaches this
+     file (natively, through an import, through a setting) and what limits it: wire up and name
+     only those. For example: "Codex reads it directly, and Claude Code through the `@AGENTS.md`
+     import in CLAUDE.md." The budget is the strictest hard limit among them, for example "32 KiB,
+     Codex's limit for all its AGENTS.md files combined"; with none, say so. Claude Code needs
+     CLAUDE.md's `@AGENTS.md` import (skeleton: CLAUDE.skeleton.md), Gemini CLI a
+     `.gemini/settings.json` (new-project Phase 2.1 gives its content); Codex, Antigravity,
+     Cursor, and Copilot read it as it is. Fill in every
      [BRACKETED] placeholder, then delete comments like this one. Keep this file short enough to
      be read in full at the start of every session — one screen of project facts, one screen of
-     rules — and in any case under 24,000 bytes, Antigravity's per-file limit. Everything longer
-     belongs in docs/ with a pointer from here. Paths you name here are checked, by
+     rules — and in any case within the budget above; with Claude Code selected, near its
+     guidance of 200 lines, counting what CLAUDE.md imports. Everything longer belongs in docs/
+     with a pointer from here. The budget and paths you name here are checked, by
      `node <template checkout>/scripts/check-instructions.mjs --root <this repo>` (that form, not
      the template's `npm run` script: this repo's package.json doesn't have it, and the check
      reports any `npm run` it can't find). -->

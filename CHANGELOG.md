@@ -27,6 +27,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the minor-and-patch group, with every action bump in one more. A project on free plans: copy the
   guide to `docs/free-tier.md`, add the `deploymentEnabled` block to `vercel.json` for its agent
   and notes branch prefixes, and take the new Dependabot settings.
+- **Instruction files sized and wired for the agents a project uses, not for all six.** A project
+  now records its coding agents in `.agents/platforms.json` (for example
+  `{"platforms": ["claude-code", "codex"]}`), and `check:instructions` holds each shared
+  instruction file to the strictest documented limit among those agents: Codex's 32 KiB for a
+  Claude Code and Codex project, Antigravity's 24,000 bytes only when Antigravity is selected. A
+  documented guidance length, such as Claude Code's 200 lines counting what CLAUDE.md imports,
+  is a note, never a failure. The template's registry of the six agents it knows
+  (`scripts/agent-platforms.mjs`) records each one's files, limits, and the page and date every
+  fact came from, and `prompts/agent-platforms.md` is the same table plus the procedure for an
+  agent it doesn't list: research it from the vendor's documentation into the file's `custom`
+  list, with sources and dates, leaving what isn't documented as unknown. The new-project and
+  existing-project prompts ask for the agents before they write or judge instruction files and
+  wire only what the selection needs; `npm run init -- --platforms claude-code,codex` records it
+  in a fresh fork, and `process:apply` recommends it, never writes it. ADR 0020. **A project
+  built from the template:** record the agents you use in `.agents/platforms.json` (a fork
+  inherits the template's own, `claude-code` and `codex`; change it). Nothing else changes until
+  you do: without the file, the check keeps the 24,000-byte limit and adds a note on stderr. A
+  malformed file now stops the check with exit 2.
 
 ## [1.0.0] - 2026-10-13
 
