@@ -20,7 +20,7 @@ push; there were just too many places a push turned into a build.
 | Counts against it | Limit | The lever |
 | --- | --- | --- |
 | Vercel deployments: every push to any branch of a Git-connected project makes one | 100 a day on Hobby; past it, a deploy fails with `api-deployments-free-per-day` | `git.deploymentEnabled` in `vercel.json` for branches that don't need a preview (below) |
-| GitHub Actions minutes: every push to a pull request re-runs CI | Free on standard runners in a public repository; 2,000 a month for a private one on GitHub Free | Push once per pull request; no "branch must be up to date" rule (below) |
+| GitHub Actions minutes: every push to a pull request re-runs CI | Free on standard runners in a public repository; 2,000 a month for a private one on GitHub Free | Push once per pull request; at most two pull requests in flight (below) |
 | Dependabot pull requests and their rebases: each is a push, so a CI run and a deployment | Not a quota, but it spends the two above | Monthly, grouped, not rebased (`.github/dependabot.yml`) |
 | Supabase preview branches and redeploys, when its GitHub integration branches per pull request | Plan-dependent | Leave "Automatic branching" off; test against a local stack |
 
@@ -60,10 +60,13 @@ daily limit is unverified.
 
 ## GitHub
 
-- **No "require branches to be up to date before merging."** With it, every merge makes every
-  other open pull request re-run CI, and each update is a push to that branch, so a deployment
-  too. Required status checks still block a red merge without it.
-- A merge queue would give the same guarantee with one run per merge; whether it's available to a
+- **Keep "require branches to be up to date before merging"** (the ruleset skeleton's
+  `strict_required_status_checks_policy: true`), and pay for it by keeping few pull requests open.
+  It costs CI: every merge makes each other open pull request update and re-run before it can
+  merge. Turning it off saves those runs but lets two pull requests that are each green alone
+  merge into a red `main`, because nothing tested them together. With at most two in flight, the
+  cost is one extra run per merge.
+- A merge queue would test each merge's result with one run; whether it's available to a
   repository owned by a personal account is unverified.
 - Rulesets and branch protection work only in a public repository on GitHub Free (a paid plan adds
   private ones).
