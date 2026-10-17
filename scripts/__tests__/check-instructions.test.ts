@@ -294,6 +294,62 @@ describe('the platform selection', () => {
     expect(findings()).toEqual([expect.stringMatching(/^AGENTS\.md:1: size: 30010 bytes; Example Agent reads at most 28000, .*\(codex, Example Agent\)/)])
   })
 
+  // Codex's 32 KiB is on every AGENTS.md from the root down, together; each file was once
+  // measured alone, so a nested file under 32 KiB passed with its parent filling most of it.
+  describe("Codex's limit, on the AGENTS.md files from the root down combined", () => {
+    const sized = (n: number) => `# Rules\n\n${'x'.repeat(n - 10)}\n` // n bytes
+    beforeEach(() => {
+      write('AGENTS.md', sized(20_000))
+      write('packages/web/AGENTS.md', sized(15_000))
+    })
+
+    it("holds a nested file to what its ancestors leave, and names them", () => {
+      select({ platforms: ['claude-code', 'codex'] })
+      expect(findings()).toEqual([
+        'packages/web/AGENTS.md:1: size: 15000 bytes, 35000 together with the AGENTS.md files above it (AGENTS.md, 20000); ' +
+          'Codex reads at most 32768 bytes of AGENTS.md from the root down, combined (truncated past it), which leaves this file 12768 bytes, so the end may never reach it',
+      ])
+      expect(run().status).toBe(1)
+    })
+
+    it('counts every ancestor, an AGENTS.override.md in place of its AGENTS.md', () => {
+      write('packages/AGENTS.md', sized(1_000))
+      write('packages/web/AGENTS.md', sized(11_000))
+      select({ platforms: ['codex'] })
+      expect(findings()).toEqual([]) // 20,000 + 1,000 + 11,000 = 32,000: fits
+      write('packages/AGENTS.override.md', sized(2_000))
+      expect(findings()).toEqual([expect.stringContaining('packages/web/AGENTS.md:1: size: 11000 bytes, 33000 together with the AGENTS.md files above it (AGENTS.md, 20000; packages/AGENTS.override.md, 2000)')])
+    })
+
+    it('says when the ancestors fill the budget before the file is reached', () => {
+      write('AGENTS.md', sized(32_768))
+      write('packages/web/AGENTS.md', sized(100))
+      select({ platforms: ['codex'] })
+      expect(findings()).toEqual([expect.stringMatching(/^packages\/web\/AGENTS\.md:1: size: 100 bytes, .*which they already fill, so Codex never reaches this file/)])
+    })
+
+    it('holds a custom platform that declares a combined limit the same way', () => {
+      select({ platforms: ['claude-code'], custom: [{ ...custom, hardBytes: 30_000, hardScope: 'combined' }] })
+      expect(findings()).toEqual([expect.stringContaining('packages/web/AGENTS.md:1: size: 15000 bytes, 35000 together with the AGENTS.md files above it (AGENTS.md, 20000); Example Agent reads at most 30000')])
+    })
+
+    it('leaves the files alone without Codex, and without a selection (sized as before)', () => {
+      select({ platforms: ['claude-code'] })
+      expect(findings()).toEqual([])
+      rmSync(join(root, '.agents/platforms.json'))
+      expect(findings()).toEqual([])
+      // Positive control: a nested file past its own per-file limit is still found without one.
+      write('packages/web/AGENTS.md', sized(25_000))
+      expect(findings()).toEqual([expect.stringMatching(/^packages\/web\/AGENTS\.md:1: size: 25000 bytes; Antigravity reads at most 24000/)])
+    })
+
+    it("reports a file past Codex's own 32 KiB once, not again for the combined limit", () => {
+      write('packages/web/AGENTS.md', sized(33_000))
+      select({ platforms: ['codex'] })
+      expect(findings()).toEqual([expect.stringMatching(/^packages\/web\/AGENTS\.md:1: size: 33000 bytes; Codex reads at most 32768 /)])
+    })
+  })
+
   it('has no size finding for a file no selected platform limits', () => {
     write('AGENTS.md', `# Rules\n\n${'Keep it short. '.repeat(3000)}\n`) // 45,000 bytes
     select({ platforms: ['cursor', 'copilot', 'gemini-cli'] })
@@ -309,6 +365,7 @@ describe('the platform selection', () => {
     ['a custom source with no url', { platforms: ['codex'], custom: [{ ...custom, sources: [{ checked: '2026-10-14' }] }] }, 'sources[0] needs a "url"'],
     ['a custom entry with an unknown field', { platforms: ['codex'], custom: [{ ...custom, maxBytes: 1 }] }, 'unknown field "maxBytes"'],
     ['a custom entry whose limit is a guess in words', { platforms: ['codex'], custom: [{ ...custom, hardBytes: 'about 30k' }] }, 'needs "hardBytes"'],
+    ['a custom entry whose limit has an unknown scope', { platforms: ['codex'], custom: [{ ...custom, hardScope: 'per-repo' }] }, '"hardScope" must be "file"'],
   ])('reports %s', (_label, selection, detail) => {
     write('AGENTS.md', '# Rules\n')
     select(selection)

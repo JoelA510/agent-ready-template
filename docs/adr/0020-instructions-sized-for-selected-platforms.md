@@ -100,3 +100,15 @@ No new file. It lost because not every target is a Node project, and the agents'
   at 24,000), and the selection's own errors; each was run against a planted defect.
 - `scripts/__tests__/agent-platforms.test.ts` holds every registry entry to a source and a date,
   and `prompts/agent-platforms.md`'s table to the registry.
+
+## Addendum, 2026-10-17: Codex's limit is combined
+
+The registry recorded that Codex's 32 KiB covers every AGENTS.md from the project root down,
+together, but the size check measured each file alone, so a nested AGENTS.md under 32 KiB passed
+however much of the budget its ancestors used. A platform's limit now has a scope: `hardScope:
+'combined'` on Codex's entry (and allowed on a `custom` one; absent means per file). With such a
+platform selected, a nested AGENTS.md is also held to that limit less the bytes of the AGENTS.md
+(or AGENTS.override.md, which Codex reads in its place) in each directory above it, and the
+finding names those files and what they leave. Only with a selection: a repo that records none is
+sized as before. Verification: "Codex's limit, on the AGENTS.md files from the root down combined"
+in `scripts/__tests__/check-instructions.test.ts`, each case run with the check reverted.
