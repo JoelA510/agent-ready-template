@@ -34,6 +34,15 @@ describe('this repo', () => {
     expect(result.status).toBe(0)
   })
 
+  // AGENTS.md keeps the rules and points here for the reference detail; what moved keeps the
+  // same bar, every path and script it names resolving.
+  it('its agent reference, where AGENTS.md points for detail, names only paths and scripts that exist', () => {
+    expect(readFileSync(join(REPO, 'AGENTS.md'), 'utf8')).toContain('`docs/system/agent-reference.md`')
+    const result = spawnSync(process.execPath, [SCRIPT, 'docs/system/agent-reference.md'], { cwd: REPO, encoding: 'utf8' })
+    expect(result.stdout + result.stderr).toMatch(/Checked 1 file\(s\): \d+ link\(s\), \d+ import\(s\), [1-9]\d* path\(s\), [1-9]\d* script/)
+    expect(result.status).toBe(0)
+  })
+
   it("its AGENTS.md is sized for its own selection: Codex's 32 KiB binds, Claude Code's 200 lines advise", () => {
     expect(JSON.parse(readFileSync(join(REPO, '.agents/platforms.json'), 'utf8'))).toEqual({ platforms: ['claude-code', 'codex'] })
     const result = spawnSync(process.execPath, [SCRIPT], { cwd: REPO, encoding: 'utf8' })

@@ -51,8 +51,9 @@ up. Then:
    two sets, as the prompt's Phase 2.1 says, sized for the selected agents; a CLAUDE.md imports
    AGENTS.md.
 4. **If the new project should also use the template's interface foundation** (it's a fork of
-   the template repo), follow the rebrand workflow in the template's `AGENTS.md` (init script →
-   palette swap → tokens rebuild → contrast re-check) before building features on top.
+   the template repo), follow the rebrand workflow in the template's agent reference,
+   docs/system/agent-reference.md (init script → palette swap → tokens rebuild → contrast
+   re-check), before building features on top.
 5. **Log the run.** Add a row to `prompts/run-log.md` when the run starts, and fill in its
    outcome columns (outputs, whether references were verified) when it finishes, so an
    abandoned run still leaves a record. If the run exposed a gap in the prompt itself, note

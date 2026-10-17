@@ -1,44 +1,32 @@
 # AGENTS.md
 
-Instructions for every coding agent working in this repository. Codex, Antigravity, Cursor, and
-GitHub Copilot read this file directly, Gemini CLI through `.gemini/settings.json`, and Claude
-Code through the `@AGENTS.md` import in `CLAUDE.md`. Keep every rule here, not in a per-tool file,
-within the budget of the agents `.agents/platforms.json` selects (Agent setup, below).
+Instructions for every coding agent working here. Codex, Antigravity, Cursor, and GitHub Copilot
+read this file directly, Gemini CLI through `.gemini/settings.json`, and Claude Code through the
+`@AGENTS.md` import in `CLAUDE.md`. Keep every rule here, not in a per-tool file, within the
+budget below; reference detail goes in `docs/system/agent-reference.md`, with a pointer.
 
 ## What this is
 
 A **project build template** for AI-driven development: agents write most of the code, and the
-template supplies the process, checks, and structure that keep that work honest. It has two uses:
-
-- **New repos start from it**, so the architecture is sound from the first commit: a verified
-  stack decision, agent instructions, a typed env module, CI as a required check, and a phased
-  plan that ends in a deployable walking skeleton.
-- **Existing repos measure against it** to reach production grade: a baseline, a thirteen-area
-  audit, and a remediation plan. `process:apply` delivers the process into the repo without
-  touching anything the repo owns.
-
-Two halves:
-
-1. **Process** — the build prompts in `prompts/` (new-project bootstrap, existing-project audit,
-   and the day-to-day prompts), the workflow skills in `.agents/skills/` that run them, the
-   decision record format in `docs/adr/`, and the definition of done in `CONTRIBUTING.md`.
-2. **Interface** — design tokens (W3C DTCG JSON) compiled by Style Dictionary, accessible React
-   primitives built on Radix UI + Tailwind CSS v4, and written brand & content guidance (voice,
-   tone, terminology, UI-copy patterns) under `docs/brand/`. All documented together in one
-   Storybook.
+template supplies the process, checks, and structure that keep that work honest. **New repos
+start from it** (a verified stack decision, agent instructions, a typed env module, CI as a
+required check, a phased plan ending in a deployable walking skeleton); **existing repos measure
+against it** (a baseline, a thirteen-area audit, a remediation plan), and `process:apply` delivers
+the process without touching anything the repo owns. Two halves: the **process** (the prompts in
+`prompts/`, the skills in `.agents/skills/` that run them, `docs/adr/`, and the definition of done
+in `CONTRIBUTING.md`) and the **interface** (DTCG design tokens compiled by Style Dictionary,
+accessible React primitives on Radix UI + Tailwind CSS v4, and brand guidance in `docs/brand/`,
+in one Storybook whose rationale is plain MDX in `docs/**/*.mdx`: read it).
 
 It ships with a neutral placeholder brand (**Acme Inc.**) and placeholder palette. <!-- init:keep -->
 None of that is meant to be kept: `npm run init` replaces the name, so a `package.json` still named
 `@acme/design-system` means this copy hasn't been rebranded yet. <!-- init:keep -->
-The design rationale lives in `docs/**/*.mdx` — those are plain MDX you can read directly (you
-cannot see the rendered Storybook, but you can read every word of its source).
 
 ## Figure out which situation you're in first
 
-Each workflow is an Agent Skill in `.agents/skills/` (Claude Code reads the generated copy in
-`.claude/skills/`). Invoke one by name: `/bootstrap` in Claude Code and Antigravity, `$bootstrap`
-in Codex, or ask for the skill by name in any other agent. A skill only wires up its prompt; the
-prompt is the instruction set, so an agent without skills can follow the prompt directly.
+Each workflow is an Agent Skill in `.agents/skills/` (Claude Code reads its copy in
+`.claude/skills/`), invoked by name: `/bootstrap` in Claude Code and Antigravity, `$bootstrap` in
+Codex. A skill only wires up its prompt, so an agent without skills follows the prompt directly.
 
 | Situation | Skill | Prompt |
 | --- | --- | --- |
@@ -53,86 +41,56 @@ prompt is the instruction set, so an agent without skills can follow the prompt 
 | Taking a release of the template this repo was built from | `template-update` | `prompts/template-update.md` |
 | A check proven in one repo should hold in every repo (template only) | `harvest` | `prompts/harvest.md` |
 
-- **Bootstrapping a NEW project:** follow `prompts/new-project.md` in phase order. Phase 0
-  (reference verification) is not optional. Every artifact the prompt requires has a skeleton
-  under `templates/project/` (in a target that received the process via `process:apply`:
-  `<target>/prompts/skeletons/`) — copy it to its real path, fill the `[BRACKETED]`
-  placeholders, delete the guidance comments, and confirm with
-  `node scripts/check-placeholders.mjs <files>` (targets without Node: the grep one-liner in
-  each prompt) — it must report nothing. If you're also using the interface half, do the
-  rebrand before building anything on top — see "Rebrand workflow" below.
+- **Bootstrapping a NEW project:** follow `prompts/new-project.md` in phase order; Phase 0
+  (reference verification) is not optional. Each required artifact has a skeleton under
+  `templates/project/` (`<target>/prompts/skeletons/` after `process:apply`): copy it to its real
+  path, fill the `[BRACKETED]` placeholders, delete the guidance comments, and confirm with
+  `node scripts/check-placeholders.mjs <files>` (without Node: each prompt's grep one-liner),
+  which must report nothing. Using the interface half too? Rebrand before building on it.
 - **Completing an EXISTING project:** follow `prompts/existing-project.md`. Audit before you
   edit; minimal diffs; the existing codebase's conventions outrank anything in this template.
   The audit and remediation-plan shapes are in `templates/project/docs/`.
 - **Target repo is not a fork of this one:** `npm run process:apply -- --target <path>` delivers
-  the prompts, the skills (live, in `.agents/skills/` and `.claude/skills/`), the skeletons
-  (staged under `<target>/prompts/skeletons/`, never at live paths), and the standards
-  (`--pack` adds a stack's), and records a manifest so
-  re-runs update only what the target hasn't edited. Never hand-copy them selectively; the
-  script is the manifest. `npm run check:instructions -- --root <path>` lints the target's
-  agent instruction files and skills.
-- **Taking a template update into a project built from it:** follow
-  `docs/system/updating-from-the-template.mdx`: read the CHANGELOG from `package.json`'s
-  `templateVersion` to the new release, merge the release tag (never `main`) without
-  committing, rebuild generated files rather than merging them, and search for the placeholder
-  name in what the release added.
-- **Pulling this into an EXISTING project:** do NOT run the rebrand script against someone's
-  existing repo — it's written for a fresh fork and rewrites files repo-wide. Read
-  `docs/system/consuming-in-an-existing-project.mdx` first; it spells out the substrate each
-  component needs and the two honest integration paths.
-- **Working on this template itself:** the rules below apply. A change to a prompt or skill is a
-  change to how every target works: test it the way the prompt tests code.
-- Log each run of a project prompt (new-project, existing-project) in `prompts/run-log.md`, and
-  write an ADR (`docs/adr/`, copy `docs/adr/0000-template.md`) for any decision that would take a
-  paragraph to justify.
+  the prompts, the skills (live), the skeletons (staged under `<target>/prompts/skeletons/`), and
+  the standards (`--pack` adds a stack's), and records a manifest so re-runs update only what the
+  target hasn't edited. Never hand-copy them selectively; the script is the manifest.
+  `npm run check:instructions -- --root <path>` lints the target's instruction files and skills.
+- **Taking a template update:** `docs/system/updating-from-the-template.mdx` (merge the release
+  tag, never `main`; rebuild generated files rather than merging them).
+- **Pulling the interface into an EXISTING project:** never the rebrand script (it rewrites files
+  repo-wide); read `docs/system/consuming-in-an-existing-project.mdx` first.
+- **Working on this template itself:** the rules below apply, and a prompt or skill change
+  changes every target: test it the way the prompt tests code.
+- Log each new-project or existing-project run in `prompts/run-log.md`. Write an ADR (copy
+  `docs/adr/0000-template.md`) for any decision that would take a paragraph to justify.
 
 ## Agent setup
 
-- **Cloud and background sessions start from a fresh clone.** Run `bash scripts/setup.sh` first:
-  the Node `.nvmrc` pins (through mise or nvm), then `npm ci`. Claude Code on the web's
-  SessionStart hook and Cursor's `.cursor/environment.json` run it; in Codex cloud, make it the
-  environment's setup script.
-- **Browser tests need Chromium.** `npm run test:browser` uses the one Playwright installs
-  (`npx playwright install chromium`). A sandbox that ships its own points
-  `PLAYWRIGHT_CHROMIUM_EXECUTABLE` at it instead; the SessionStart hook does that on Claude Code
-  on the web.
-- **Generated files are guarded.** A pre-edit hook refuses an edit to one and names the source to
-  edit, in every agent with hooks once it trusts the project (ADR 0018). A shell write gets past
-  it; `npm run check:generated` fails the PR.
-- **This file is sized for the maintainers' agents**, recorded in `.agents/platforms.json`
-  (Claude Code and Codex): under Codex's 32 KiB, which `check:instructions` enforces, and as
-  near Claude Code's 200-line guidance as the rules allow (a note, not a failure). Move detail
-  into `docs/` with a pointer rather than growing it. The template still ships wiring for all
-  six agents; `prompts/agent-platforms.md` is how a project chooses its own.
+- **Cloud and background sessions start from a fresh clone:** run `bash scripts/setup.sh` first
+  (Claude Code on the web's SessionStart hook and `.cursor/environment.json` do; in Codex cloud,
+  make it the setup script). Browser tests need `npx playwright install chromium`, or a sandbox's
+  own Chromium in `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
+- **This file is sized for the agents in `.agents/platforms.json`** (Claude Code and Codex): under
+  Codex's 32 KiB (enforced) and Claude Code's 200 lines with CLAUDE.md (a note). Move detail into
+  `docs/` with a pointer rather than grow it; `prompts/agent-platforms.md` is how a project chooses.
 
 ## Commands
 
+What each checks, in full: `docs/system/agent-reference.md`.
+
 | Command | What it does |
 | --- | --- |
-| `npm run check` | The gate: tokens build → contrast check → typecheck → lint → unused code → app build → bundle budget → Storybook build → tests. Run this before you consider a change done; CI also runs `test:browser` and `check:generated`. Before each commit (`verify`): `lint`, `typecheck`, `test`, and the build for any generated output whose source changed. |
-| `npm run check:audit` | Dependency gate: fails on any high/critical `npm audit` advisory (runtime or dev) without a current waiver in `docs/security/audit-waivers.json`; expired or stale waivers fail too. Runs in its own CI workflow per PR and weekly. Policy: `docs/security/dependency-policy.md`. |
-| `npm run check:env` | Env checks for a target whose app reads environment variables (`-- --root <path>`; this repo's tooling reads only CI, token, and browser-path variables): a secret behind a client-exposed prefix (`VITE_`, `NEXT_PUBLIC_`, `EXPO_PUBLIC_`, …), an env read or Vite `define` that bundles more than it names, placeholder values, and `${VAR}` in `eas.json`; the full list heads `scripts/check-env.mjs`. It self-tests its detectors and exits 2 rather than pass when they fail. |
-| `npm run check:instructions` | Lints agent instruction files and skills (CLAUDE.md, AGENTS.md, Cursor/Copilot/Gemini/Antigravity rules, `*/skills/*/SKILL.md`) for links, `@` imports, code-span paths, and `npm run` scripts that don't resolve; an AGENTS.md that Claude Code or Gemini CLI never reads; a skill that breaks the Agent Skills spec; an AGENTS.md over the strictest limit of the agents `.agents/platforms.json` selects (24,000 bytes without one), and that file's own mistakes; and hidden characters (control, bidi, zero-width, variation selectors, Unicode tags). `-- --root <path>` checks another repo. Runs in `test` for this repo. |
-| `npm run check:conformance` | Scores a repo (`-- --root <path>`) against the standards catalog in `standards/`: `core` plus the packs it detects or its `docs/standards/conformance.json` declares, with that file's baseline and expiring waivers. Exit 1 on a failure, 2 when a probe couldn't run. `npm run fleet:report -- --fleet <file>` scores every repo in a fleet file; `fleet:update` proposes this template's process to each, one PR apiece (`--apply`; a dry run without). Adding a standard: `standards/README.md`. |
-| `npm run check:settings` | Scores a repo's GitHub settings over the API (`-- --repo <owner/name>`, with a token that can read its admin settings in `GITHUB_TOKEN`): the `settings` standards in `standards/core/`. `fleet:report -- --settings` adds them to the fleet table. |
-| `npm run check:generated` | Drift gate: regenerates tokens, the registry, and the Claude Code skill copies, and fails if any committed generated file differs (modified, orphaned, or new). It compares against the last commit, so it's not part of `check`: CI runs it on every PR, and you run it after committing a token or component change, before pushing. |
-| `npm run tokens:build` | Compiles `tokens/**/*.json` into every platform output (CSS, JS/TS, JSON, Swift, Android XML). |
-| `npm run check-contrast` | Recomputes contrast from the tokens, both themes: every text pairing the components render (AA 4.5:1; the pairings are `TEXT_ON_SURFACE` in the script), and focus rings and status icons (3:1). Fails below either bar, or when a color class in `src/components/` isn't measured by any pairing. Re-run after any palette change. |
-| `npm run registry:build` | Regenerates the shadcn registry (`registry.json` + `public/r/*.json`, each item with its source inlined, and `public/llms.txt`, its index for agents) from `src/components/ui/`, for the site at `package.json`'s `homepage`, where `.github/workflows/pages.yml` publishes it with Storybook. Each npm dependency is named with its major (`@tanstack/react-table@^9`). Run after adding/changing a component or a dependency's major; `test` fails until you do. |
-| `npm run skills:build` | Regenerates `.claude/skills/` from `.agents/skills/`, validating each skill against the Agent Skills spec. Run after editing a skill. |
-| `npm run storybook` | Living docs at `http://localhost:6006`. |
-| `npm run dev` | Minimal Vite smoke-test app (`src/App.tsx`). |
-| `npm run test` | Vitest, two projects: component behavior + `axe` a11y across every story (jsdom), and the Node tooling under `scripts/` (`scripts/__tests__/`). |
-| `npm run test:browser` | Every story in real Chromium, once per theme, with `axe` after it renders (rendered color contrast and WCAG 2.2 target size, which jsdom can't measure) and the stories' play tests. Builds the tokens first; needs a browser (`npx playwright install chromium`). Run it after changing a component, story, or token. |
-| `npm run check:unused` | knip: unused files, exports, and dependencies (`knip.json`; the components' exports are public API). |
-| `npm run check:bundle` | The app build's gzipped JS and CSS against `bundle-budget.json`; raising a budget needs a stated reason. |
-| `npm run lint` / `npm run typecheck` | ESLint (incl. `jsx-a11y`; Node rules for `scripts/` and root configs; zero warnings allowed) / `tsc -b --noEmit`. |
-| `npm run init -- --name "Client Inc." --slug clientinc` | Rebrand a fresh fork (see below). |
+| `npm run check` | The gate (tokens, contrast, typecheck, lint, unused code, builds, bundle budget, tests). Run it before calling a change done. Before each commit (`verify`): `lint`, `typecheck`, `test`, and any generated output whose source changed. After committing, before pushing: `npm run check:generated`, the drift gate. |
+| `npm run check:audit` / `check:env` / `check:instructions` | Dependency advisories past their waivers; env misuse in a target; instruction files and skills. |
+| `npm run check:conformance` / `check:settings` | Score a repo against `standards/`, and its GitHub settings. |
+| `npm run tokens:build` / `registry:build` / `skills:build` | Rebuild generated output from its source (Golden rule 1). |
+| `npm run test` / `test:browser` | Vitest (jsdom + `axe`, and `scripts/`); every story in Chromium, both themes. |
+| `npm run lint` / `npm run typecheck` | ESLint (`jsx-a11y`, zero warnings) / `tsc -b --noEmit`. Also `storybook`, `dev`. |
+| `npm run init -- --name "Client Inc." --slug clientinc` | Rebrand a fresh fork (never an existing project). |
 
 ## Engineering guardrails (any code, any stack)
 
-These apply to everything you write here and to any project built from this template — they're
-the same standard the prompts in `prompts/` enforce.
+These hold for everything written here and in any project built from this template.
 
 - **Match existing conventions over generic best practice.** Read a neighboring file before
   writing a new one. The codebase you're in outranks anything you'd do by default.
@@ -142,8 +100,8 @@ the same standard the prompts in `prompts/` enforce.
   build-time-checked access — never `process.env.WHATEVER` scattered through the code. Keep
   `.env.example` current with every new variable.
 - **Report honestly.** Label every claim as *statically reviewed*, *executed*, or *fully
-  validated*. Never say tests pass without running them; never say something works because it
-  looks like it should.
+  validated*. Never say tests pass without running them, or that something works because it looks
+  like it should.
 - **Validate at trust boundaries** — user input, external API responses, environment, file
   paths, nulls. Surface expected failures to the user or log them with enough context to
   diagnose; never swallow an error to make a red thing green.
@@ -155,22 +113,19 @@ the same standard the prompts in `prompts/` enforce.
   data is multi-tenant, enforce tenancy at the row or query level, not in the UI.
 - **Tests come with the change, not after it** — unit coverage for logic, at least one
   meaningful edge case, and end-to-end coverage for user-facing flows.
-- **When stuck:** diagnose, change the assumption or the method, retry only if the change could
-  plausibly fix it. Before bisecting, confirm the baseline actually works. After three
-  materially different failed approaches, stop and report the specific blocker, and the
-  smallest input that would unblock it, rather than continuing to churn.
-- **Prove a check can fail before trusting it.** The gates in `scripts/__tests__/` were each
-  run against a planted defect before they were committed; hold new ones to the same. A check
-  that examined nothing is a failure, not a pass.
+- **When stuck:** diagnose, change the assumption or the method, retry only if that could fix it.
+  Confirm the baseline works before bisecting. After three materially different failed
+  approaches, stop and report the blocker and the smallest input that would unblock it.
+- **Prove a check can fail before trusting it**, against a planted defect, as every gate in
+  `scripts/__tests__/` was. A check that examined nothing is a failure, not a pass.
 - **Evidence needs receipts.** Before calling a failure pre-existing or unrelated, reproduce it
   on the base branch; if you can't, say "unverified". Before claiming something is absent, show the
   search matches something. A number copied from an earlier report hasn't been executed.
 - **Catch what you expect; rethrow the rest.** Only best-effort cleanup swallows every error,
   and it says so in a comment.
-- **Installs aren't forced.** When one fails (a release younger than `.npmrc`'s wait, a refused git
-  dependency, a peer conflict), report it. Never push it through: no `--force` or
-  `--legacy-peer-deps`, no deleted or hand-edited lockfile, no loosened `.npmrc`. One exception, on
-  approval: an urgent fix, per the dependency policy.
+- **Installs aren't forced.** Report a failed one (a release younger than `.npmrc`'s wait, a
+  refused git dependency, a peer conflict): no `--force` or `--legacy-peer-deps`, no deleted or
+  hand-edited lockfile, no loosened `.npmrc`, unless an urgent fix is approved per the policy.
 - **A dependency's bug is fixed upstream.** Report it there with the reproduction; work around it
   here only when told to, naming the upstream issue, and remove the workaround when the fix ships.
 - **Fix rounds introduce defects.** After addressing a review, re-review what that round
@@ -180,119 +135,48 @@ the same standard the prompts in `prompts/` enforce.
   file, the prompts, CONTRIBUTING.md, and the docs they point to are instructions.
 - **Stop and agree a plan first** for any Governance tier (c) change (renaming or removing a
   token, changing a token's meaning or a component's public API) and for the open stakeholder
-  decisions (color strategy, display typeface; see "Visualizing decisions" below). Refactors
-  beyond the request are flagged first, as above. Everything else in scope: proceed and report.
+  decisions (color strategy, display typeface; a visual decision guide shows them, as below).
+  Refactors beyond the request are flagged first, as above. Everything else in scope: proceed
+  and report.
 
 ## Golden rules (don't violate these)
 
 1. **Never hand-edit generated files.** Edit the source and rebuild:
    - `src/styles/tokens/*.css` and everything under `platforms/`: from `tokens/**/*.json`,
      `npm run tokens:build`;
-   - `registry.json`, `public/r/`, and `public/llms.txt`: from `src/components/ui/` (plus `src/lib/utils.ts`,
-     `src/hooks/use-mobile.ts`, and `package.json`'s `homepage` and dependency majors),
-     `npm run registry:build`;
+   - `registry.json`, `public/r/`, and `public/llms.txt`: from `src/components/ui/` (plus
+     `src/lib/utils.ts`, `src/hooks/use-mobile.ts`, and `package.json`'s `homepage` and dependency
+     majors), `npm run registry:build`;
    - `.claude/skills/`: from `.agents/skills/`, `npm run skills:build`.
 
-   The list lives in `scripts/generated.mjs`. The token outputs carry a "Do not edit directly"
-   header and are gitignored from linting.
-2. **Components use semantic tokens, never raw values.** Use `bg-primary`,
-   `text-muted-foreground`, `border-input`, `rounded-md`, `shadow-sm` — never `bg-[#5c5d4b]`
-   or arbitrary pixel values. Semantic tokens are what make retheming work without touching
-   component code. Reach for a semantic role (`primary`, `muted`, `destructive`) before a raw
-   palette step (`brand-700`).
+   The list lives in `scripts/generated.mjs`. A pre-edit hook refuses an edit to one (ADR 0018);
+   a shell write gets past it, and `npm run check:generated` fails the PR.
+2. **Components use semantic tokens, never raw values.** `bg-primary`, `text-muted-foreground`,
+   `border-input`, `rounded-md`, `shadow-sm` — never `bg-[#5c5d4b]` or arbitrary pixel values,
+   and a semantic role (`primary`, `muted`) before a palette step (`brand-700`). Retheming
+   depends on it. The token architecture and the component recipe (Radix, `cva`, `cn()`, the
+   focus ring, a story per state) are in `docs/system/agent-reference.md`; read a neighbor in
+   `src/components/ui/` before adding one.
 3. **Accessibility is a bar, not a nicety, and it's enforced.** WCAG 2.2 AA minimum,
-   keyboard-operable, screen-reader-labeled. This is checked, not just documented:
-   `jsx-a11y` fails `lint`, `check-contrast` fails on any sub-AA text pairing or a focus ring
-   under 3:1, and `axe` runs against every story twice: in jsdom (`test`, no layout) and in real
-   Chromium, in both themes (`test:browser`), where it measures rendered contrast and WCAG 2.2 target size. Note
-   what is NOT covered: `border`/`input` boundary contrast is advisory, not enforced; overlay
-   contents are measured only where a story renders them open; and the other WCAG 2.2 additions
-   (dragging alternatives, focus not obscured, accessible authentication) are manual review, per
-   `docs/foundations/accessibility.mdx`. Green gates are not 2.2 conformance. Don't disable these to get green — fix the component (or,
-   for a genuine false positive, disable the one rule on the one line with a justifying
-   comment, as `date-picker.tsx` and `pagination.tsx` do; an axe rule, on the one story, in
-   `parameters.a11y.options.rules` beside its reason and in `REVIEWED_EXCEPTIONS` in
-   `src/components/ui/stories.a11y.test.tsx`). See `docs/foundations/accessibility.mdx`.
+   keyboard-operable, screen-reader-labeled, held by `jsx-a11y`, `check-contrast`, and `axe` on
+   every story (jsdom, and Chromium in both themes). Boundary contrast, unopened overlays, and the
+   other 2.2 additions are manual review: green gates are not 2.2 conformance. Don't disable a
+   check to get green; fix the component. A genuine false positive gets the one rule disabled on
+   the one line with a reason (as `date-picker.tsx` does), or on the one story
+   (`parameters.a11y.options.rules`) and in `REVIEWED_EXCEPTIONS`
+   (`src/components/ui/stories.a11y.test.tsx`). See `docs/foundations/accessibility.mdx`.
 
-## Token architecture
+## Pointers
 
-Source of truth is `tokens/**/*.json` in W3C DTCG format (`$value` / `$type`, with `{...}`
-alias references):
-
-- `tokens/core/*.json` — raw values: `palette.*` color ramps, `spacing`, `radius`, `shadow`,
-  `motion`, `typography`, `breakpoint`, `z-index`.
-- `tokens/semantic/{light,dark}.json` — role aliases (`primary`, `background`, `muted`,
-  `destructive`, `sidebar-*`, …) that point at core values. Same role names in both files so
-  components never branch on theme.
-
-`style-dictionary.config.mjs` compiles those into:
-
-- `src/styles/tokens/*.css` — CSS custom properties this app consumes (light = `:root`,
-  dark = `.dark`). Wired into Tailwind v4 via `@theme inline` in `src/styles/globals.css`.
-- `platforms/js/` — typed TS module + JSON (React Native, JS `matchMedia`, non-CSS web), plus
-  `tokens-native` for the values React Native can't take in CSS form (easing, shadows, font
-  families, line heights, letter spacing).
-- `platforms/ios/` — Swift (`UIColor`, `CGFloat`, `Double` seconds).
-- `platforms/android/` — XML resources (colors, `dp`/`sp` dimens, ms integers).
-
-`npm run tokens:build` runs automatically before `dev`, `build`, and `storybook` via `pre*`
-hooks, so you rarely call it directly — but do after editing any `tokens/**/*.json`.
-
-## Adding or changing a component
-
-Match the existing files in `src/components/ui/` exactly (read a couple first, e.g.
-`button.tsx`, `card.tsx`). The pattern:
-
-- One `*.tsx` per primitive, built on the matching Radix primitive where interactivity is
-  involved (keyboard/focus/screen-reader behavior comes from Radix, don't hand-roll it).
-- Variants via `class-variance-authority` (`cva`), using only semantic Tailwind classes.
-- Merge incoming `className` with `cn()` from `@/lib/utils`.
-- The shared focus-ring pattern on every focusable element:
-  `outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:border-ring`. Where an
-  ancestor's overflow would clip that outset ring (a scroll viewport), draw an inset outline, as
-  `scroll-area.tsx` does; the browser tier's play tests are how you prove the indicator shows.
-- Co-locate a `*.stories.tsx` covering every meaningful state (including disabled/error). The
-  stories double as the usage examples — keep them realistic.
-- UI primitives may co-export a `cva` variants fn (`export { Button, buttonVariants }`); the
-  ESLint config already exempts `src/components/ui/**` from `react-refresh/only-export-components`.
-
-`CONTRIBUTING.md` has the long-form version of this; `docs/` has the design reasoning.
-
-## Theme (light/dark)
-
-Class-based: `<html class="dark">` flips the dark tokens. `src/components/theme-provider.tsx`
-(`ThemeProvider` + `useTheme`) is the opt-in runtime toggle — it respects
-`prefers-color-scheme` on first load and persists the choice. It is not mounted by default;
-wrap your app in it if you want a live switcher (`src/components/theme-toggle.tsx` is a ready
-example).
-
-## Rebrand workflow (fresh fork only)
-
-1. `npm run init -- --name "Client Inc." --slug clientinc [--homepage <url>]` — swaps every
-   `Acme` / `acme` reference, renames the package (lockfile too), retitles `index.html`, and <!-- init:keep -->
-   regenerates the registry under the new name. It records the template release as
-   `templateVersion` and restarts `version` at 0.1.0. It prints a checklist of the things it
-   deliberately does NOT automate.
-2. Swap `palette.brand.*` / `palette.accent.*` in `tokens/core/color.json`, then
-   `npm run tokens:build`. Replace `public/brand-mark.svg`.
-3. Rewrite `docs/brand/*` for the real voice/tone/terminology, and work through
-   `docs/foundations/*` deciding each recommendation-vs-alternative.
-4. Re-verify AA contrast for your new palette (see `docs/foundations/accessibility.mdx`).
-
-## Visualizing decisions for stakeholder review
-
-Some people who sign off on the decisions this system leaves open (the color **strategy**, the
-display **typeface**, any "options menu, not a mandate" item in Foundations/Brand) don't read MDX.
-When someone needs to review or choose between such options, default to a **visual decision
-guide**: one self-contained HTML file rendering every option for real, in light and dark, with the
-recommendation, the trade-offs, and the default if it's left to us. How to build one from the
-docs, and how to hand it over (never auto-published: it carries the real brand), is in
-`docs/proposals/README.md`.
+- **Theme** (class-based, opt-in toggle) and the **rebrand** steps (fresh fork only):
+  `docs/system/agent-reference.md`.
+- **Stakeholder decisions** (color strategy, display typeface, any "options menu" item): default
+  to a visual decision guide, one self-contained HTML file showing every option in light and
+  dark, never auto-published (it carries the real brand). How: `docs/proposals/README.md`.
 
 ## Don't
 
-- Don't edit `src/styles/tokens/**`, `platforms/**`, `registry.json`, `public/r/**`, `public/llms.txt`, or
-  `.claude/skills/**` (generated — edit the source and rebuild).
+- Don't edit a generated file (Golden rule 1): edit the source and rebuild.
 - Don't hardcode colors/spacing in components (semantic tokens only).
 - Don't run `npm run init` against an existing project (fresh forks only).
 - Don't add a component without a story, or ship one that fails the a11y bar.
