@@ -246,6 +246,40 @@ describe.skipIf(!hasWorkflows)('workflow permissions', () => {
   })
 })
 
+// The audit workflow. One concurrency group for every event once let a push to main cancel the
+// weekly scheduled run (or the reverse), and the token that opens the scheduled-failure issue
+// once sat in the job that checks out the repository and runs npm.
+const AUDIT_WORKFLOW = join(WORKFLOWS, 'audit.yml')
+describe.skipIf(!existsSync(AUDIT_WORKFLOW))('the audit workflow', () => {
+  type Job = { if?: string; needs?: string | string[]; permissions?: Record<string, string>; steps?: { uses?: string; run?: string }[] }
+  type Wf = { concurrency?: { group?: string }; jobs: Record<string, Job> }
+  const wf = () => parseYaml(readFileSync(AUDIT_WORKFLOW, 'utf8')) as Wf
+  const writes = (job: Job) => Object.entries(job.permissions ?? {}).filter(([, v]) => v === 'write').map(([k]) => k)
+  const runsCode = (job: Job) => (job.steps ?? []).some((st) => /actions\/checkout@/.test(st.uses ?? '') || /\b(npm|npx|node)\b/.test(st.run ?? ''))
+
+  it('groups runs by event as well as ref, so a push and the schedule never cancel each other', () => {
+    const group = wf().concurrency?.group ?? ''
+    expect(group).toContain('github.event_name')
+    expect(group).toContain('github.ref')
+  })
+
+  it('opens the scheduled-failure issue from a job of its own that runs no code, and nothing else can write', () => {
+    const jobs = Object.entries(wf().jobs)
+    const auditJob = jobs.find(([, job]) => (job.steps ?? []).some((st) => st.run === 'npm run check:audit'))
+    expect(auditJob, 'the job that runs npm run check:audit (positive control)').toBeDefined()
+    expect(writes(auditJob![1])).toEqual([])
+    const writers = jobs.filter(([, job]) => writes(job).length)
+    expect(writers.map(([, job]) => writes(job))).toEqual([['issues']])
+    const [, issueJob] = writers[0]
+    expect(runsCode(issueJob)).toBe(false)
+    expect([issueJob.needs].flat()).toEqual([auditJob![0]])
+    expect(issueJob.if).toMatch(/failure\(\)/)
+    expect(issueJob.if).toMatch(/github\.event_name == 'schedule'/)
+    // Positive control: the audit job itself would count as running code.
+    expect(runsCode(auditJob![1])).toBe(true)
+  })
+})
+
 // The project skeletons: a literal reader fills the ruleset from the CI skeleton, so the ruleset
 // skeleton names every job the CI skeleton runs, under the same name. The audit's check comes from
 // its own workflow, which isn't a skeleton, so it stays a placeholder.
@@ -313,21 +347,40 @@ describe("the CI skeleton runs every gate Phase 2.5's tooling names", () => {
 
 describe.skipIf(!hasWorkflows)('the ruleset requires every pull-request check', () => {
   const RULESET = join(REPO, '.github/rulesets/main.json')
-  type Workflow = { on?: unknown; jobs?: Record<string, { name?: string; strategy?: { matrix?: unknown } }> }
+  type Job = { name?: string; if?: string; strategy?: { matrix?: unknown } }
+  type Workflow = { on?: unknown; jobs?: Record<string, Job> }
   const triggers = (on: unknown): string[] =>
     typeof on === 'string' ? [on] : Array.isArray(on) ? on.map(String) : on && typeof on === 'object' ? Object.keys(on) : []
+  // A job whose `if` admits only other events (`github.event_name == 'schedule'`, and no `||` or
+  // `!=` that could let a pull request in) is skipped on every pull request, which GitHub reports
+  // as passing: requiring it would require nothing.
+  const prOnlySkipped = (job: Job) => {
+    const cond = typeof job.if === 'string' ? job.if : ''
+    const events = [...cond.matchAll(/github\.event_name\s*==\s*'([\w-]+)'/g)].map((m) => m[1])
+    return events.length > 0 && !events.includes('pull_request') && !/\|\||!=/.test(cond)
+  }
   const workflows = (hasWorkflows ? readdirSync(WORKFLOWS) : [])
     .filter((f) => /\.ya?ml$/.test(f))
     .map((f) => ({ f, doc: parseYaml(readFileSync(join(WORKFLOWS, f), 'utf8')) as Workflow }))
-  const prJobs = workflows
+  const allJobs = workflows
     .filter(({ doc }) => triggers(doc.on).includes('pull_request'))
-    .flatMap(({ f, doc }) => Object.entries(doc.jobs ?? {}).map(([id, job]) => ({ f, id, name: job.name ?? id, matrix: Boolean(job.strategy?.matrix) })))
+    .flatMap(({ f, doc }) => Object.entries(doc.jobs ?? {}).map(([id, job]) => ({ f, id, job, name: job.name ?? id, matrix: Boolean(job.strategy?.matrix) })))
+  const prJobs = allJobs.filter((j) => !prOnlySkipped(j.job))
 
   it('reads every trigger form, and finds the pull-request jobs (positive control)', () => {
     expect(triggers('pull_request')).toEqual(['pull_request'])
     expect(triggers(['push', 'pull_request'])).toEqual(['push', 'pull_request'])
     expect(triggers({ pull_request: { branches: ['main'] } })).toEqual(['pull_request'])
     expect(prJobs.map((j) => j.name)).toEqual(expect.arrayContaining(['Build, lint, typecheck, test', 'npm audit (high and critical block)']))
+  })
+
+  it('leaves out only a job no pull request can run, and keeps one a condition could let in (positive control)', () => {
+    expect(allJobs.filter((j) => prOnlySkipped(j.job)).map((j) => j.name)).toEqual(['Open an issue when the scheduled audit fails'])
+    expect(prOnlySkipped({ if: "failure() && github.event_name == 'schedule'" })).toBe(true)
+    expect(prOnlySkipped({ if: "github.event_name == 'schedule' || github.event_name == 'pull_request'" })).toBe(false)
+    expect(prOnlySkipped({ if: "github.event_name != 'push'" })).toBe(false)
+    expect(prOnlySkipped({ if: 'failure()' })).toBe(false)
+    expect(prOnlySkipped({})).toBe(false)
   })
 
   it('reports each job under a fixed name (a matrix job reports one check per combination)', () => {

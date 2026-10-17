@@ -93,8 +93,12 @@ This delivers the prompts (with this README and a fresh run log) into `<target>/
 skeletons into `<target>/prompts/skeletons/`, the standards the target is held to into
 `<target>/prompts/standards/`, and the skills into `<target>/.agents/skills/` and
 `<target>/.claude/skills/`, plus `prompts/.apply-manifest.json` recording what was delivered
-and from which template commit. Nothing but the skills lands at a live path, so nothing in the
-target is overwritten or shadowed. `--list` previews without writing.
+and from which template commit. When the target's `.agents/platforms.json` selects its agents
+(`agent-platforms.md`), the skills go only to the home(s) those agents read: `.claude/skills/`
+for Claude Code, `.agents/skills/` for the rest. What an earlier apply put in a home the
+selection no longer reads is reported and left as it is, never removed. Nothing but the skills
+lands at a live path, so nothing in the target is overwritten or shadowed. `--list` previews
+without writing.
 
 The `core` standards always come along. `--pack <name>` (`node`, `supabase`, and the rest of the
 catalog's packs) adds a stack's standards, and the manifest remembers it for later runs;

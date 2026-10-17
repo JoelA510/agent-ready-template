@@ -15,6 +15,11 @@
 //                                 scripts/build-skills.mjs). A target that got .claude/commands/
 //                                 from an earlier run has them removed by the rule below for a
 //                                 file the template dropped.
+//   Which skill homes: the ones the platforms in the target's .agents/platforms.json read (each
+//   platform's `skills` in scripts/agent-platforms.mjs), or both when it has none (ADR 0020). A
+//   home no selected platform reads gets nothing, and what an earlier apply delivered there is
+//   reported and left exactly as it is, still recorded, never removed or updated. No hook
+//   configuration is delivered: the hooks guard the template's own generated files (ADR 0018).
 //   prompts/standards/**          the standards the target is held to: core/ always, plus each
 //                                 pack named with --pack (remembered; --drop-pack forgets one)
 //   prompts/.apply-manifest.json  per file, the hash of the template version last delivered or
@@ -44,7 +49,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PROCEDURE, SELECTION_FILE } from './agent-platforms.mjs'
+import { PROCEDURE, SELECTION_FILE, readSelection } from './agent-platforms.mjs'
 import { INSTRUCTION_PATHS, agentsHiddenFromClaude } from './check-instructions.mjs'
 import { enginesNode, satisfies } from './runtime.mjs'
 
@@ -73,6 +78,37 @@ export const PROCESS_SKILLS = ['bootstrap', 'complete', 'discovery', 'plan-chang
 // The catalog lives in the template, so harvesting into it only makes sense here.
 export const TEMPLATE_ONLY = { prompts: ['harvest.md'], skills: ['harvest'] }
 
+// Where process:apply delivers the skills, the same files in each: a selected platform reads one.
+export const SKILL_HOMES = ['.agents/skills', '.claude/skills']
+
+/**
+ * The skill homes to deliver into `target`, from its platform selection: { homes, selected,
+ * names (the selected platforms), elsewhere ([{ name, skills }] for a platform that reads skills
+ * from a path process:apply doesn't deliver to), problem (why the selection couldn't be followed,
+ * or a note on what it got wrong) }. With no selection, or one that selects nothing readable,
+ * every home, as before selections existed: delivering more than needed loses nothing, a guess
+ * at less could.
+ */
+export function skillHomes(target) {
+  const selection = readSelection(target)
+  if (selection.absent) return { homes: SKILL_HOMES, selected: false, names: [], elsewhere: [], problem: null }
+  if (selection.error || !selection.platforms.length) {
+    const why = selection.error ?? `${SELECTION_FILE} ${selection.problems.join('; ')}`
+    return { homes: SKILL_HOMES, selected: false, names: [], elsewhere: [], problem: `${why}, so the skills go to every home, as with no selection` }
+  }
+  const home = (p) => (typeof p.skills === 'string' ? p.skills.trim().replace(/^\.\//, '').replace(/\/+$/, '') : null)
+  const read = new Set(selection.platforms.map(home).filter(Boolean))
+  return {
+    homes: SKILL_HOMES.filter((h) => read.has(h)),
+    selected: true,
+    names: selection.platforms.map((p) => p.name),
+    elsewhere: selection.platforms.filter((p) => home(p) && !SKILL_HOMES.includes(home(p))).map((p) => ({ name: p.name, skills: home(p) })),
+    problem: selection.problems.length ? `${SELECTION_FILE} ${selection.problems.join('; ')}` : null,
+  }
+}
+
+const homeOf = (dest) => SKILL_HOMES.find((h) => dest.startsWith(`${h}/`)) ?? null
+
 /** The packs in the template's standards catalog, besides core, which is always delivered. */
 export const PACKS = () =>
   readdirSync(join(ROOT, 'standards'), { withFileTypes: true })
@@ -91,8 +127,9 @@ function usage() {
   --check      Write nothing; exit 1 if the target has drifted from this template.
 
 Delivers prompts/ (with skeletons staged under prompts/skeletons/ and the standards under
-prompts/standards/) and the workflow skills in .agents/skills/ and .claude/skills/. Nothing the
-target owns is ever overwritten; the header of this script says exactly how re-runs behave.
+prompts/standards/) and the workflow skills in .agents/skills/ and .claude/skills/, or only the
+one(s) the platforms in the target's .agents/platforms.json read. Nothing the target owns is ever
+overwritten; the header of this script says exactly how re-runs behave.
 `)
 }
 
@@ -163,9 +200,9 @@ const posixRel = (from, abs) => relative(from, abs).split(sep).join('/')
 /**
  * Every file to deliver: { dest (relative, forward slashes), src (its path in the template, or
  * null when the delivered content isn't the file as committed), content }. `packs` are delivered
- * beside core.
+ * beside core; the skills go to `homes` (skillHomes()).
  */
-export function sources(packs = []) {
+export function sources(packs = [], homes = SKILL_HOMES) {
   const skeletonRoot = join(ROOT, 'templates', 'project')
   const list = [
     ...PROCESS_PROMPTS.map((f) => {
@@ -173,9 +210,9 @@ export function sources(packs = []) {
       return f === 'run-log.md' ? { dest: `prompts/${f}`, src: null, content: freshRunLog(text) } : { dest: `prompts/${f}`, src: `prompts/${f}`, content: text }
     }),
     ...PROCESS_SKILLS.flatMap((name) =>
-      ['.agents', '.claude'].flatMap((home) => {
-        const dir = join(ROOT, home, 'skills', name)
-        return collectFiles(dir).map((abs) => ({ dest: `${home}/skills/${name}/${posixRel(dir, abs)}`, src: posixRel(ROOT, abs), content: contentOf(abs) }))
+      homes.flatMap((home) => {
+        const dir = join(ROOT, home, name)
+        return collectFiles(dir).map((abs) => ({ dest: `${home}/${name}/${posixRel(dir, abs)}`, src: posixRel(ROOT, abs), content: contentOf(abs) }))
       }),
     ),
     ...collectFiles(skeletonRoot).map((abs) => ({ dest: `prompts/skeletons/${posixRel(skeletonRoot, abs)}`, src: posixRel(ROOT, abs), content: contentOf(abs) })),
@@ -361,10 +398,10 @@ export function mergeProposal(mine, base, theirs, labels = ['your copy', 'templa
  * What a re-apply would do. `held` are packs the manifest records that this template doesn't
  * ship (it's older, or the pack was renamed): their files are left as they are, and stay recorded.
  */
-function plan(target, previous, packs, held = []) {
+function plan(target, previous, packs, held = [], homes = SKILL_HOMES) {
   const actions = []
   const next = {}
-  const delivered = sources(packs)
+  const delivered = sources(packs, homes)
 
   for (const { dest, src, content } of delivered) {
     const sourceHash = hash(content)
@@ -419,6 +456,16 @@ function plan(target, previous, packs, held = []) {
       continue
     }
     const destAbs = join(target, dest)
+    // A skill home no selected platform reads: what an earlier apply put there stays as it is,
+    // never removed or updated, and stays recorded, so selecting its platform again later picks
+    // up from what was delivered. Reported, so the target can decide.
+    const home = homeOf(dest)
+    if (home && !homes.includes(home)) {
+      if (!existsSync(destAbs)) continue // gone: forget it
+      actions.push({ kind: 'unselected', dest })
+      next[dest] = last
+      continue
+    }
     if (!existsSync(destAbs)) continue // gone on both sides: forget it
     if (hash(contentOf(destAbs)) === last) {
       actions.push({ kind: 'remove', dest })
@@ -503,6 +550,11 @@ function outsideTarget(target, dest, kind) {
 
 // What a re-apply writes: a new file, an update, or something parked beside the target's copy.
 const WRITES = ['copy', 'update', 'park', 'park-unrecorded', 'propose']
+// Delivered files in a skill home the selection no longer reads, for --check's note.
+const UNSELECTED = (files) =>
+  `${files.length} file(s) an earlier apply delivered are in a skill home no platform in ${SELECTION_FILE} reads; left as they are, and no longer updated:\n` +
+  files.slice(0, 5).map((f) => `    ${f}`).join('\n') +
+  `${files.length > 5 ? `\n    ... and ${files.length - 5} more` : ''}\n  Delete them if no agent you use reads them, or select the platform that does.`
 const parked = (kind) => kind.startsWith('park') || kind === 'propose'
 
 // What to do about delivered files the target's .gitignore covers: an exception, or, where
@@ -533,7 +585,8 @@ export function drift(target) {
   const previous = readManifest(target)
   const delivered = Object.keys(previous.files).length > 0
   const { known, held } = splitPacks(previous.packs ?? [])
-  const { actions } = plan(target, previous, known, held)
+  const homes = skillHomes(target)
+  const { actions } = plan(target, previous, known, held, homes.homes)
   const changes = actions.filter((a) => WRITES.includes(a.kind) || a.kind === 'remove').map((a) => ({ kind: a.kind, dest: a.dest }))
   const heldBack = [...new Set(actions.filter((a) => a.kind === 'own-skill').map((a) => a.dest.split('/').slice(0, 3).join('/')))]
   const leftovers = actions.filter((a) => a.kind === 'outside').map((a) => `${a.dest} leads out of the target through a symlink`)
@@ -547,7 +600,8 @@ export function drift(target) {
   // none of it, and its absence there reads like a file the target deleted on purpose.
   // Kept apart from the leftovers: a re-apply doesn't fix it, committing does.
   const ignored = gitignored(target, Object.keys(previous.files))
-  return { delivered, templateCommit: previous.templateCommit ?? null, ahead: notInHistory(previous.templateCommit), held, heldBack, changes, leftovers, ignored }
+  const unselected = actions.filter((a) => a.kind === 'unselected').map((a) => a.dest)
+  return { delivered, templateCommit: previous.templateCommit ?? null, ahead: notInHistory(previous.templateCommit), held, heldBack, changes, leftovers, ignored, unselected }
 }
 
 /** Recorded packs this template ships, and those it doesn't. */
@@ -588,7 +642,7 @@ function notInHistory(commit) {
 const ELSEWHERE = 'a newer template, another branch, or a repository this template was copied from without its history'
 
 function check(target) {
-  const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers, ignored } = drift(target)
+  const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers, ignored, unselected } = drift(target)
   if (!delivered) {
     console.log(`Not delivered: ${target} has no ${MANIFEST}. Run process:apply first.`)
     process.exit(1)
@@ -598,6 +652,8 @@ function check(target) {
   if (ahead) console.log(`! ${from.slice(0, 12)} isn't in this template checkout's history (${ELSEWHERE}): a re-apply from here could take files back. Check with the checkout it came from.\n`)
   if (held.length) console.log(`! The manifest records pack(s) this template doesn't ship: ${held.join(', ')}. Their files are left as they are.\n`)
   if (heldBack.length) console.log(`! The target's own skill(s) hold the template's back: ${heldBack.join(', ')} (not a copy of the template's; see process:apply's report).\n`)
+  // Not drift: the target chose its platforms, and these are left for it to keep or delete.
+  if (unselected.length) console.log(`${UNSELECTED(unselected)}\n`)
   if (changes.length) {
     console.log(`A re-apply would change ${changes.length} file(s):`)
     for (const c of changes.slice(0, 20)) console.log(`  ${c.kind === 'remove' ? 'x' : parked(c.kind) ? '~' : c.kind === 'copy' ? '+' : '↑'} ${c.dest} (${c.kind})`)
@@ -663,7 +719,8 @@ function main() {
   if (unknownDrop.length) fail(`No pack ${unknownDrop.join(', ')} in the template's standards/ or the target's manifest.`, 2)
   const held = split.held.filter((p) => !args.dropPacks.includes(p)) // a dropped one's files go the usual way
   const packs = [...new Set([...split.known, ...args.packs])].filter((p) => p !== 'core' && !args.dropPacks.includes(p)).sort()
-  const { actions, next } = plan(target, previous, packs, held)
+  const homes = skillHomes(target)
+  const { actions, next } = plan(target, previous, packs, held, homes.homes)
   const list = args.list === true
 
   let recorded = false
@@ -713,12 +770,13 @@ function main() {
     ['shadowed', `${list ? 'Would hold' : 'Held'} back: in Claude Code this skill would silently replace the target's command of the same name (.claude/commands/<name>.md). Move what you need from that command into .agents/skills/<name>/SKILL.md, delete the command, and re-run`, '!'],
     ['own-skill', `${list ? 'Would hold' : 'Held'} back: the target has a skill of its own by this name, not a copy of the template's (Claude Code's /verify records its run recipe at .claude/skills/verify/SKILL.md, for one). Yours is left as it is. To take the template's, fold what yours does into it, delete yours, and re-run`, '!'],
     ['outside', `${list ? 'Would skip' : 'Skipped'}: the path leads out of the target through a symlink, so nothing is written or removed there`, '!'],
+    ['unselected', `Left as it is, and no longer updated: delivered by an earlier apply to a skill home no platform in ${SELECTION_FILE} reads. Delete it if no agent you use reads it, or select the platform that does and re-run`, '-'],
   ]
   console.log(`${list ? 'Dry run: ' : ''}process assets -> ${target}\n`)
   let changed = false
   for (const [kind, title, mark] of sections) {
     if (!files(kind).length) continue
-    if (!['kept-deleted', 'orphaned', 'shadowed', 'own-skill', 'outside'].includes(kind)) changed = true
+    if (!['kept-deleted', 'orphaned', 'shadowed', 'own-skill', 'outside', 'unselected'].includes(kind)) changed = true
     console.log(`${title}:`)
     for (const a of byKind[kind]) {
       const note = a.kind === 'propose' ? (a.conflicts ? ` (${a.conflicts} conflict(s) marked)` : ' (merged cleanly)') : ''
@@ -731,7 +789,7 @@ function main() {
   if (notInHistory(previous.templateCommit)) {
     console.log(`! The target was last applied from ${previous.templateCommit.slice(0, 12)}, which isn't in this template checkout's history (${ELSEWHERE}): what this run updated could be older than what it replaced. Review the diff before committing.\n`)
   }
-  const ignored = gitignored(target, [...actions.filter((a) => !['kept-deleted', 'remove', 'shadowed', 'own-skill', 'outside'].includes(a.kind)).map((a) => a.dest), MANIFEST])
+  const ignored = gitignored(target, [...actions.filter((a) => !['kept-deleted', 'remove', 'shadowed', 'own-skill', 'outside', 'unselected'].includes(a.kind)).map((a) => a.dest), MANIFEST])
   if (ignored.length) {
     const shown = ignored.slice(0, 5).map((f) => `  ! ${f}`).join('\n')
     console.log(
@@ -759,6 +817,14 @@ function main() {
   if (advice) console.log(advice)
   const hidden = agentsHiddenFromClaude(target)
   if (hidden) console.log(`${hidden.file}: ${hidden.detail}\n`)
+  if (homes.selected) {
+    const into = homes.homes.length ? homes.homes.map((h) => `${h}/`).join(' and ') : 'no skill home (none of them reads one process:apply delivers)'
+    console.log(`Skills delivered for the platforms ${SELECTION_FILE} selects (${homes.names.join(', ')}): ${into}.\n`)
+  }
+  for (const { name, skills } of homes.elsewhere) {
+    console.log(`! ${name} reads skills from ${skills}/, where process:apply doesn't deliver: copy them there from .agents/skills/ and keep them in step.\n`)
+  }
+  if (homes.problem) console.log(`! ${homes.problem}.\n`)
   // The target's own choice: never delivered, so only recommended.
   if (!existsSync(join(target, SELECTION_FILE))) {
     console.log(`No ${SELECTION_FILE} records which coding agents this repo uses, so its instruction files are checked against every agent's strictest limit. Record them there (${PROCEDURE} lists the ids, and how to research one that isn't listed).\n`)
@@ -771,8 +837,11 @@ function main() {
   // Before the commit: a pre-commit formatter would otherwise rewrite the delivery as it's committed.
   // One run by hand can wait for the first change the project makes, where a config edit is in scope.
   if (delivered) {
-    steps.push(`If this repo runs a formatter, keep it off prompts/, .agents/skills/, and .claude/skills/
-     (for Prettier, those three lines in .prettierignore). One that runs on commit (a pre-commit
+    const paths = ['prompts/', ...homes.homes.map((h) => `${h}/`)]
+    const named = paths.length > 2 ? `${paths.slice(0, -1).join(', ')}, and ${paths.at(-1)}` : paths.join(' and ')
+    const lines = ['', 'that line', 'those two lines', 'those three lines'][paths.length]
+    steps.push(`If this repo runs a formatter, keep it off ${named}
+     (for Prettier, ${lines} in .prettierignore). One that runs on commit (a pre-commit
      hook, lint-staged) needs that before this delivery is committed. One run only by hand can wait
      for the project's first change (where a config edit is in scope) if, until then, it's run only
      on the project's own paths. A reformat makes every delivered file look edited, and re-applies

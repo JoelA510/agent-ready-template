@@ -14,12 +14,16 @@ on:
 # Nothing by default; each job asks for what it uses, so a job added later starts with nothing.
 permissions: {}
 
+# A newer run supersedes an older one of the same event on the same ref. The event is in the
+# group so a push to main and the weekly schedule, both on main, never cancel each other: a
+# cancelled scheduled run opens no issue, and a cancelled push run leaves main's check unreported.
 concurrency:
-  group: audit-${{ github.ref }}
+  group: audit-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Each job's `name` is a required check in .github/rulesets/main.json. Renaming or adding a job
-# means updating that file (a test holds them equal) and re-importing it in Settings → Rules.
+# The `name` of each job a pull request runs is a required check in .github/rulesets/main.json.
+# Renaming or adding one means updating that file (a test holds them equal) and re-importing it in
+# Settings → Rules.
 jobs:
   audit:
     name: npm audit (high and critical block)
@@ -27,7 +31,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      issues: write # only used by the scheduled-failure step below
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,15 +50,25 @@ jobs:
       - name: Audit dependencies
         run: npm run check:audit
 
-      # A red scheduled run notifies only whoever last edited the cron line, so on a schedule a
-      # failure also opens (once) an issue the whole repo can see.
-      - name: Open an issue when the scheduled audit fails
-        if: failure() && github.event_name == 'schedule'
+  # A red scheduled run notifies only whoever last edited the cron line, so on a schedule a
+  # failure also opens (once) an issue the whole repo can see. Its own job, so the token that can
+  # write issues never shares a runner with the checkout and the npm it runs. It only runs on the
+  # schedule, so a pull request reports it skipped, and the ruleset doesn't require it.
+  report-scheduled-failure:
+    name: Open an issue when the scheduled audit fails
+    needs: audit
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open the issue, unless one is already open
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           title="Dependency audit is failing on main"
           if [ -z "$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[].number')" ]; then
             gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
-              --body "The scheduled \`npm run check:audit\` run failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. Fix or waive per docs/security/dependency-policy.md, then close this issue."
+              --body "The scheduled dependency audit (check:audit) failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. Fix or waive per docs/security/dependency-policy.md, then close this issue."
           fi

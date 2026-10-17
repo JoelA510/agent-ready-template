@@ -12,6 +12,7 @@ export interface Platform {
   wiring: string | null
   hardBytes: number | null
   hardEffect?: string
+  hardScope?: 'file' | 'combined'
   guidanceLines: number | null
   loads?: string[]
   loadsOtherwise?: string[]
@@ -31,3 +32,8 @@ export declare function readSelection(
 export declare function selectionText(root: string, ids: string[]): string
 export declare function unknownIds(ids: string[]): string[]
 export declare function budgetFor(fileName: string, platforms: Platform[]): { bytes: number; by: Platform[] } | null
+export declare function combinedBudgets(
+  root: string,
+  rel: string,
+  platforms: Platform[],
+): { platform: Platform; ancestors: { file: string; bytes: number }[]; used: number; budget: number }[]

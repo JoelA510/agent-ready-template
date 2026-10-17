@@ -24,20 +24,26 @@ The project owns one file, `.agents/platforms.json`:
   `hardBytes` (the documented size past which a file isn't read in full, or `null` when the
   documentation gives none); and `sources`, at least one `{"url": "...", "checked": "YYYY-MM-DD"}`
   per page the facts came from. Optional: `guidanceLines` (a documented length to stay under),
-  `hardEffect` (what happens past the limit: truncated, skipped), `wiring` (what the project adds so
+  `hardEffect` (what happens past the limit: truncated, skipped), `hardScope` (`"combined"` when
+  the limit is on every AGENTS.md from the root down together, as Codex's is; `"file"`, the
+  default, when it's per file), `wiring` (what the project adds so
   AGENTS.md reaches it), `skills` and `hooks` (where it reads project skills and hook
   configuration), and `notes` (what the sources leave open). Any other field is an error.
 
 Where it comes from: a fresh fork of the template records it with
 `npm run init -- --name ... --slug ... --platforms claude-code,codex`; the new-project and
 existing-project prompts write it from the owner's answer. `process:apply` never writes, updates, or
-removes it; it says so when the target has none.
+removes it; it says so when the target has none. It reads it: the skills go only to the skill
+home(s) the selected platforms read (`skills` in the table's source), and a home dropped from the
+selection keeps what was delivered there, reported, never removed.
 
 `check:instructions` (`node <template checkout>/scripts/check-instructions.mjs --root <repo>`) reads
 it:
 
 - **Size, a finding:** each shared instruction file is held to the smallest hard limit among the
-  selected platforms that read it. A file none of them limits has no budget.
+  selected platforms that read it. A file none of them limits has no budget. Where a selected
+  platform's limit is combined (Codex), a nested AGENTS.md is also held to that limit less the
+  AGENTS.md files above it, and the finding names them.
 - **Guidance, a note:** a documented length to stay under, such as Claude Code's 200 lines
   (counting what the file imports, which loads too), is reported, never failed.
 - **The file itself, a finding:** an unknown id, an unknown field, an empty selection, or a custom

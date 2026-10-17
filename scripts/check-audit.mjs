@@ -10,8 +10,9 @@
 // waiver covers nothing, and a waiver for an advisory/package the audit no longer reports fails
 // (a stale entry would otherwise pre-approve the advisory if it ever came back).
 //
-// And the gate is held to the bar it enforces: if the report can't be read, or what it parsed
-// doesn't reconcile with npm's own totals, it fails — "couldn't check" is never "clean".
+// And the gate is held to the bar it enforces: if the report can't be read, audited no
+// dependencies, or what it parsed doesn't reconcile with npm's own totals, it fails — "couldn't
+// check" is never "clean". Waiver values are compared trimmed, as they're validated.
 //
 // Run: node scripts/check-audit.mjs                              (npm run check:audit)
 //      node scripts/check-audit.mjs --input audit.json --waivers w.json --today 2026-01-01
@@ -122,6 +123,19 @@ function advisories(report) {
         `The npm audit report format may have changed; the gate can't vouch for this tree.`,
     )
   }
+  // An audit that examined nothing (no dependencies in the lockfile it read, or a report that
+  // doesn't say how many) proves nothing, so it fails as "couldn't check", never as clean.
+  const audited = report.metadata?.dependencies
+  const count = typeof audited === 'number' ? audited : audited?.total
+  if (!Number.isInteger(count) || count < 0) {
+    throw new CheckError("Audit report doesn't say how many dependencies it audited (metadata.dependencies.total), so it can't show it examined any.")
+  }
+  if (count === 0) {
+    throw new CheckError(
+      'npm audit examined 0 dependencies, so nothing was checked. Is package-lock.json missing or empty? ' +
+        'A project with no dependencies has nothing for this gate to do: remove the gate rather than pass it empty.',
+    )
+  }
   const totals = report.metadata?.vulnerabilities
   if (totals) {
     const counted = Object.fromEntries(SEVERITIES.map((s) => [s, 0]))
@@ -134,7 +148,7 @@ function advisories(report) {
       )
     }
   }
-  return [...byId.values()]
+  return { found: [...byId.values()], audited: count }
 }
 
 // --- The waiver register ------------------------------------------------------------------------
@@ -160,17 +174,22 @@ function loadWaivers(args, today) {
       problems.push(`${where}: "reason" must be a string saying why this is acceptable here (at least 40 characters).`)
     }
     if (!str('owner')) problems.push(`${where}: "owner" is required — who revisits this when it expires.`)
-    const expires = parseDate(w.expires)
+    const expires = parseDate(str('expires'))
     if (!expires) problems.push(`${where}: "expires" must be a real date, YYYY-MM-DD.`)
     else if (expires > latest) {
-      problems.push(`${where}: "expires" ${w.expires} is more than ${MAX_WAIVER_DAYS} days out; renew it later instead.`)
+      problems.push(`${where}: "expires" ${str('expires')} is more than ${MAX_WAIVER_DAYS} days out; renew it later instead.`)
     }
     const key = `${str('advisory')}|${str('package')}`
     if (seen.has(key)) problems.push(`${where}: duplicate waiver for ${str('advisory')} in ${str('package')}.`)
     seen.add(key)
   })
   if (problems.length) throw new CheckError(`Invalid waiver register ${path}:\n  ${problems.join('\n  ')}`)
-  return register.waivers
+  // Compared as validated: a stray space around an id, a package name, or a date would otherwise
+  // pass validation here and then match nothing, leaving the advisory unwaived and the waiver stale.
+  return register.waivers.map((w) => ({
+    ...w,
+    ...Object.fromEntries(['advisory', 'package', 'owner', 'expires'].map((key) => [key, w[key].trim()])),
+  }))
 }
 
 // --- Run ----------------------------------------------------------------------------------------
@@ -181,7 +200,7 @@ function main() {
   const today = parseDate(todayString)
   if (!today) throw new CheckError(`--today must be a real date, YYYY-MM-DD; got "${todayString}".`)
 
-  const found = advisories(loadReport(args))
+  const { found, audited } = advisories(loadReport(args))
   const waivers = loadWaivers(args, today)
   const current = (w) => w.expires >= todayString
   const waiverFor = (id, pkg) => waivers.find((w) => w.advisory === id && w.package === pkg && current(w))
@@ -192,7 +211,7 @@ function main() {
   const stale = waivers.filter((w) => !found.some((a) => a.id === w.advisory && a.packages.has(w.package)))
 
   const line = (a, pkg) => `${a.severity.padEnd(8)} ${a.id}  ${pkg} — ${a.title}`
-  const summary = [`npm audit: ${found.length} advisor${found.length === 1 ? 'y' : 'ies'}, ${blocking.length} high or critical.`]
+  const summary = [`npm audit: ${audited} dependencies, ${found.length} advisor${found.length === 1 ? 'y' : 'ies'}, ${blocking.length} high or critical.`]
   for (const a of found.filter((x) => !BLOCKING.has(x.severity))) {
     summary.push(`  · ${line(a, [...a.packages].join(', '))} (reported; below the blocking bar)`)
   }

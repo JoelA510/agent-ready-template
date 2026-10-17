@@ -45,6 +45,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   inherits the template's own, `claude-code` and `codex`; change it). Nothing else changes until
   you do: without the file, the check keeps the 24,000-byte limit and adds a note on stderr. A
   malformed file now stops the check with exit 2.
+- **`process:apply` delivers the skill copies the selected agents read.** With a
+  `.agents/platforms.json`, the workflow skills go only to the home(s) its agents read:
+  `.claude/skills/` for Claude Code, `.agents/skills/` for Codex, Cursor, Copilot, Gemini CLI, and
+  Antigravity. A selected agent whose skills live elsewhere is named in the report. Nothing is
+  deleted: what an earlier apply put in a home the selection no longer reads is reported and left
+  exactly as it is (no longer updated, still recorded, so selecting the agent again resumes its
+  updates), and `--check` names it without calling it drift. With no selection, or one that can't
+  be read, both homes are delivered, as before. ADR 0020's addendum. **A project built from the
+  template:** nothing to do; a re-apply after narrowing the selection lists any skills left in the
+  dropped home, for you to keep or delete.
+- **`check:instructions` holds a nested AGENTS.md to what its ancestors leave of Codex's 32 KiB.**
+  Codex's limit is on every AGENTS.md from the project root down, combined, but each file was
+  measured alone. With Codex selected, a nested AGENTS.md is now also held to 32 KiB less the
+  AGENTS.md (or AGENTS.override.md) files above it, and the finding names them and what they
+  leave. A `custom` platform can declare the same with `"hardScope": "combined"`. **A project
+  built from the template with nested AGENTS.md files and Codex selected:** run
+  `check:instructions`; trim a file it reports, or move its detail into docs.
+
+### Changed
+
+- **The template's own AGENTS.md keeps the rules and points to the reference.** It goes from
+  24,394 bytes and 301 lines to 13,683 bytes and 185 lines (200 with CLAUDE.md's import, inside
+  Claude Code's guidance). The full command explanations, token architecture, component recipe,
+  theme, rebrand steps, and stakeholder-visuals guidance move to `docs/system/agent-reference.md`,
+  which a test holds to the same path and script checks; the bootstrap skill points there for the
+  rebrand. **A fork:** take the new AGENTS.md and the reference page; if you added rules of your
+  own to AGENTS.md, keep them there.
+- **The audit workflow opens its scheduled-failure issue from a job of its own.** The `issues:
+  write` token moved out of the job that checks out the repository and runs npm, into one that runs
+  only after a failed scheduled audit and holds nothing else. Runs now group by event as well as
+  branch, so a push to `main` and the weekly schedule no longer cancel each other. **A project
+  that copied `audit.yml`:** take both changes; the new job is skipped on pull requests, so no
+  ruleset change is needed.
+
+### Fixed
+
+- **`check:audit` fails an audit of nothing.** A report of zero dependencies audited (a missing or
+  empty lockfile), or one that doesn't say how many, now exits 2 ("couldn't check") instead of
+  passing. The summary line names how many dependencies were audited.
+- **`check:audit` compares waivers as it validates them.** An id, package name, owner, or date with
+  a stray space passed validation and then matched nothing, leaving the advisory unwaived and the
+  waiver stale; values are now trimmed before they're compared.
+- **`check:instructions` no longer reads a blank line in a CRLF `.gitignore` as ignoring every
+  directory.** git turns that line into an empty pattern, which `git check-ignore` matches against
+  any path ending in a slash, so every missing directory named in an instruction file passed as
+  gitignored. Directories are now asked about through a file inside them. `process:apply`'s
+  ignore check and the shared file listing were never affected; a regression test holds both.
 
 ## [1.0.0] - 2026-10-13
 

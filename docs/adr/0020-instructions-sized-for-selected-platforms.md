@@ -86,7 +86,7 @@ No new file. It lost because not every target is a Node project, and the agents'
   examined: without it no budget is known.
 - **Not done here:** `process:apply` still delivers the same skills to the same paths, and the
   per-agent hook configurations stay as ADR 0018 set them; making those follow the selection is a
-  separate change.
+  separate change. (Since done for the skills: the second addendum below.)
 - **Revisit** when an agent's documented limit changes, or when the hook and skill deliveries
   should follow the selection too.
 
@@ -100,3 +100,39 @@ No new file. It lost because not every target is a Node project, and the agents'
   at 24,000), and the selection's own errors; each was run against a planted defect.
 - `scripts/__tests__/agent-platforms.test.ts` holds every registry entry to a source and a date,
   and `prompts/agent-platforms.md`'s table to the registry.
+
+## Addendum, 2026-10-17: Codex's limit is combined
+
+The registry recorded that Codex's 32 KiB covers every AGENTS.md from the project root down,
+together, but the size check measured each file alone, so a nested AGENTS.md under 32 KiB passed
+however much of the budget its ancestors used. A platform's limit now has a scope: `hardScope:
+'combined'` on Codex's entry (and allowed on a `custom` one; absent means per file). With such a
+platform selected, a nested AGENTS.md is also held to that limit less the bytes of the AGENTS.md
+(or AGENTS.override.md, which Codex reads in its place) in each directory above it, and the
+finding names those files and what they leave. Only with a selection: a repo that records none is
+sized as before. Verification: "Codex's limit, on the AGENTS.md files from the root down combined"
+in `scripts/__tests__/check-instructions.test.ts`, each case run with the check reverted.
+
+## Addendum, 2026-10-17: process:apply follows the selection
+
+The "Not done here" above is done for the skills. When the target has `.agents/platforms.json`,
+`process:apply` delivers the workflow skills only to the homes its selected platforms read, from
+each registry entry's `skills` (and a `custom` entry's): `.claude/skills/` for Claude Code,
+`.agents/skills/` for the other five. A selected platform whose skills live elsewhere is named,
+not delivered to. With no selection, or one that can't be read or selects nothing the registry
+knows, every home is delivered, as before, with the reason said: delivering more than needed
+loses nothing, and a guess at less could.
+
+It never deletes. A file an earlier apply put in a home the selection no longer reads is reported
+("left as it is, and no longer updated"), neither removed nor updated, and stays in the manifest,
+so selecting that platform again later updates an untouched copy in place; `--check` names these
+files without calling them drift. A file the target deleted there is forgotten.
+
+Hook configurations need nothing here: `process:apply` delivers none. The per-agent hooks of ADR
+0018 guard this template's own generated files, and a target writes its own if it wants one.
+
+Verification: "process:apply: the platform selection" in `scripts/__tests__/apply-process.test.ts`
+(only one home for Codex or Claude Code alone, both for both and with no selection, nothing removed
+or updated in a dropped home and the update resumed on reselection, the elsewhere and empty cases,
+and an unreadable selection), each case but the no-selection control run failing against the
+earlier `apply-process.mjs`.

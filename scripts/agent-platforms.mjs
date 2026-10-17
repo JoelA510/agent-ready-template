@@ -12,13 +12,15 @@
 //                  'setting' (a configuration value names it)
 //   wiring         what a project adds so it reads AGENTS.md, or null when nothing is needed
 //   hardBytes      the documented limit past which a file isn't read in full, or null when the
-//                  vendor documents none; hardEffect says what happens past it
+//                  vendor documents none; hardEffect says what happens past it; hardScope
+//                  'combined' when the limit is on every AGENTS.md from the root down together,
+//                  so a nested file's budget is what its ancestors leave (absent: per file)
 //   guidanceLines  a documented length to stay under, advisory (a note, never a finding), or null;
 //                  loads (then loadsOtherwise, when none of those exists) are the root files the
 //                  count starts from, and expandsImports counts what their `@` imports pull in
 //   skills, hooks  where its project skills and hook configuration live (ADRs 0011 and 0018)
 //   notes          what the sources leave open, or a fact the fields above can't hold
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 export const SELECTION_FILE = '.agents/platforms.json'
@@ -56,6 +58,7 @@ export const PLATFORMS = [
     wiring: null,
     hardBytes: 32 * KiB,
     hardEffect: 'truncated: Codex stops adding files once their combined size, from the project root down, reaches project_doc_max_bytes',
+    hardScope: 'combined',
     guidanceLines: null,
     skills: '.agents/skills',
     hooks: '.codex/hooks.json',
@@ -143,7 +146,8 @@ export const PLATFORMS = [
 const IDS = PLATFORMS.map((p) => p.id)
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 const SELECTION_KEYS = new Set(['platforms', 'custom'])
-const CUSTOM_KEYS = new Set(['name', 'files', 'agentsMd', 'wiring', 'hardBytes', 'hardEffect', 'guidanceLines', 'skills', 'hooks', 'notes', 'sources'])
+const CUSTOM_KEYS = new Set(['name', 'files', 'agentsMd', 'wiring', 'hardBytes', 'hardEffect', 'hardScope', 'guidanceLines', 'skills', 'hooks', 'notes', 'sources'])
+const SCOPES = ['file', 'combined']
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 const isLimit = (v) => v === null || (Number.isInteger(v) && v > 0)
 
@@ -161,6 +165,7 @@ function customProblems(entry, i) {
   if (typeof entry.agentsMd !== 'string' || !entry.agentsMd.trim()) problems.push(`${label} needs "agentsMd": how AGENTS.md reaches it (or that it doesn't)`)
   if (!('hardBytes' in entry) || !isLimit(entry.hardBytes)) problems.push(`${label} needs "hardBytes": a whole number of bytes, or null when its documentation gives none`)
   if ('guidanceLines' in entry && !isLimit(entry.guidanceLines)) problems.push(`${label} "guidanceLines" must be a whole number of lines, or null`)
+  if ('hardScope' in entry && !SCOPES.includes(entry.hardScope)) problems.push(`${label} "hardScope" must be "file" (the limit is per file) or "combined" (on every AGENTS.md from the root down, together)`)
   for (const key of ['wiring', 'hardEffect', 'skills', 'hooks', 'notes']) {
     if (key in entry && entry[key] !== null && typeof entry[key] !== 'string') problems.push(`${label} "${key}" must be a string, or null`)
   }
@@ -213,7 +218,8 @@ export function readSelection(root) {
       const found = customProblems(entry, i)
       problems.push(...found)
       if (isObject(entry) && Array.isArray(entry.files) && isLimit(entry.hardBytes ?? null)) {
-        platforms.push({ ...entry, id: entry.name, hardBytes: entry.hardBytes ?? null, guidanceLines: entry.guidanceLines ?? null, loads: entry.files, custom: true })
+        const hardScope = entry.hardScope === 'combined' ? 'combined' : undefined
+        platforms.push({ ...entry, id: entry.name, hardBytes: entry.hardBytes ?? null, hardScope, guidanceLines: entry.guidanceLines ?? null, loads: entry.files, custom: true })
       }
     })
   }
@@ -248,4 +254,33 @@ export function budgetFor(fileName, platforms) {
   if (!limited.length) return null
   const bytes = Math.min(...limited.map((p) => p.hardBytes))
   return { bytes, by: limited.filter((p) => p.hardBytes === bytes) }
+}
+
+/**
+ * For a nested AGENTS.md (`rel`, relative to root), what the platforms whose limit covers every
+ * AGENTS.md from the root down together leave it: [{ platform, ancestors: [{ file, bytes }],
+ * used, budget }], where ancestors are the AGENTS.md (or AGENTS.override.md, which Codex reads in
+ * its place) in each directory above it, `used` their combined bytes, and `budget` the limit less
+ * `used` (zero or less: the ancestors fill it before this file is reached). Empty for a root file,
+ * a file with no ancestors, or no such platform among those given.
+ */
+export function combinedBudgets(root, rel, platforms) {
+  const combined = platforms.filter((p) => p.hardScope === 'combined' && p.hardBytes !== null && p.files.includes('AGENTS.md'))
+  const dirs = rel.split('/').slice(0, -1)
+  if (!combined.length || !dirs.length || rel.split('/').at(-1) !== 'AGENTS.md') return []
+  const ancestors = []
+  for (let i = 0; i < dirs.length; i++) {
+    const dir = dirs.slice(0, i).join('/')
+    for (const name of ['AGENTS.override.md', 'AGENTS.md']) {
+      const file = dir ? `${dir}/${name}` : name
+      const abs = join(root, file)
+      if (existsSync(abs) && statSync(abs).isFile()) {
+        ancestors.push({ file, bytes: statSync(abs).size })
+        break
+      }
+    }
+  }
+  if (!ancestors.length) return []
+  const used = ancestors.reduce((sum, a) => sum + a.bytes, 0)
+  return combined.map((platform) => ({ platform, ancestors, used, budget: platform.hardBytes - used }))
 }

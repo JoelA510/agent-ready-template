@@ -58,8 +58,10 @@
 //              read it, of those the repo selects in .agents/platforms.json (scripts/agent-
 //              platforms.mjs holds each platform's files and documented limit, with its source),
 //              so its end may never reach that agent. A file no selected platform limits has no
-//              budget. With no selection, the AGENTS.md and GEMINI.md budget is the strictest of
-//              every platform the template knows: 24,000 bytes, Antigravity's;
+//              budget. Where a selected platform's limit is on every AGENTS.md from the root down
+//              combined (Codex's), a nested AGENTS.md is also held to that limit less the size of
+//              the AGENTS.md files above it. With no selection, the AGENTS.md and GEMINI.md budget
+//              is the strictest of every platform the template knows: 24,000 bytes, Antigravity's;
 //   - platforms: a .agents/platforms.json that selects a platform the template doesn't know,
 //              has a field it doesn't define, selects nothing, or has a custom (researched) entry
 //              without its files, its limit (a number or null), or sources with a url and a
@@ -79,7 +81,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PLATFORMS, PROCEDURE, SELECTION_FILE, budgetFor, readSelection } from './agent-platforms.mjs'
+import { PLATFORMS, PROCEDURE, SELECTION_FILE, budgetFor, combinedBudgets, readSelection } from './agent-platforms.mjs'
 import { SKELETON_MARKER, SKIP_DIRS, inSkeletonDir, listRepoFiles as listFiles, skeletonDirs, toPosix, walk } from './repo-files.mjs'
 import { parseSkill } from './skills.mjs'
 import { MISSING_DEPENDENCY } from './template-dependency.mjs'
@@ -282,16 +284,22 @@ function readsAsPath(root, fileDir, p) {
   )
 }
 
+// A name inside a directory, for asking git whether the directory is ignored (pathExists).
+const IGNORE_PROBE = '.check-instructions-probe'
+
 function pathExists(root, fileDir, p, index) {
   const literal = literalPart(p).replace(/\/$/, '')
   if (!literal) return true
   if ([root, fileDir].some((base) => existsSync(resolve(base, literal)))) return true
   if (index.some((q) => q === literal || q.endsWith(`/${literal}`))) return true
   // Missing but ignored by git: generated or local-only, so absent from a clean checkout by
-  // design. A directory pattern (`fixtures/`) only matches a path that says it's a directory, so
-  // a path without a trailing slash is asked about both ways: `fixtures` may be that directory.
-  const asked = literalPart(p)
-  return [asked, ...(asked.endsWith('/') ? [] : [`${asked}/`])].some((q) => {
+  // design. A directory pattern (`fixtures/`) only matches a directory, so a path without a
+  // trailing slash is asked about both ways: `fixtures` may be that directory. A directory is
+  // asked about through a file inside it, never in its `dir/` form: git reads a blank line in a
+  // CRLF .gitignore as an empty pattern, and `check-ignore` matches that against any path ending
+  // in a slash (git's own listing never does), so every missing directory would read as ignored.
+  // A file inside is ignored exactly when its directory is, or when the directory's contents are.
+  return [literal, `${literal}/${IGNORE_PROBE}`].some((q) => {
     try {
       execFileSync('git', ['check-ignore', '-q', '--no-index', q], { cwd: root, stdio: 'ignore' })
       return true
@@ -467,6 +475,19 @@ function sizeFinding(bytes, budget, sizing) {
   )
 }
 
+function combinedFinding(bytes, { platform, ancestors, used, budget }) {
+  const effect = platform.hardEffect?.split(':')[0]
+  const above = ancestors.map((a) => `${a.file}, ${a.bytes}`).join('; ')
+  const left =
+    budget > 0
+      ? `which leaves this file ${budget} bytes`
+      : `which they already fill, so ${platform.name} never reaches this file`
+  return (
+    `${bytes} bytes, ${used + bytes} together with the AGENTS.md files above it (${above}); ${platform.name} reads at most ` +
+    `${platform.hardBytes} bytes of AGENTS.md from the root down, combined${effect ? ` (${effect} past it)` : ''}, ${left}, so the end may never reach it`
+  )
+}
+
 /** Findings for one instruction file: [{ file, line, kind, detail }], plus what was examined. */
 export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsFor = scriptsLookup(root), sizing = sizingFor(root)) {
   const rel = toPosix(relative(root, abs))
@@ -531,9 +552,17 @@ export function lintFile(root, abs, index = repoPaths(listFiles(root)), scriptsF
     for (const problem of parseSkill(text, skill[1], { strict }).problems) report(1, 'skill', problem)
   }
   const budget = sizing.files?.has(basename(rel)) ? budgetFor(basename(rel), sizing.platforms) : null
-  if (budget) {
-    const bytes = Buffer.byteLength(text)
-    if (bytes > budget.bytes) report(1, 'size', sizeFinding(bytes, budget, sizing))
+  const bytes = Buffer.byteLength(text)
+  const overOwn = budget !== null && bytes > budget.bytes
+  if (overOwn) report(1, 'size', sizeFinding(bytes, budget, sizing))
+  // A selected platform whose limit is on every AGENTS.md from the root down, together (Codex):
+  // a nested file gets what its ancestors leave. Only with a selection, so a repo that records
+  // none is sized as before. Over the per-file limit of the same platform already says it.
+  if (!sizing.legacy) {
+    for (const c of combinedBudgets(root, rel, sizing.platforms)) {
+      if (bytes <= c.budget || (overOwn && budget.by.includes(c.platform))) continue
+      report(1, 'size', combinedFinding(bytes, c))
+    }
   }
   if (/(^|\/)(CLAUDE(\.local)?|AGENTS)\.md$/.test(rel) || rel.startsWith('.claude/rules/')) {
     for (const imp of importsOf(abs, text)) {
