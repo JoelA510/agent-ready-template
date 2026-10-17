@@ -689,6 +689,108 @@ describe('process:apply: gitignored deliveries', () => {
   })
 })
 
+// Skill copies follow the target's .agents/platforms.json (ADR 0020's addendum): each platform
+// reads skills from one home, so a project that runs only Codex gets no .claude/skills/. Nothing
+// already delivered is ever removed for falling outside the selection.
+describe('process:apply: the platform selection', () => {
+  const select = (selection: unknown) => write(target, '.agents/platforms.json', typeof selection === 'string' ? selection : JSON.stringify(selection))
+  const manifest = () => JSON.parse(read(target, 'prompts/.apply-manifest.json')).files as Record<string, string>
+  const homesIn = (files: Record<string, string>) => [...new Set(Object.keys(files).filter((f) => /skills\//.test(f)).map((f) => f.split('/').slice(0, 2).join('/')))].sort()
+  const SKILL = '.claude/skills/verify/SKILL.md'
+
+  it('delivers only the skill home the selected platforms read, and says so', () => {
+    select({ platforms: ['codex'] })
+    const { status, out } = apply()
+    expect(status).toBe(0)
+    expect(existsSync(join(target, '.agents/skills/verify/SKILL.md'))).toBe(true)
+    expect(existsSync(join(target, '.claude'))).toBe(false)
+    expect(homesIn(manifest())).toEqual(['.agents/skills'])
+    expect(out).toContain('Skills delivered for the platforms .agents/platforms.json selects (Codex): .agents/skills/.')
+    expect(out).toMatch(/keep it off prompts\/ and \.agents\/skills\/\n\s+\(for Prettier, those two lines in \.prettierignore\)/)
+  })
+
+  it('delivers .claude/skills/ alone for Claude Code alone, and both homes for both', () => {
+    select({ platforms: ['claude-code'] })
+    apply()
+    expect(homesIn(manifest())).toEqual(['.claude/skills'])
+    expect(existsSync(join(target, '.agents/skills'))).toBe(false)
+    select({ platforms: ['claude-code', 'cursor'] })
+    apply()
+    expect(homesIn(manifest())).toEqual(['.agents/skills', '.claude/skills'])
+  })
+
+  it('with no selection, delivers every home, as before (positive control)', () => {
+    const { out } = apply()
+    expect(homesIn(manifest())).toEqual(['.agents/skills', '.claude/skills'])
+    expect(out).not.toContain('Skills delivered for the platforms')
+    expect(out).toMatch(/keep it off prompts\/, \.agents\/skills\/, and \.claude\/skills\/\n\s+\(for Prettier, those three lines/)
+  })
+
+  it('never removes or updates what an earlier apply put in a home the selection drops, and reports it', () => {
+    apply() // no selection: both homes
+    write(target, '.claude/skills/pre-pr/SKILL.md', `${read(target, '.claude/skills/pre-pr/SKILL.md')}\nA local note.\n`)
+    const before = read(target, SKILL)
+    select({ platforms: ['codex'] })
+    write(template, SKILL, `${before}\nA template change.\n`)
+    const { status, out } = apply()
+    expect(status).toBe(0)
+    expect(out).toContain('Left as it is, and no longer updated: delivered by an earlier apply to a skill home no platform in .agents/platforms.json reads')
+    expect(out).toContain(`- ${SKILL}`)
+    expect(read(target, SKILL)).toBe(before) // not updated
+    expect(read(target, '.claude/skills/pre-pr/SKILL.md')).toContain('A local note.') // not removed, edited or not
+    expect(existsSync(join(target, `${SKILL}.template`))).toBe(false)
+    expect(homesIn(manifest())).toEqual(['.agents/skills', '.claude/skills']) // still recorded
+    // --check: a note, not drift.
+    const check = apply('--check')
+    expect(check.out).toContain("in a skill home no platform in .agents/platforms.json reads; left as they are, and no longer updated")
+    expect(check.status).toBe(0)
+    // Selecting Claude Code again picks up from what was delivered: the untouched copy updates.
+    select({ platforms: ['codex', 'claude-code'] })
+    const again = apply()
+    expect(again.out).toContain(`↑ ${SKILL}`)
+    expect(read(target, SKILL)).toContain('A template change.')
+  })
+
+  it("leaves a home's files alone when the target deleted them, and forgets them", () => {
+    apply()
+    rmSync(join(target, '.claude'), { recursive: true })
+    select({ platforms: ['codex'] })
+    const { out } = apply()
+    expect(out).not.toContain('Left as it is')
+    expect(homesIn(manifest())).toEqual(['.agents/skills'])
+  })
+
+  it('names a selected platform whose skills live where process:apply does not deliver', () => {
+    select({
+      platforms: ['codex'],
+      custom: [{ name: 'Example Agent', files: ['AGENTS.md'], agentsMd: 'native', hardBytes: null, skills: '.example/skills', sources: [{ url: 'https://example.com/docs', checked: '2026-10-14' }] }],
+    })
+    const { out } = apply()
+    expect(out).toContain("! Example Agent reads skills from .example/skills/, where process:apply doesn't deliver")
+    expect(homesIn(manifest())).toEqual(['.agents/skills'])
+  })
+
+  it('delivers no skills for a selection that reads none of the homes', () => {
+    select({ custom: [{ name: 'Example Agent', files: ['AGENTS.md'], agentsMd: 'native', hardBytes: null, skills: null, sources: [{ url: 'https://example.com/docs', checked: '2026-10-14' }] }] })
+    const { status, out } = apply()
+    expect(status).toBe(0)
+    expect(homesIn(manifest())).toEqual([])
+    expect(out).toContain('Skills delivered for the platforms .agents/platforms.json selects (Example Agent): no skill home')
+    expect(existsSync(join(target, 'prompts/new-project.md'))).toBe(true)
+  })
+
+  it.each([
+    ['JSON that does not parse', '{"platforms": ['],
+    ['a selection of nothing it knows', { platforms: ['windsurf'] }],
+  ])('with %s, delivers every home and says why', (_label, selection) => {
+    select(selection)
+    const { status, out } = apply()
+    expect(status).toBe(0)
+    expect(homesIn(manifest())).toEqual(['.agents/skills', '.claude/skills'])
+    expect(out).toMatch(/! \.agents\/platforms\.json .*, so the skills go to every home, as with no selection\./)
+  })
+})
+
 describe('process:apply: refusals', () => {
   it('--list writes nothing', () => {
     const { status, out } = apply('--list')

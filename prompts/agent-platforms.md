@@ -33,7 +33,9 @@ The project owns one file, `.agents/platforms.json`:
 Where it comes from: a fresh fork of the template records it with
 `npm run init -- --name ... --slug ... --platforms claude-code,codex`; the new-project and
 existing-project prompts write it from the owner's answer. `process:apply` never writes, updates, or
-removes it; it says so when the target has none.
+removes it; it says so when the target has none. It reads it: the skills go only to the skill
+home(s) the selected platforms read (`skills` in the table's source), and a home dropped from the
+selection keeps what was delivered there, reported, never removed.
 
 `check:instructions` (`node <template checkout>/scripts/check-instructions.mjs --root <repo>`) reads
 it:
