@@ -628,6 +628,19 @@ describe('process:apply: gitignored deliveries', () => {
     expect(apply().out).not.toContain(".gitignore covers")
   })
 
+  // A blank line in a CRLF .gitignore is an empty pattern to git, which `check-ignore` matches
+  // against a path ending in a slash; the delivered paths and git's listing never take that form.
+  it('a CRLF .gitignore with blank lines covers no delivery, and hides no file from the listing', () => {
+    fixtureGit(() => target)('init', '-q')
+    write(target, '.gitignore', 'node_modules/\r\n\r\ndist/\r\n\r\n')
+    write(target, 'docs/notes.md', 'notes\n')
+    expect(apply().out).not.toContain('.gitignore covers')
+    expect(listRepoFiles(target)).toEqual(expect.arrayContaining(['docs/notes.md', '.claude/skills/verify/SKILL.md']))
+    // Positive control: a real pattern in the same CRLF file still covers its deliveries.
+    write(target, '.gitignore', 'node_modules/\r\n\r\n.claude/\r\n\r\n')
+    expect(apply().out).toContain('.gitignore covers')
+  })
+
   it('offers a force-add for a target whose .gitignore is not to be edited', () => {
     fixtureGit(() => target)('init', '-q')
     write(target, '.gitignore', '.claude/\n')

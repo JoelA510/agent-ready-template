@@ -502,6 +502,17 @@ describe('does not report', () => {
     expect(findings()).toEqual(["CLAUDE.md:1: path: src/test/fixtures doesn't exist"])
   })
 
+  it('a CRLF .gitignore: its blank lines ignore nothing, and its directory patterns still do', () => {
+    // git turns a blank CRLF line into an empty pattern that `check-ignore` matches against any
+    // path ending in a slash, which once made every missing directory read as ignored.
+    write('.gitignore', 'node_modules/\r\n\r\nsrc/test/fixtures/\r\n\r\n')
+    write('CLAUDE.md', 'Real shipments go in `src/test/fixtures/` and `src/test/fixtures`.\nComponents live in `web/src/components/`; schema in `src/db/tables`.\n')
+    expect(findings()).toEqual([
+      "CLAUDE.md:2: path: web/src/components/ doesn't exist",
+      "CLAUDE.md:2: path: src/db/tables doesn't exist",
+    ])
+  })
+
   it('imports outside CLAUDE/AGENTS files, where `@` means nothing special', () => {
     write('.cursorrules', 'Mention @docs/rules.md for the reader.\n')
     expect(findings()).toEqual([])

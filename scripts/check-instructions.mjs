@@ -282,16 +282,22 @@ function readsAsPath(root, fileDir, p) {
   )
 }
 
+// A name inside a directory, for asking git whether the directory is ignored (pathExists).
+const IGNORE_PROBE = '.check-instructions-probe'
+
 function pathExists(root, fileDir, p, index) {
   const literal = literalPart(p).replace(/\/$/, '')
   if (!literal) return true
   if ([root, fileDir].some((base) => existsSync(resolve(base, literal)))) return true
   if (index.some((q) => q === literal || q.endsWith(`/${literal}`))) return true
   // Missing but ignored by git: generated or local-only, so absent from a clean checkout by
-  // design. A directory pattern (`fixtures/`) only matches a path that says it's a directory, so
-  // a path without a trailing slash is asked about both ways: `fixtures` may be that directory.
-  const asked = literalPart(p)
-  return [asked, ...(asked.endsWith('/') ? [] : [`${asked}/`])].some((q) => {
+  // design. A directory pattern (`fixtures/`) only matches a directory, so a path without a
+  // trailing slash is asked about both ways: `fixtures` may be that directory. A directory is
+  // asked about through a file inside it, never in its `dir/` form: git reads a blank line in a
+  // CRLF .gitignore as an empty pattern, and `check-ignore` matches that against any path ending
+  // in a slash (git's own listing never does), so every missing directory would read as ignored.
+  // A file inside is ignored exactly when its directory is, or when the directory's contents are.
+  return [literal, `${literal}/${IGNORE_PROBE}`].some((q) => {
     try {
       execFileSync('git', ['check-ignore', '-q', '--no-index', q], { cwd: root, stdio: 'ignore' })
       return true
