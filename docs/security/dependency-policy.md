@@ -17,8 +17,9 @@ in [ADR 0005](../adr/0005-dependency-audit-gate.md).
   least monthly. Nothing automatic guarantees that happens, so treat a growing moderate list on
   the summary page as a maintenance debt signal.
 - **The audit has to run, and has to be read correctly.** The gate fails, rather than passes, in
-  three cases:
+  four cases:
   - `npm audit` produced no report (offline, registry outage);
+  - it audited no dependencies, or doesn't say how many (a missing or empty lockfile);
   - a high or critical entry doesn't trace to an advisory it parsed;
   - its counts don't match npm's own totals, because a changed report format could otherwise
     read as "clean".
@@ -95,8 +96,10 @@ The gate holds the register to the same standard as the advisories:
   (`.github/workflows/audit.yml`). It needs only the lockfile, not an install.
 - **Weekly, on a schedule, against `main`.** Advisories are published against code that has
   already merged, and a repo with no open PRs would otherwise never find out. When a scheduled
-  run fails it opens an issue, "Dependency audit is failing on main", once, rather than relying
-  on the Actions email, which only reaches whoever last edited the cron line.
+  run fails, a job of its own, holding the only token that can write, opens an issue,
+  "Dependency audit is failing on main", once, rather than relying on the Actions email, which
+  only reaches whoever last edited the cron line. Runs group by event and branch, so a push to
+  `main` never cancels the scheduled run, or the reverse.
 - **Make it a required check.** "Blocks" is only true if branch protection (or a ruleset) on
   `main` requires the **npm audit (high and critical block)** status check. A red run on an
   unprotected branch is advisory. The same goes for CI's **Build, lint, typecheck, test**.

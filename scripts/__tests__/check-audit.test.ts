@@ -12,14 +12,16 @@ type Vuln = { severity: string; via: unknown[] }
 
 // Shapes taken from a real `npm audit --json` report (auditReportVersion 2): each package entry
 // lists advisories as objects in `via`, or as strings pointing at another package's entry, and
-// `metadata.vulnerabilities` counts package entries by severity.
+// `metadata.vulnerabilities` counts package entries by severity, `metadata.dependencies` the
+// packages audited.
 function advisory(ghsa: string, severity: string, title = `${ghsa} title`) {
   return { source: 1, name: 'x', title, url: `https://github.com/advisories/${ghsa}`, severity, range: '<1' }
 }
-function report(vulns: Record<string, Vuln>, metadataOverride?: Record<string, number>) {
+const AUDITED = { prod: 12, dev: 30, optional: 0, peer: 0, peerOptional: 0, total: 42 }
+function report(vulns: Record<string, Vuln>, metadataOverride?: Record<string, number>, dependencies: unknown = AUDITED) {
   const counts: Record<string, number> = { info: 0, low: 0, moderate: 0, high: 0, critical: 0 }
   for (const v of Object.values(vulns)) counts[v.severity] = (counts[v.severity] ?? 0) + 1
-  return { auditReportVersion: 2, vulnerabilities: vulns, metadata: { vulnerabilities: metadataOverride ?? counts } }
+  return { auditReportVersion: 2, vulnerabilities: vulns, metadata: { vulnerabilities: metadataOverride ?? counts, dependencies } }
 }
 const waiver = (overrides: Record<string, unknown> = {}) => ({
   advisory: 'GHSA-aaaa-bbbb-cccc',
@@ -58,9 +60,9 @@ const HIGH = report({
 })
 
 describe('check-audit: advisories', () => {
-  it('passes a clean report', () => {
+  it('passes a clean report, and says how many dependencies it audited', () => {
     const { status, out } = run(report({}))
-    expect(out).toContain('0 advisories, 0 high or critical')
+    expect(out).toContain('npm audit: 42 dependencies, 0 advisories, 0 high or critical')
     expect(status).toBe(0)
   })
 
@@ -119,6 +121,19 @@ describe('check-audit: refuses to read a report it cannot account for', () => {
     expect(status).toBe(2)
   })
 
+  // A clean report from an audit of nothing (an empty or missing lockfile) once passed as clean.
+  it.each([
+    ['zero dependencies audited', { prod: 0, dev: 0, optional: 0, peer: 0, peerOptional: 0, total: 0 }, 'npm audit examined 0 dependencies, so nothing was checked'],
+    ['zero, in the older numeric form', 0, 'npm audit examined 0 dependencies, so nothing was checked'],
+    ['no count of what was audited', null, "doesn't say how many dependencies it audited"],
+  ])('%s -> exit 2, not a pass', (_label, dependencies, message) => {
+    const { status, out } = run(report({}, undefined, dependencies))
+    expect(out).toContain(message)
+    expect(status).toBe(2)
+    // Positive control: the numeric form with something in it passes.
+    expect(run(report({}, undefined, 7)).status).toBe(0)
+  })
+
   it('reports invalid JSON as exit 2 with the reason, not a stack trace', () => {
     const { status, out } = run('{"vulnerabilities": {', [])
     expect(out).toContain('--input report is not valid JSON')
@@ -155,6 +170,19 @@ describe('check-audit: waivers', () => {
     const { status, out } = run(noGhsa, [waiver({ advisory: 'npm-1234' })])
     expect(out).not.toContain('Unwaived')
     expect(status).toBe(0)
+  })
+
+  // A waiver validated with its values trimmed but compared untrimmed matched nothing: the
+  // advisory read as unwaived and the waiver as stale.
+  it('reads ids, package names, and dates with stray whitespace as written without it', () => {
+    const padded = waiver({ advisory: ' GHSA-aaaa-bbbb-cccc ', package: 'brace-expansion\t', owner: ' design-systems working group ', expires: ' 2026-10-31\n' })
+    const { status, out } = run(HIGH, [padded])
+    expect(out).toContain('waived until 2026-10-31, owner design-systems working group)')
+    expect(out).not.toContain('Unwaived')
+    expect(out).not.toContain('Stale waiver')
+    expect(status).toBe(0)
+    // And a padded expired date still expires.
+    expect(run(HIGH, [waiver({ expires: ' 2026-09-23 ' })]).out).toContain('Expired waiver: GHSA-aaaa-bbbb-cccc (brace-expansion) expired 2026-09-23.')
   })
 
   it('fails on a stale waiver whose advisory is no longer reported', () => {
