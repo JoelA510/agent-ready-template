@@ -134,7 +134,7 @@
     "playwright": "^1.63.0",
     "remark-gfm": "^4.0.1",
     "smol-toml": "^1.9.0",
-    "storybook": "^10.6.1",
+    "storybook": "^10.6.2",
     "storybook-design-token": "^5.0.0",
     "style-dictionary": "^5.6.0",
     "tailwindcss": "^4.3.3",
