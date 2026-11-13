@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Evidence-based code review rules.** The root AGENTS.md and project skeleton define
+  actionable findings, meaningful regression coverage, and disclosure of dependency, network,
+  and stored-data changes. Existing projects can adopt the section after checking their
+  review workflow; it does not require extra review rounds.
+
 - **Private handling of security findings in agent instructions.** The template's AGENTS.md
   and project skeleton now point agents to SECURITY.md and explain that public draft PRs,
   CI logs, and artifacts are not private reporting channels. Existing projects can add the
