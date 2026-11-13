@@ -35,7 +35,7 @@ Codex. A skill only wires up its prompt, so an agent without skills follows the 
 | Before the next piece of work: which open questions deserve a discovery pass | `discovery` | `prompts/discovery.md` |
 | A change is large enough to agree on before building it | `plan-change` | `prompts/plan-change.md` |
 | Something is broken and the cause isn't known | `root-cause` | `prompts/investigate.md` |
-| A change needs an adversarial review | `review-change` | `prompts/review.md` |
+| A change needs a review (any review, including an automated one on a PR) | `review-change` | `prompts/review.md` |
 | A change is about to leave your hands | `pre-pr` | `prompts/pre-pr.md` |
 | A change is about to be committed (Claude Code runs it on its own) | `verify` | `prompts/verify.md` |
 | Taking a release of the template this repo was built from | `template-update` | `prompts/template-update.md` |
@@ -98,11 +98,7 @@ These hold for everything written here and in any project built from this templa
   cost of the status quo and the risk of the change. Then let the human call it.
 - **Never embed secrets.** Environment access goes through a validated env module with typed,
   build-time-checked access — never `process.env.WHATEVER` scattered through the code. Keep
-  `.env.example` current with every new variable.
-- **Security findings:** read [SECURITY.md](SECURITY.md) before sharing a suspected
-  vulnerability. Keep exploit details, secrets, and personal data out of public issues,
-  pull requests, CI logs, and artifacts; a draft PR is still public in a public repo.
-  Use synthetic reproductions and coordinate private disclosure with the maintainer.
+  `.env.example` current. Report a vulnerability via `SECURITY.md`, never in public (drafts too).
 - **Report honestly.** Label every claim as *statically reviewed*, *executed*, or *fully
   validated*. Never say tests pass without running them, or that something works because it looks
   like it should.
@@ -142,29 +138,6 @@ These hold for everything written here and in any project built from this templa
   decisions (color strategy, display typeface; a visual decision guide shows them, as below).
   Refactors beyond the request are flagged first, as above. Everything else in scope: proceed
   and report.
-
-## Code review rules
-
-Use these rules when a review is requested or required; they do not add review rounds.
-Apply code and test checks to executable changes, not prose-only edits.
-
-- Review the diff and affected callers for correctness, security, data loss, concurrency,
-  and error-handling defects. Leave formatting and lint findings to CI.
-- Order findings by severity. Each gives severity, `path:line`, the concrete trigger and
-  consequence, and a fix. Mark it confirmed (reproduced or traced through code) or plausible
-  (state the missing evidence); distinguish static review from executed checks.
-- Trace validation of external input (users, files, network responses, environment) before
-  use. Flag missing validation, swallowed errors, or blank values treated as zero when they
-  hide a failure or violate the expected contract; respect documented best-effort cleanup.
-- Flag new logic without meaningful test coverage, including an edge case. A test claiming
-  to cover changed behavior must fail without that behavior; this does not apply to unrelated
-  tests. State whether failure was demonstrated or only inferred.
-- Flag new dependencies, network calls, or stored-data shape changes absent from the PR
-  description. Disclosure does not replace any required approval.
-- Flag changes outside the PR's stated purpose. If no defects are found, say so in one line
-  and identify the review scope and unrun checks without implying runtime validation.
-- Follow this repository's security-reporting rules for sensitive findings; keep exploit
-  details and private data out of public review comments.
 
 ## Golden rules (don't violate these)
 

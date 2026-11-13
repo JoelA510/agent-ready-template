@@ -12,15 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Evidence-based code review rules.** The root AGENTS.md and project skeleton define
-  actionable findings, meaningful regression coverage, and disclosure of dependency, network,
-  and stored-data changes. Existing projects can adopt the section after checking their
-  review workflow; it does not require extra review rounds.
-
-- **Private handling of security findings in agent instructions.** The template's AGENTS.md
-  and project skeleton now point agents to SECURITY.md and explain that public draft PRs,
-  CI logs, and artifacts are not private reporting channels. Existing projects can add the
-  skeleton's Security findings section to their own AGENTS.md after reviewing their policy.
+- **Review covers what a description leaves out, and keeps sensitive findings private.**
+  `prompts/review.md` now treats an undisclosed dependency, network call, or stored-data shape
+  change, and a change outside the stated purpose, as findings, and routes a sensitive finding
+  through `SECURITY.md` instead of a public comment. AGENTS.md and the project skeleton point
+  every review, an automated one on a pull request included, at that prompt rather than restating
+  it. Existing projects take the prompt with `process:apply`; add the skeleton's Code review and
+  Security findings sections to your own AGENTS.md by hand.
 
 - **A guide to staying inside free plans, and a Dependabot skeleton tuned for them.** On a free
   plan every push is spent somewhere: on one project built this way, parallel agent branches used
