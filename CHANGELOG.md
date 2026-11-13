@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Review covers what a description leaves out, and keeps sensitive findings private.**
+  `prompts/review.md` now treats an undisclosed dependency, network call, or stored-data shape
+  change, and a change outside the stated purpose, as findings, and routes a sensitive finding
+  through `SECURITY.md` instead of a public comment. AGENTS.md and the project skeleton point
+  every review, an automated one on a pull request included, at that prompt rather than restating
+  it. Existing projects take the prompt with `process:apply`; add the skeleton's Code review and
+  Security findings sections to your own AGENTS.md by hand.
+
 - **A guide to staying inside free plans, and a Dependabot skeleton tuned for them.** On a free
   plan every push is spent somewhere: on one project built this way, parallel agent branches used
   a Vercel Hobby team's 100 deployments for the day in under 13 hours, most of them previews

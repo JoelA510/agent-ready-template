@@ -35,7 +35,7 @@ Codex. A skill only wires up its prompt, so an agent without skills follows the 
 | Before the next piece of work: which open questions deserve a discovery pass | `discovery` | `prompts/discovery.md` |
 | A change is large enough to agree on before building it | `plan-change` | `prompts/plan-change.md` |
 | Something is broken and the cause isn't known | `root-cause` | `prompts/investigate.md` |
-| A change needs an adversarial review | `review-change` | `prompts/review.md` |
+| A change needs a review (any review, including an automated one on a PR) | `review-change` | `prompts/review.md` |
 | A change is about to leave your hands | `pre-pr` | `prompts/pre-pr.md` |
 | A change is about to be committed (Claude Code runs it on its own) | `verify` | `prompts/verify.md` |
 | Taking a release of the template this repo was built from | `template-update` | `prompts/template-update.md` |
@@ -98,7 +98,7 @@ These hold for everything written here and in any project built from this templa
   cost of the status quo and the risk of the change. Then let the human call it.
 - **Never embed secrets.** Environment access goes through a validated env module with typed,
   build-time-checked access — never `process.env.WHATEVER` scattered through the code. Keep
-  `.env.example` current with every new variable.
+  `.env.example` current. Report a vulnerability via `SECURITY.md`, never in public (drafts too).
 - **Report honestly.** Label every claim as *statically reviewed*, *executed*, or *fully
   validated*. Never say tests pass without running them, or that something works because it looks
   like it should.

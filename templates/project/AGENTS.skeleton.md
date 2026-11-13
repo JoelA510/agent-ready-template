@@ -135,6 +135,19 @@ it on its own), `template-update` to take a template release. [WHERE THE SKILLS 
 <!-- operating-rules:end -->
 <!-- prettier-ignore-end -->
 
+## Security findings
+
+Follow the project's SECURITY.md for private reporting. Keep exploit details, secrets, and
+personal data out of public issues, pull requests, CI logs, and artifacts; a draft PR is still
+public in a public repo. Use synthetic reproductions and coordinate disclosure with the
+maintainer. If the reporting channel is missing, flag it to the owner; do not invent one.
+
+## Code review
+
+Any review, including an automated one on a pull request, follows `prompts/review.md`: findings
+most severe first, each with `file:line`, a concrete failure scenario, and a verification label.
+Style the linter owns is not a finding. It adds no review rounds.
+
 ## Project-specific rules
 
 <!-- GUIDANCE: The rules only this codebase needs: the directory nothing may import from, the table
