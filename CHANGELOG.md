@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Private handling of security findings in agent instructions.** The template's AGENTS.md
+  and project skeleton now point agents to SECURITY.md and explain that public draft PRs,
+  CI logs, and artifacts are not private reporting channels. Existing projects can add the
+  skeleton's Security findings section to their own AGENTS.md after reviewing their policy.
+
 - **A guide to staying inside free plans, and a Dependabot skeleton tuned for them.** On a free
   plan every push is spent somewhere: on one project built this way, parallel agent branches used
   a Vercel Hobby team's 100 deployments for the day in under 13 hours, most of them previews

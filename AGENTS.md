@@ -99,6 +99,10 @@ These hold for everything written here and in any project built from this templa
 - **Never embed secrets.** Environment access goes through a validated env module with typed,
   build-time-checked access — never `process.env.WHATEVER` scattered through the code. Keep
   `.env.example` current with every new variable.
+- **Security findings:** read [SECURITY.md](SECURITY.md) before sharing a suspected
+  vulnerability. Keep exploit details, secrets, and personal data out of public issues,
+  pull requests, CI logs, and artifacts; a draft PR is still public in a public repo.
+  Use synthetic reproductions and coordinate private disclosure with the maintainer.
 - **Report honestly.** Label every claim as *statically reviewed*, *executed*, or *fully
   validated*. Never say tests pass without running them, or that something works because it looks
   like it should.

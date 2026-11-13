@@ -135,6 +135,13 @@ it on its own), `template-update` to take a template release. [WHERE THE SKILLS 
 <!-- operating-rules:end -->
 <!-- prettier-ignore-end -->
 
+## Security findings
+
+Follow the project's SECURITY.md for private reporting. Keep exploit details, secrets, and
+personal data out of public issues, pull requests, CI logs, and artifacts; a draft PR is still
+public in a public repo. Use synthetic reproductions and coordinate disclosure with the
+maintainer. If the reporting channel is missing, flag it to the owner; do not invent one.
+
 ## Project-specific rules
 
 <!-- GUIDANCE: The rules only this codebase needs: the directory nothing may import from, the table
