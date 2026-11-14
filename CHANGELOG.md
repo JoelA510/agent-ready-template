@@ -23,6 +23,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `src/styles/fonts.css`; nothing to do in an existing fork unless it takes a later release, where
   the move arrives as an ordinary merge. Forks without `--preset` are unchanged.
 
+- **The contrast-checker and token-build tests no longer depend on the fork's palette.** They
+  plant defects into a frozen copy of the placeholder tokens
+  (`scripts/__tests__/fixtures/placeholder-tokens/`) instead of the live `tokens/`, so a fork that
+  rebrands its palette, by hand or with a preset, no longer fails tests about the checker itself.
+  Its own tokens are still checked by `npm run check-contrast`.
+
 - **Review covers what a description leaves out, and keeps sensitive findings private.**
   `prompts/review.md` now treats an undisclosed dependency, network call, or stored-data shape
   change, and a change outside the stated purpose, as findings, and routes a sensitive finding

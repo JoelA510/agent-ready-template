@@ -1,0 +1,9 @@
+{
+  "spacing": {
+    "base": {
+      "$description": "Base spacing unit. Feeds Tailwind v4's --spacing theme variable, which generates the entire numeric spacing scale (p-4, gap-2, w-96, …) as multiples of this value.",
+      "$value": "0.25rem",
+      "$type": "dimension"
+    }
+  }
+}
