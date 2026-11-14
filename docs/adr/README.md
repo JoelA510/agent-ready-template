@@ -53,3 +53,4 @@ Don't write one for a choice a reader can reconstruct from the code in under a m
 | [0018](./0018-a-guard-and-a-setup-for-every-agent.md) | Every agent with hooks runs the generated-file guard, and every cloud agent sets up the same way | Accepted |
 | [0019](./0019-npm-install-guards.md) | Pin npm 11, and make npm wait for releases to age and refuse a dependency's git dependencies | Accepted |
 | [0020](./0020-instructions-sized-for-selected-platforms.md) | Instruction files are wired and sized for the agents a project selects | Accepted |
+| [0021](./0021-brand-presets.md) | Brand presets fill the existing roles, are chosen at init, and leave the default neutral | Accepted |

@@ -28,7 +28,7 @@ holds its paths and scripts to the repository, as it does AGENTS.md's.
 | `npm run check:unused` | knip: unused files, exports, and dependencies (`knip.json`; the components' exports are public API). |
 | `npm run check:bundle` | The app build's gzipped JS and CSS against `bundle-budget.json`; raising a budget needs a stated reason. |
 | `npm run lint` / `npm run typecheck` | ESLint (incl. `jsx-a11y`; Node rules for `scripts/` and root configs; zero warnings allowed) / `tsc -b --noEmit`. |
-| `npm run init -- --name "Client Inc." --slug clientinc` | Rebrand a fresh fork (see "Rebrand workflow", below). |
+| `npm run init -- --name "Client Inc." --slug clientinc [--preset <id>]` | Rebrand a fresh fork, optionally with a brand preset (see "Rebrand workflow", below). |
 
 ## Token architecture
 
@@ -90,7 +90,10 @@ example).
    `templateVersion` and restarts `version` at 0.1.0. It prints a checklist of the things it
    deliberately does NOT automate.
 2. Swap `palette.brand.*` / `palette.accent.*` in `tokens/core/color.json`, then
-   `npm run tokens:build`. Replace `public/brand-mark.svg`.
+   `npm run tokens:build`. Replace `public/brand-mark.svg`. Or pass `--preset <id>` to step 1: a
+   folder under `presets/` (ADR 0021) supplies the token sources, `src/styles/fonts.css` and any
+   extra `docs/brand/` pages, and init rebuilds the tokens. A preset fills the existing semantic
+   roles only; see its README for the role mapping.
 3. Rewrite `docs/brand/*` for the real voice/tone/terminology, and work through
    `docs/foundations/*` deciding each recommendation-vs-alternative.
 4. Re-verify AA contrast for your new palette (see `docs/foundations/accessibility.mdx`).

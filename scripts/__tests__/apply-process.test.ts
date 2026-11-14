@@ -82,6 +82,17 @@ describe('process:apply: delivery', () => {
     expect(out).not.toContain('Nothing to change.')
   })
 
+  it('delivers no brand preset: presets are fork-only, applied by init (ADR 0021)', () => {
+    cpSync(join(REPO, 'presets'), join(template, 'presets'), { recursive: true })
+    const { status } = apply()
+    expect(status).toBe(0)
+    const delivered = readdirSync(target, { recursive: true, withFileTypes: true })
+      .filter((d) => d.isFile())
+      .map((d) => join(d.parentPath, d.name).slice(target.length + 1))
+    expect(delivered.length).toBeGreaterThan(0)
+    expect(delivered.filter((path) => path.startsWith('presets') || path.includes('severity-and-figures') || path.endsWith('fonts.css'))).toEqual([])
+  })
+
   it('delivers skills that pass check:instructions inside the target, where only the target exists', () => {
     apply()
     // Linting parses the skills, which needs the template's dependencies (process:apply doesn't).

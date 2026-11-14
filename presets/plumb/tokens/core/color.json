@@ -1,0 +1,536 @@
+{
+  "palette": {
+    "$description": "Raw color ramps. Named `palette.*` (not `color.*`) deliberately: it keeps the raw CSS variable (--palette-brand-500) distinct from the Tailwind-facing theme key (--color-brand-500) that globals.css maps it to, so @theme inline never has to reference a variable by its own name. The values below are a neutral PLACEHOLDER starter palette (a muted olive `brand` + a warm `accent`) — REPLACE them with your organization's brand ramp. See docs/foundations/colors.mdx for how to rebrand (swap the base hues, regenerate the 50–950 steps, then re-check contrast) and for the documented palette-strategy options.",
+    "brand": {
+      "50": {
+        "$value": "#e7feff",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#d9f7f9",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "#9fd3d5",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#7bc0c2",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "#73b1b5",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#4e9397",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#32787c",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#2a6a6e",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "#1f5559",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#164347",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#011a1c",
+        "$type": "color"
+      },
+      "$description": "Plumb teal (hue 201): the accent. 700 is the light-theme accent, 300 the dark-theme accent."
+    },
+    "accent": {
+      "50": {
+        "$value": "#f5f9fe",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#e7f1ff",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "#c9e0ff",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#9cc7ff",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "#4f8ef7",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#4687d8",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#2a6fdb",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#0c54a0",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "#013e7d",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#012a58",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#001532",
+        "$type": "color"
+      },
+      "$description": "Plumb blue (hue 255): the alternate accent, here for charts and a second series."
+    },
+    "neutral": {
+      "50": {
+        "$value": "#f5f9fc",
+        "$type": "color"
+      },
+      "100": {
+        "$value": "#edf1f4",
+        "$type": "color"
+      },
+      "200": {
+        "$value": "#dadfe3",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#bfc5cb",
+        "$type": "color"
+      },
+      "400": {
+        "$value": "#9ea6ad",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#7f878f",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#656d74",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#4f565d",
+        "$type": "color"
+      },
+      "800": {
+        "$value": "#3a4146",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#272c31",
+        "$type": "color"
+      },
+      "950": {
+        "$value": "#13161a",
+        "$type": "color"
+      },
+      "$description": "Plumb slate (hue 245): neutrals with a slight cool bias."
+    }
+  },
+  "color": {
+    "$description": "Status/utility colors. Consumed mainly by alias (tokens/semantic/*.json → the destructive/success/warning/info semantic roles), and a few 600 steps are also referenced directly as raw --color-*-600 vars by the chart default palette (src/components/ui/chart.tsx). They never appear on the left-hand side of a @theme mapping, so no naming collision risk applies to this group.",
+    "success": {
+      "100": {
+        "$value": "#ccffdc",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#80dba2",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#3f9b65",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#1c7f4c",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#036639",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#02351b",
+        "$type": "color"
+      },
+      "$description": "Status color: positive/complete states. Distinct hue from the brand color so brand and status meaning never collide."
+    },
+    "warning": {
+      "100": {
+        "$value": "#ffedd6",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#f2b966",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#b07a20",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#906106",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#734c02",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#3c2601",
+        "$type": "color"
+      },
+      "$description": "Status color: caution/needs-attention states."
+    },
+    "danger": {
+      "100": {
+        "$value": "#ffebe9",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#ffaba3",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#d15c56",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#b2403d",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#972527",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#570109",
+        "$type": "color"
+      },
+      "$description": "Status color: destructive/error states."
+    },
+    "info": {
+      "100": {
+        "$value": "#e4f2fe",
+        "$type": "color"
+      },
+      "300": {
+        "$value": "#b5c7d7",
+        "$type": "color"
+      },
+      "500": {
+        "$value": "#788897",
+        "$type": "color"
+      },
+      "600": {
+        "$value": "#5e6e7c",
+        "$type": "color"
+      },
+      "700": {
+        "$value": "#485765",
+        "$type": "color"
+      },
+      "900": {
+        "$value": "#1f2d39",
+        "$type": "color"
+      },
+      "$description": "Status color: neutral/informational states."
+    },
+    "white": {
+      "$value": "#ffffff",
+      "$type": "color"
+    },
+    "black": {
+      "$value": "#000000",
+      "$type": "color"
+    }
+  },
+  "plumb": {
+    "$description": "Plumb preset (ADR 0021): Plumb's role values exactly as the Plumb design system defines them, per theme. tokens/semantic/*.json reference these; components never do. The palette keys above keep the template's names with Plumb hues.",
+    "light": {
+      "canvas": {
+        "$value": "oklch(0.98 0.004 240)",
+        "$type": "color"
+      },
+      "surface": {
+        "$value": "oklch(1 0 0)",
+        "$type": "color"
+      },
+      "raised": {
+        "$value": "oklch(1 0 0)",
+        "$type": "color"
+      },
+      "sunken": {
+        "$value": "oklch(0.955 0.006 240)",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "oklch(0.965 0.006 240)",
+        "$type": "color"
+      },
+      "active": {
+        "$value": "oklch(0.94 0.009 240)",
+        "$type": "color"
+      },
+      "selected": {
+        "$value": "oklch(0.95 0.02 201)",
+        "$type": "color"
+      },
+      "ink": {
+        "$value": "oklch(0.24 0.02 250)",
+        "$type": "color"
+      },
+      "ink-soft": {
+        "$value": "oklch(0.48 0.018 250)",
+        "$type": "color"
+      },
+      "ink-muted": {
+        "$value": "#646b73",
+        "$type": "color"
+      },
+      "ink-disabled": {
+        "$value": "oklch(0.62 0.015 250)",
+        "$type": "color"
+      },
+      "ink-inverse": {
+        "$value": "#ffffff",
+        "$type": "color"
+      },
+      "border-control": {
+        "$value": "#848b93",
+        "$type": "color"
+      },
+      "line": {
+        "$value": "oklch(0.9 0.008 240)",
+        "$type": "color"
+      },
+      "line-strong": {
+        "$value": "oklch(0.82 0.012 240)",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "#2a6a6e",
+        "$type": "color"
+      },
+      "accent-hover": {
+        "$value": "#1f5559",
+        "$type": "color"
+      },
+      "accent-press": {
+        "$value": "#164347",
+        "$type": "color"
+      },
+      "accent-soft": {
+        "$value": "oklch(0.95 0.02 201)",
+        "$type": "color"
+      },
+      "accent-ink": {
+        "$value": "#156165",
+        "$type": "color"
+      },
+      "on-accent": {
+        "$value": "#ffffff",
+        "$type": "color"
+      },
+      "focus-ring": {
+        "$value": "#2a6a6e",
+        "$type": "color"
+      },
+      "pass": {
+        "$value": "oklch(0.53 0.11 155)",
+        "$type": "color"
+      },
+      "pass-soft": {
+        "$value": "oklch(0.95 0.035 155)",
+        "$type": "color"
+      },
+      "pass-ink": {
+        "$value": "#057743",
+        "$type": "color"
+      },
+      "warn": {
+        "$value": "oklch(0.58 0.12 70)",
+        "$type": "color"
+      },
+      "warn-soft": {
+        "$value": "oklch(0.96 0.04 80)",
+        "$type": "color"
+      },
+      "warn-ink": {
+        "$value": "#855904",
+        "$type": "color"
+      },
+      "block": {
+        "$value": "oklch(0.53 0.16 25)",
+        "$type": "color"
+      },
+      "block-soft": {
+        "$value": "oklch(0.95 0.03 25)",
+        "$type": "color"
+      },
+      "block-ink": {
+        "$value": "#a03f3c",
+        "$type": "color"
+      },
+      "on-block": {
+        "$value": "#ffffff",
+        "$type": "color"
+      },
+      "on-accent-near-black": {
+        "$value": "#101419",
+        "$type": "color"
+      }
+    },
+    "dark": {
+      "canvas": {
+        "$value": "oklch(0.19 0.012 250)",
+        "$type": "color"
+      },
+      "surface": {
+        "$value": "oklch(0.235 0.014 250)",
+        "$type": "color"
+      },
+      "raised": {
+        "$value": "oklch(0.27 0.015 250)",
+        "$type": "color"
+      },
+      "sunken": {
+        "$value": "oklch(0.165 0.012 250)",
+        "$type": "color"
+      },
+      "hover": {
+        "$value": "oklch(0.27 0.015 250)",
+        "$type": "color"
+      },
+      "active": {
+        "$value": "oklch(0.31 0.017 250)",
+        "$type": "color"
+      },
+      "selected": {
+        "$value": "oklch(0.3 0.04 201)",
+        "$type": "color"
+      },
+      "ink": {
+        "$value": "oklch(0.94 0.006 250)",
+        "$type": "color"
+      },
+      "ink-soft": {
+        "$value": "oklch(0.75 0.012 250)",
+        "$type": "color"
+      },
+      "ink-muted": {
+        "$value": "#9299a1",
+        "$type": "color"
+      },
+      "ink-disabled": {
+        "$value": "oklch(0.5 0.014 250)",
+        "$type": "color"
+      },
+      "ink-inverse": {
+        "$value": "oklch(0.19 0.012 250)",
+        "$type": "color"
+      },
+      "border-control": {
+        "$value": "#636a72",
+        "$type": "color"
+      },
+      "line": {
+        "$value": "oklch(0.32 0.016 250)",
+        "$type": "color"
+      },
+      "line-strong": {
+        "$value": "oklch(0.42 0.02 250)",
+        "$type": "color"
+      },
+      "accent": {
+        "$value": "#7bc0c2",
+        "$type": "color"
+      },
+      "accent-hover": {
+        "$value": "#9fd3d5",
+        "$type": "color"
+      },
+      "accent-press": {
+        "$value": "#b8e0e2",
+        "$type": "color"
+      },
+      "accent-soft": {
+        "$value": "oklch(0.3 0.04 201)",
+        "$type": "color"
+      },
+      "accent-ink": {
+        "$value": "#80c5ca",
+        "$type": "color"
+      },
+      "on-accent": {
+        "$value": "#101419",
+        "$type": "color"
+      },
+      "focus-ring": {
+        "$value": "#7bc0c2",
+        "$type": "color"
+      },
+      "pass": {
+        "$value": "oklch(0.72 0.12 155)",
+        "$type": "color"
+      },
+      "pass-soft": {
+        "$value": "oklch(0.28 0.05 155)",
+        "$type": "color"
+      },
+      "pass-ink": {
+        "$value": "#6cd092",
+        "$type": "color"
+      },
+      "warn": {
+        "$value": "oklch(0.78 0.12 80)",
+        "$type": "color"
+      },
+      "warn-soft": {
+        "$value": "oklch(0.3 0.05 75)",
+        "$type": "color"
+      },
+      "warn-ink": {
+        "$value": "#e8aa4e",
+        "$type": "color"
+      },
+      "block": {
+        "$value": "oklch(0.7 0.14 25)",
+        "$type": "color"
+      },
+      "block-soft": {
+        "$value": "oklch(0.3 0.06 25)",
+        "$type": "color"
+      },
+      "block-ink": {
+        "$value": "#ff958e",
+        "$type": "color"
+      },
+      "on-block": {
+        "$value": "#101419",
+        "$type": "color"
+      },
+      "on-accent-near-black": {
+        "$value": "#101419",
+        "$type": "color"
+      }
+    }
+  }
+}

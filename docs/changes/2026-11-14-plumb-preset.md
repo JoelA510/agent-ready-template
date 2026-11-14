@@ -1,6 +1,6 @@
 # Plumb as an optional brand preset
 
-Kind: FEATURE · Drawn up: 2026-11-14 · Owner: Joel Abraham · Status: PROPOSED
+Kind: FEATURE · Drawn up: 2026-11-14 · Owner: Joel Abraham · Status: IN PROGRESS (agreed 2026-11-14)
 
 ## Why
 
@@ -117,9 +117,10 @@ its `fonts.css` over `src/styles/fonts.css` and its `brand/` into `docs/brand/`,
 `npm run tokens:build` and `npm run registry:build` as it already does. A missing or unknown
 preset fails with the list of valid ids and writes nothing.
 
-**Failure surfacing.** If `tokens:build` or the contrast check fails after the copy, init exits
-non-zero and names the failing pair. It does not leave a half-applied preset: files are written
-only after the preset folder validates.
+**Failure surfacing.** A preset is validated before anything is written: the id must be a folder
+under `presets/`, the required files must exist, and its semantic role names must match the
+fork's exactly. If `tokens:build` then fails, init exits non-zero with the build's error and says
+the files are written but the tokens need rebuilding, as it already does for the registry.
 
 **Accessibility.** Every pair `check-contrast` enforces is checked against the preset's values
 in both themes (executed in a test, below). Plumb's values were computed to pass 4.5:1 for text
@@ -144,29 +145,50 @@ and 3:1 for borders and the focus ring, so no failure is expected; the test prov
 
 ## Tasks
 
-- [ ] Draft ADR 0021 (brand presets) and agree it — proved by review (a decision record has no
+- [x] Draft ADR 0021 (brand presets) and agree it — proved by review (a decision record has no
   test).
-- [ ] Move the font imports from `globals.css` to `src/styles/fonts.css` (the flagged refactor)
+- [x] Move the font imports from `globals.css` to `src/styles/fonts.css` (the flagged refactor)
   — proved by `npm run check` and `npm run test:browser` passing unchanged, and the Storybook
   font story rendering the same faces.
-- [ ] Add `presets/plumb/` tokens and the role mapping — proved by
-  `scripts/__tests__/preset-plumb.test.ts`: builds the tokens from the preset and asserts every
+- [x] Add `presets/plumb/` tokens and the role mapping — proved by
+  `scripts/__tests__/presets.test.ts` (every preset, not only Plumb): builds the tokens from the preset and asserts every
   pair in `check-contrast` passes in light and dark, and that the role names match
   `tokens/semantic/*.json` exactly (no role added or missing).
-- [ ] Planted defect for that test — proved by the same test failing when one preset value is
+- [x] Planted defect for that test — proved by the same test failing when one preset value is
   swapped for a low-contrast one (shown once, then reverted).
-- [ ] Add `--preset` to `scripts/init.mjs` — proved by `scripts/__tests__/init.test.ts` cases:
+- [x] Add `--preset` to `scripts/init.mjs` — proved by `scripts/__tests__/init.test.ts` cases:
   `--preset plumb` writes the preset's token values and `fonts.css`; an unknown id fails and
   writes nothing; no `--preset` produces byte-identical output to today (the Unchanged list).
 - [ ] Add the three Fontsource packages and `presets/plumb/fonts.css` — proved by
   `npm run check` (build and bundle budget) and a browser story test asserting the three
   families load in a preset-applied build.
-- [ ] Add `presets/plumb/brand/plumb-rules.mdx` and the preset README — proved by
+- [x] Add `presets/plumb/brand/severity-and-figures.mdx` and the preset README — proved by
   `npm run check:instructions` and the Storybook docs build.
-- [ ] Confirm `process:apply` does not deliver `presets/` — proved by
+- [x] Confirm `process:apply` does not deliver `presets/` — proved by
   `scripts/__tests__/apply-process.test.ts` asserting no `presets/` path in the manifest.
-- [ ] Document `--preset` in AGENTS.md's command table and `docs/system/agent-reference.md` —
+- [x] Document `--preset` in AGENTS.md's command table and `docs/system/agent-reference.md` —
   proved by `npm run check:instructions` (AGENTS.md stays within its size budget).
+
+## Found during the work
+
+- **`muted-foreground` maps to `ink-soft`, not `ink-muted`.** On the template's 10% status tints
+  over the light background, `ink-muted` measured 4.42 to 4.46:1. The gate caught it; the
+  mapping changed, the check did not. `ink-soft` is also the closer meaning (secondary text).
+- **A top-level `$description` in a preset's `core/color.json` collides** with the semantic
+  files' in Style Dictionary. Caught by the init test; the note lives on the `plumb` group.
+- **knip flips in a preset fork:** the placeholder's font packages become unused and the
+  preset's become used. init now rewrites `knip.json`'s ignored font packages from what
+  `src/styles/fonts.css` imports. Tested by running knip in the preset fork.
+- **Vite inlined two small font subsets as base64,** adding about 5 kB gzipped to the CSS and
+  failing the bundle budget in the preset fork. `vite.config.ts` now never inlines a font file;
+  the template's own CSS is unchanged at 17.5 kB, the preset fork's is 18.2 kB.
+- **Blocking, not yet resolved:** 12 tests in `check-contrast.test.ts` and `tokens-build.test.ts`
+  fail in a preset fork. They test the checker and the token build against the fork's live
+  tokens and expect the placeholder palette's exact ratios and references. This predates the
+  preset: at HEAD, a hand rebrand to a blue brand ramp that passes the contrast gate fails 3 of
+  them. Proposed fix (needs agreement, it changes test infrastructure): run those tests against
+  a frozen copy of the placeholder tokens kept under `scripts/__tests__/fixtures/`, leaving the
+  tests that check the fork's own tokens on the live ones.
 
 ## Done when
 

@@ -207,6 +207,53 @@ describe('init', () => {
     expect(stdout).toContain('prompts/agent-platforms.md')
   }, 60_000)
 
+  it('applies a brand preset: its token sources, fonts.css and brand pages, with the tokens rebuilt and nothing left out of date or unused', () => {
+    const { status, stdout, stderr } = init(...REBRAND, '--preset', 'plumb')
+    expect({ status, errors: errors(stderr) }).toEqual({ status: 0, errors: '' })
+    expect(stdout).toContain('brand preset      -> plumb')
+    for (const rel of ['tokens/core/color.json', 'tokens/core/typography.json', 'tokens/semantic/light.json', 'tokens/semantic/dark.json']) {
+      expect(read(rel)).toBe(readFileSync(join(REPO, 'presets/plumb', rel), 'utf8'))
+    }
+    expect(read('src/styles/fonts.css')).toBe(readFileSync(join(REPO, 'presets/plumb/fonts.css'), 'utf8'))
+    expect(read('docs/brand/severity-and-figures.mdx')).toBe(readFileSync(join(REPO, 'presets/plumb/brand/severity-and-figures.mdx'), 'utf8'))
+    // The generated CSS carries the preset's values: Plumb's light accent is the primary role.
+    expect(read('src/styles/tokens/tokens-core.css')).toContain('#2a6a6e')
+    // knip ignores the font packages the new fonts.css no longer imports, and only those.
+    const ignored: string[] = JSON.parse(read('knip.json')).ignoreDependencies
+    expect(ignored).toEqual(expect.arrayContaining(['@fontsource-variable/inter', '@fontsource-variable/fraunces']))
+    expect(ignored).not.toEqual(expect.arrayContaining(['@fontsource-variable/public-sans']))
+    const knip = spawnSync(join(root, 'node_modules/.bin/knip'), [], { cwd: root, encoding: 'utf8' })
+    // (Storybook, loaded by knip's plugin, may print an unrelated note about src/**/*.mdx.)
+    expect(knip.status).toBe(0)
+    expect(knip.stdout).not.toMatch(/Unused|Configuration hints/)
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'rebrand with preset')
+    const drift = spawnSync(process.execPath, ['scripts/check-generated.mjs'], { cwd: root, encoding: 'utf8' })
+    expect({ status: drift.status, stderr: drift.stderr }).toEqual({ status: 0, stderr: '' })
+  }, 180_000)
+
+  it('without --preset, leaves the token sources and fonts.css as they were, and adds no brand page', () => {
+    expect(init(...REBRAND).status).toBe(0)
+    expect(git('diff', '--name-only', '--', 'tokens', 'src/styles/fonts.css', 'src/styles/tokens', 'knip.json').trim()).toBe('')
+    // The rebrand edits the brand pages' wording; no page is added.
+    expect(git('status', '--porcelain', '--untracked-files=all', '--', 'docs/brand').split('\n').filter((l) => l.startsWith('??'))).toEqual([])
+  }, 60_000)
+
+  it('rejects a preset whose semantic roles differ from the template\'s, before writing anything', () => {
+    const file = join(root, 'presets/plumb/tokens/semantic/dark.json')
+    const dark = JSON.parse(read('presets/plumb/tokens/semantic/dark.json'))
+    delete dark.ring
+    dark.glow = dark.primary
+    writeFileSync(file, JSON.stringify(dark, null, 2))
+    git('add', '-A')
+    git('commit', '-q', '--no-verify', '-m', 'broken preset')
+    const { status, stderr } = init(...REBRAND, '--preset', 'plumb')
+    expect(status).toBe(1)
+    expect(stderr).toContain('missing ring')
+    expect(stderr).toContain('not a template role: glow')
+    expect(changed()).toBe('')
+  }, 60_000)
+
   it('is a no-op the second time, and says so', () => {
     expect(init(...REBRAND).status).toBe(0)
     git('add', '-A')
@@ -236,6 +283,9 @@ describe('init', () => {
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--scope'], '--scope needs a value'],
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--platforms', 'codex,windsurf'], "windsurf isn't a platform the template knows"],
     [['--name', 'Client Inc.', '--slug', 'clientinc', '--platforms', ','], '--platforms needs at least one platform id'],
+    [['--name', 'Client Inc.', '--slug', 'clientinc', '--preset', 'nonesuch'], `--preset "nonesuch" isn't a preset in presets/`],
+    [['--name', 'Client Inc.', '--slug', 'clientinc', '--preset', '../tokens'], `--preset "../tokens" isn't a preset in presets/`],
+    [['--name', 'Client Inc.', '--slug', 'clientinc', '--preset'], '--preset needs a value'],
   ])('rejects %j before writing anything', (args, message) => {
     const { status, stderr } = init(...args)
     expect(status).toBe(1)
