@@ -74,6 +74,10 @@ components:
    and the terminology page's example vocabulary) that are domain-specific and need a human
    rewrite rather than a string swap. Then rewrite the
    Brand & Content pages under `docs/brand/` to describe *your* voice, tone, and terminology.
+
+   If a brand preset in `presets/` fits (ADR 0021), add `--preset <id>`: it replaces the token
+   sources and `src/styles/fonts.css`, adds its `docs/brand/` pages, and rebuilds the tokens, which
+   covers step 2. `presets/plumb/README.md` shows what a preset holds.
 2. **Swap the palette for your brand ramp.** In `tokens/core/`, replace the placeholder
    `palette.brand.*` (primary) and `palette.accent.*` (secondary) color steps with your brand's
    ramps. The semantic tokens in `tokens/semantic/light.json` and `tokens/semantic/dark.json`
@@ -191,7 +195,7 @@ easing curves, which have no unambiguous native equivalent there. Colors may be 
 | `npm run check:upgrade-path` | Proves a repository with the last release's process takes this commit's cleanly: nothing parked, nothing left over. CI runs it on every PR. A full clone with no release before `HEAD` (no `v*` tag, or tags only on `HEAD`) passes and says so. |
 | `npm run check-contrast` | Recomputes WCAG contrast in both themes for the text/surface combinations the components render, plus focus rings at their drawn opacity; fails below AA, and fails when a color class in `src/components/` isn't measured by any pairing. Re-run after any palette change. |
 | `npm run registry:build` | Regenerates the component registry (`registry.json` + `public/r/*.json`, and `public/llms.txt` for agents) from `src/components/ui/`. |
-| `npm run init -- --name "..." --slug ...` | Rebrands a fresh fork — see [Make it yours](#make-it-yours). |
+| `npm run init -- --name "..." --slug ... [--preset <id>]` | Rebrands a fresh fork, optionally with a brand preset from `presets/` — see [Make it yours](#make-it-yours). |
 | `npm run process:apply -- --target <path>` | Delivers the prompts, skills, staged skeletons, and standards into another repo, with a manifest so re-runs are safe; never overwrites a file the target edited, and proposes a merge where both sides changed one. `--pack` adds a stack's standards, `--list` previews, `--check` reports drift. |
 | `npm run test` | Vitest: component behavior plus `axe` accessibility checks across every story (jsdom). |
 | `npm run test:browser` | Every story in real Chromium, in both themes, with `axe` and its play tests: rendered contrast and WCAG 2.2 target size. Needs `npx playwright install chromium` once. |

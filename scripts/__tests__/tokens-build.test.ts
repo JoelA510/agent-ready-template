@@ -8,11 +8,12 @@ const REPO = resolve(__dirname, '../..')
 const roots: string[] = []
 
 // A throwaway copy of the token pipeline (the config plus every script module it could import),
-// built for real. `edit` changes the authored core tokens before each build.
+// built for real, from the frozen placeholder tokens (fixtures/README.md): the cases expect its
+// references, such as `primary` aliasing brand-700, which a fork's own tokens would change. `edit` changes the authored core tokens before each build.
 function pipeline() {
   const root = mkdtempSync(join(tmpdir(), 'tokens-build-'))
   roots.push(root)
-  cpSync(join(REPO, 'tokens'), join(root, 'tokens'), { recursive: true })
+  cpSync(join(__dirname, 'fixtures/placeholder-tokens'), join(root, 'tokens'), { recursive: true })
   cpSync(join(REPO, 'scripts'), join(root, 'scripts'), { recursive: true, filter: (src) => !src.includes('__tests__') })
   for (const f of ['style-dictionary.config.mjs', 'package.json']) cpSync(join(REPO, f), join(root, f))
   symlinkSync(join(REPO, 'node_modules'), join(root, 'node_modules'), 'dir')

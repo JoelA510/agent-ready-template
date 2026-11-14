@@ -7,11 +7,14 @@ import { hexToOklch } from '../color.mjs'
 
 const REPO = resolve(__dirname, '../..')
 const SCRIPT = join(REPO, 'scripts/check-contrast.mjs')
+// The placeholder palette, frozen: the cases below expect its exact ratios, which a fork's own
+// palette would change (fixtures/README.md).
+const TOKENS = join(__dirname, 'fixtures/placeholder-tokens')
 
 type Theme = Record<string, unknown>
 const roots: string[] = []
 
-// A throwaway tree with this repo's real tokens and a single probe component. `classes` is the
+// A throwaway tree with the frozen placeholder tokens and a single probe component. `classes` is the
 // probe's class list; the default includes `text-foreground` so the scan's positive control
 // passes and each test only varies what it's about.
 function fixture(
@@ -20,7 +23,7 @@ function fixture(
 ) {
   const root = mkdtempSync(join(tmpdir(), 'check-contrast-'))
   roots.push(root)
-  cpSync(join(REPO, 'tokens'), join(root, 'tokens'), { recursive: true })
+  cpSync(TOKENS, join(root, 'tokens'), { recursive: true })
   for (const name of ['light', 'dark'] as const) {
     const path = join(root, 'tokens/semantic', `${name}.json`)
     const theme = JSON.parse(readFileSync(path, 'utf8')) as Theme

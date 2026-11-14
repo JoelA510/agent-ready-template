@@ -1,0 +1,11 @@
+/* Self-hosted brand type for the Plumb preset (ADR 0021): no third-party font requests.
+   Public Sans for interface and body text, Plus Jakarta Sans for headings and editorial moments
+   (the template's display slot, `font-serif`), JetBrains Mono for figures and metadata.
+   Almarai and Source Serif 4 stay loaded ONLY for the side-by-side comparison on
+   docs/foundations/typography.mdx; nothing else uses them. */
+@import '@fontsource-variable/public-sans';
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource/almarai/400.css';
+@import '@fontsource/almarai/700.css';
+@import '@fontsource-variable/source-serif-4';

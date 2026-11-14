@@ -1,0 +1,39 @@
+{
+  "font": {
+    "family": {
+      "$description": "Sans for UI and body copy; serif for editorial/display moments where your brand's voice should feel warmer and more considered.",
+      "sans": { "$value": "'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif", "$type": "fontFamily" },
+      "serif": { "$value": "'Fraunces Variable', Fraunces, ui-serif, Georgia, serif", "$type": "fontFamily" },
+      "mono": { "$value": "ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace", "$type": "fontFamily" }
+    },
+    "weight": {
+      "regular": { "$value": "400", "$type": "fontWeight" },
+      "medium": { "$value": "500", "$type": "fontWeight" },
+      "semibold": { "$value": "600", "$type": "fontWeight" },
+      "bold": { "$value": "700", "$type": "fontWeight" }
+    },
+    "size": {
+      "$description": "Type scale. Use with lineHeight/letterSpacing tokens per the recipes documented on the Typography foundations page.",
+      "xs": { "$value": "0.75rem", "$type": "dimension" },
+      "sm": { "$value": "0.875rem", "$type": "dimension" },
+      "md": { "$value": "1rem", "$type": "dimension" },
+      "lg": { "$value": "1.125rem", "$type": "dimension" },
+      "xl": { "$value": "1.25rem", "$type": "dimension" },
+      "2xl": { "$value": "1.5rem", "$type": "dimension" },
+      "3xl": { "$value": "1.875rem", "$type": "dimension" },
+      "4xl": { "$value": "2.25rem", "$type": "dimension" },
+      "5xl": { "$value": "3rem", "$type": "dimension" }
+    },
+    "lineHeight": {
+      "tight": { "$value": "1.1", "$type": "number" },
+      "snug": { "$value": "1.3", "$type": "number" },
+      "normal": { "$value": "1.5", "$type": "number" },
+      "relaxed": { "$value": "1.65", "$type": "number" }
+    },
+    "letterSpacing": {
+      "tight": { "$value": "-0.02em", "$type": "dimension" },
+      "normal": { "$value": "0em", "$type": "dimension" },
+      "wide": { "$value": "0.02em", "$type": "dimension" }
+    }
+  }
+}

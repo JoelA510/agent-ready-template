@@ -1,0 +1,15 @@
+{
+  "motion": {
+    "duration": {
+      "$description": "Interaction timing. Keep motion brief and purposeful — the Elevation & Motion foundations page explains when to use each step.",
+      "fast": { "$value": "120ms", "$type": "duration" },
+      "base": { "$value": "200ms", "$type": "duration" },
+      "slow": { "$value": "320ms", "$type": "duration" }
+    },
+    "easing": {
+      "standard": { "$value": "cubic-bezier(0.4, 0, 0.2, 1)", "$type": "string" },
+      "decelerate": { "$value": "cubic-bezier(0, 0, 0.2, 1)", "$type": "string" },
+      "accelerate": { "$value": "cubic-bezier(0.4, 0, 1, 1)", "$type": "string" }
+    }
+  }
+}

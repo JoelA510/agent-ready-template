@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Rebrand this template for a new client project. See usage() below, or run with no args.
 import { spawnSync } from 'node:child_process';
-import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PLATFORMS, PROCEDURE, SELECTION_FILE, selectionText, unknownIds } from './agent-platforms.mjs';
@@ -10,13 +10,13 @@ import { isSite, PLACEHOLDER_HOMEPAGE, siteBase, TEMPLATE_HOMEPAGE } from './hom
 import { listRepoFiles } from './repo-files.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
-const FLAGS = new Set(['name', 'slug', 'scope', 'homepage', 'platforms']);
+const FLAGS = new Set(['name', 'slug', 'scope', 'homepage', 'platforms', 'preset']);
 // A line containing this marker is left as written: it describes the placeholder itself
 // ("ships with a placeholder brand, Acme Inc."), which a rebrand would make false.
 const KEEP = 'init:keep';
 
 function usage() {
-  console.error(`Usage: node scripts/init.mjs --name "Client Inc." --slug clientinc [--scope @clientinc] [--homepage https://…]
+  console.error(`Usage: node scripts/init.mjs --name "Client Inc." --slug clientinc [--scope @clientinc] [--homepage https://…] [--preset <id>]
 
   --name      Display brand name, quoted if it has spaces. Replaces "Acme Inc." everywhere, then
               any remaining bare "Acme" with --name minus a trailing legal suffix
@@ -34,6 +34,10 @@ function usage() {
               (${PLATFORMS.map((p) => p.id).join(', ')}), written to ${SELECTION_FILE}: its
               instruction files are wired and sized for those. Another agent is researched into
               that file's "custom" list instead (${PROCEDURE}).
+  --preset    Optional brand preset, a folder under presets/ (${presetIds().join(', ') || 'none yet'}). Its token
+              sources replace tokens/, its fonts.css replaces src/styles/fonts.css, and its brand/
+              pages are added to docs/brand/; the tokens are then rebuilt (ADR 0021). Without it, the
+              neutral placeholder's colors and type stay.
 
 It also renames the package in package-lock.json and regenerates the registry, so the fork
 starts with no generated file out of date. On the first run it records the template's version as
@@ -45,6 +49,79 @@ marked ${KEEP} are left as written. Nothing is written unless every argument is 
 function fail(message) {
   console.error(`init: ${message}`);
   process.exit(1);
+}
+
+// A preset is a folder under presets/ holding token sources, a fonts.css, and optionally brand/
+// pages. It fills the template's existing semantic roles and must name exactly those roles.
+function presetIds() {
+  const dir = join(ROOT, 'presets');
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
+}
+
+const filesUnder = (dir) =>
+  readdirSync(dir, { withFileTypes: true, recursive: true })
+    .filter((d) => d.isFile())
+    .map((d) => join(d.parentPath, d.name).slice(dir.length + 1).split('\\').join('/'));
+
+const roleNames = (file) =>
+  Object.keys(JSON.parse(readFileSync(file, 'utf8')))
+    .filter((key) => !key.startsWith('$'))
+    .sort();
+
+// Every file the preset writes, read and checked before anything is written.
+function presetEdits(id) {
+  const ids = presetIds();
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || !ids.includes(id)) {
+    fail(`--preset "${id}" isn't a preset in presets/ (${ids.join(', ') || 'there are none'})`);
+  }
+  const base = join(ROOT, 'presets', id);
+  for (const rel of ['tokens/semantic/light.json', 'tokens/semantic/dark.json', 'fonts.css']) {
+    if (!existsSync(join(base, rel))) fail(`--preset "${id}" has no ${rel}`);
+  }
+  const out = [];
+  for (const rel of filesUnder(join(base, 'tokens'))) {
+    const target = join(ROOT, 'tokens', rel);
+    if (rel.startsWith('semantic/') && existsSync(target)) {
+      const want = roleNames(target);
+      const have = roleNames(join(base, 'tokens', rel));
+      const missing = want.filter((r) => !have.includes(r));
+      const extra = have.filter((r) => !want.includes(r));
+      if (missing.length || extra.length) {
+        fail(`--preset "${id}": tokens/${rel} must name exactly the template's roles` +
+          (missing.length ? `; missing ${missing.join(', ')}` : '') + (extra.length ? `; not a template role: ${extra.join(', ')}` : ''));
+      }
+    }
+    out.push({ abs: target, after: readFileSync(join(base, 'tokens', rel), 'utf8') });
+  }
+  const fontsCss = readFileSync(join(base, 'fonts.css'), 'utf8');
+  out.push({ abs: join(ROOT, 'src/styles/fonts.css'), after: fontsCss });
+  const knip = knipEdit(fontsCss);
+  if (knip) out.push(knip);
+  if (existsSync(join(base, 'brand'))) {
+    for (const rel of filesUnder(join(base, 'brand'))) {
+      out.push({ abs: join(ROOT, 'docs/brand', rel), after: readFileSync(join(base, 'brand', rel), 'utf8') });
+    }
+  }
+  return out;
+}
+
+// Font packages stay installed whichever face a fork uses; knip is told to ignore exactly the ones
+// src/styles/fonts.css doesn't import, so swapping fonts.css never leaves check:unused red.
+function knipEdit(fontsCss) {
+  const file = join(ROOT, 'knip.json');
+  if (!existsSync(file)) return null;
+  const text = readFileSync(file, 'utf8');
+  const config = JSON.parse(text);
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+  const fonts = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).filter((name) => name.startsWith('@fontsource'));
+  const imported = (name) => new RegExp(`@import\\s+['"]${name.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}(?:/[^'"]*)?['"]`).test(fontsCss);
+  const ignored = [...(config.ignoreDependencies ?? []).filter((name) => !fonts.includes(name)), ...fonts.filter((name) => !imported(name))];
+  const line = `"ignoreDependencies": [${ignored.map((name) => JSON.stringify(name)).join(', ')}]`;
+  const after = /"ignoreDependencies":\s*\[[^\]]*\]/.test(text)
+    ? text.replace(/"ignoreDependencies":\s*\[[^\]]*\]/, () => line)
+    : JSON.stringify({ ...config, ignoreDependencies: ignored }, null, 2) + '\n';
+  return after === text ? null : { abs: file, after };
 }
 
 function parseArgs(argv) {
@@ -100,6 +177,8 @@ if (typeof args.platforms === 'string') {
     fail(`--platforms: ${unknownPlatforms.join(', ')} isn't a platform the template knows (${PLATFORMS.map((p) => p.id).join(', ')}). Research another into ${SELECTION_FILE}'s "custom" list as ${PROCEDURE} says.`);
   }
 }
+const PRESET = typeof args.preset === 'string' ? args.preset : null;
+const PRESET_EDITS = PRESET === null ? [] : presetEdits(PRESET);
 let HOMEPAGE = null;
 if (typeof args.homepage === 'string') {
   try {
@@ -183,9 +262,17 @@ if (existsSync(join(ROOT, 'package-lock.json'))) {
   edits.push({ abs: join(ROOT, 'package-lock.json'), after: serialize(lock) });
 }
 if (PLATFORM_IDS) edits.push({ abs: join(ROOT, SELECTION_FILE), after: selectionText(ROOT, PLATFORM_IDS) });
+// A preset's file replaces the rebrand's edit of the same file, if there was one.
+for (const edit of PRESET_EDITS) {
+  const at = edits.findIndex((e) => e.abs === edit.abs);
+  if (at === -1) edits.push(edit);
+  else edits[at] = edit;
+}
 let registryEntry;
+let tokensEntry;
 try {
   registryEntry = buildEntry(ROOT, 'registry:build');
+  if (PRESET !== null) tokensEntry = buildEntry(ROOT, 'tokens:build');
 } catch (error) {
   fail(error.message);
 }
@@ -193,6 +280,15 @@ try {
 for (const { abs, after } of edits) {
   mkdirSync(dirname(abs), { recursive: true });
   writeFileSync(abs, after);
+}
+
+// A preset's token sources only reach the components once the generated CSS is rebuilt.
+if (tokensEntry) {
+  const tokens = spawnSync(process.execPath, [tokensEntry], { cwd: ROOT, encoding: 'utf8' });
+  if (tokens.status !== 0) {
+    process.stderr.write(tokens.stdout + tokens.stderr);
+    fail(`the rebrand and the "${PRESET}" preset are written, but rebuilding the tokens failed (above); fix it and run npm run tokens:build`);
+  }
 }
 
 // The registry is named after package.json and points at its homepage: rebuild it now, so the
@@ -216,6 +312,7 @@ console.log(`  package.json name -> "${PKG_NAME}", version ${pkg.version} (packa
 console.log(`  registry          -> "${built.name}" at ${built.homepage}${placeholderHomepage ? ' (a placeholder until --homepage is set)' : ''}`);
 console.log(`  index.html title  -> "${NAME} — Design System Template"`);
 if (PLATFORM_IDS) console.log(`  agent platforms   -> ${SELECTION_FILE}: ${PLATFORM_IDS.join(', ')}`);
+if (PRESET !== null) console.log(`  brand preset      -> ${PRESET}: tokens/, src/styles/fonts.css and docs/brand/ written, tokens rebuilt (presets/${PRESET}/README.md)`);
 if (NAME !== args.name.trim()) console.log(`  (the apostrophe in --name was written as \u2019, which is safe inside code strings)`);
 // Which agents the fork's selection names, when --platforms didn't just set it: the template's.
 let recorded = null;
@@ -233,8 +330,9 @@ const platformStep = PLATFORM_IDS
 console.log(`
 Next steps:
   1. Replace public/brand-mark.svg (and its two hardcoded hex colors) with the client's real mark.
-  2. Update palette.brand.* / palette.accent.* in tokens/core/color.json per README's existing
-     rebrand instructions, then run npm run tokens:build.
+  2. ${PRESET !== null ? `The "${PRESET}" preset set the palette and type. Review docs/foundations/ (color, typography),
+     which still describe the placeholder's palette and its Inter and Fraunces pairing.` : `Update palette.brand.* / palette.accent.* in tokens/core/color.json per README's existing
+     rebrand instructions, then run npm run tokens:build.`}
   3. Review docs/foundations/iconography.mdx and docs/system/contributing.mdx — they reference a
      fictional "${SLUG}-analytics" app as a rationale anchor; this script only swaps the name, the
      surrounding narrative still needs a human rewrite.

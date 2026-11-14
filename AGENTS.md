@@ -86,7 +86,7 @@ What each checks, in full: `docs/system/agent-reference.md`.
 | `npm run tokens:build` / `registry:build` / `skills:build` | Rebuild generated output from its source (Golden rule 1). |
 | `npm run test` / `test:browser` | Vitest (jsdom + `axe`, and `scripts/`); every story in Chromium, both themes. |
 | `npm run lint` / `npm run typecheck` | ESLint (`jsx-a11y`, zero warnings) / `tsc -b --noEmit`. Also `storybook`, `dev`. |
-| `npm run init -- --name "Client Inc." --slug clientinc` | Rebrand a fresh fork (never an existing project). |
+| `npm run init -- --name "Client Inc." --slug clientinc` | Rebrand a fresh fork (never an existing project); `--preset plumb` also applies a brand preset from `presets/` (ADR 0021). |
 
 ## Engineering guardrails (any code, any stack)
 

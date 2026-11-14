@@ -1,0 +1,38 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Brand & Content/Severity & Figures" />
+
+# Severity & Figures
+
+Plumb's rules for telling people what is wrong and for showing numbers. They sit beside UI Copy
+Patterns: those cover how a message is worded, these cover how serious it is and what a figure
+may claim.
+
+## Four severities
+
+| Word | Color roles | Use it when |
+| --- | --- | --- |
+| **Blocking** | `destructive` | The output would carry a figure the source documents disprove, and nothing on the screen can repair it. |
+| **Warning** | `warning` | A person should look at something before relying on it, and can see the value and correct it by hand. |
+| **Info** | `info` | A note that changes nothing. |
+| **Passed** | `success` | A check ran and held, or the work was saved. |
+
+- Warn instead of blocking wherever the person can see the value and fix it. A block holds the
+  whole job over one correction that would take a moment.
+- Every status carries its word or an icon. Color alone never carries the meaning, and the brand
+  accent (`primary`) never stands in for a status.
+- A check that cannot run fails loudly. It never disappears from the screen.
+
+## Figures
+
+- A figure the source does not state is left blank and flagged ("Not stated"), never filled with
+  another figure or with 0. Blank is not zero.
+- Numbers that line up in a column use the mono face with tabular figures and are right-aligned.
+- Totals reconcile to the source total, or the screen says they do not.
+- Compute a derived value in one place; show its precision, keep its stored precision.
+
+## Data freshness
+
+When data comes from a scheduled refresh, say once per screen, above the data, when it was last
+checked. If the refresh is late, say which day the numbers are from, as a Warning. If the lookup of
+that date itself fails, say nothing: a failed lookup is not evidence that the data is old.

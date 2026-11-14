@@ -12,6 +12,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Brand presets for init.** `npm run init -- --name … --slug … --preset plumb` starts a fresh
+  fork on a settled brand instead of the neutral placeholder: the preset's token sources replace
+  `tokens/`, its `fonts.css` replaces `src/styles/fonts.css`, its `docs/brand/` pages are added,
+  and the tokens are rebuilt. A preset only gives values to the existing semantic roles, so no
+  component changes, and each one is held to the same contrast gate as the placeholder
+  (ADR 0021). Plumb, the first preset, brings a muted teal accent, slate neutrals, Public Sans,
+  Plus Jakarta Sans and JetBrains Mono (three new Fontsource dev dependencies), and severity and
+  figure rules for `docs/brand/`. The font imports moved from `globals.css` into
+  `src/styles/fonts.css`; nothing to do in an existing fork unless it takes a later release, where
+  the move arrives as an ordinary merge. Forks without `--preset` are unchanged.
+
+- **The contrast-checker and token-build tests no longer depend on the fork's palette.** They
+  plant defects into a frozen copy of the placeholder tokens
+  (`scripts/__tests__/fixtures/placeholder-tokens/`) instead of the live `tokens/`, so a fork that
+  rebrands its palette, by hand or with a preset, no longer fails tests about the checker itself.
+  Its own tokens are still checked by `npm run check-contrast`.
+
 - **Review covers what a description leaves out, and keeps sensitive findings private.**
   `prompts/review.md` now treats an undisclosed dependency, network call, or stored-data shape
   change, and a change outside the stated purpose, as findings, and routes a sensitive finding
