@@ -184,6 +184,11 @@ and 3:1 for borders and the focus ring, so no failure is expected; the test prov
 - **Vite inlined two small font subsets as base64,** adding about 5 kB gzipped to the CSS and
   failing the bundle budget in the preset fork. `vite.config.ts` now never inlines a font file;
   the template's own CSS is unchanged at 17.5 kB, the preset fork's is 18.2 kB.
+- **Control borders on the popover (Codex review, PR #45):** in dark, Plumb's `border-control`
+  (`#636a72`, the preset's `input`) measured 2.75:1 on the popover's raised surface; it had been
+  fitted to the page, card and sunken grounds only. Now `#6c747b` (3.17:1 on raised, 3.51:1 on
+  card). The contrast gate treats control borders as advisory, so `presets.test.ts` now holds
+  every preset's `input` to 3:1 on background, card and popover; shown failing on the old value.
 - **Resolved (agreed 2026-11-14):** 12 tests in `check-contrast.test.ts` and `tokens-build.test.ts`
   fail in a preset fork. They test the checker and the token build against the fork's live
   tokens and expect the placeholder palette's exact ratios and references. This predates the
