@@ -694,9 +694,11 @@ Stage 0:
   the docs tests in `scripts/__tests__/process-docs.test.ts` (links, scripts) and
   `check-placeholders.test.ts` (the ADR is finished; each new skeleton has placeholders the
   check finds).
-- [ ] The two new skeletons reach a target, and the last release still upgrades cleanly — to be
-  proved by `scripts/__tests__/apply-process.test.ts` and `npm run check:upgrade-path`, neither
-  of which runs on the building machine (see "Found during the work").
+- [x] The two new skeletons reach a target, and the last release still upgrades cleanly — proved
+  on CI for commit c1ea437 (pull request 49, job "Build, lint, typecheck, test"):
+  `scripts/__tests__/apply-process.test.ts` passed all 79 tests, and
+  `npm run check:upgrade-path` reported "4 copied, 13 updated in place, 0 removed; nothing parked
+  or left over". Neither runs on the building machine (see "Found during the work").
 
 Later stages, each its own pull request:
 
@@ -746,8 +748,14 @@ Later stages, each its own pull request:
   Storybook build), then fails 116 script tests in 11 files. The same 116 fail on `main` at
   20aecc6 on this machine (compared test by test from vitest's JSON reports: none fails on the
   branch that doesn't fail on `main`, and the branch adds 35 passing tests). So the delivery of
-  the two new skeletons (`apply-process.test.ts`) and the upgrade-path check have not been run
-  for this change: CI, or a machine with Node 24 and symlinks, has to.
+  the two new skeletons (`apply-process.test.ts`) and the upgrade-path check couldn't be run
+  there. CI ran them on the pinned Node: for commit c1ea437, `npm run check` passed with 35 test
+  files and 1,310 tests, none failing or skipped, and the upgrade-path step passed.
+- **The audit check went red the same day, for a reason outside this change.** GHSA-fc5q-39xc-vjpf
+  (a ReDoS in picomatch, high) covers every release up to the latest, 4.0.7, so no update fixes
+  it. The lockfile is identical to `main`'s, whose scheduled audit last passed on 2026-11-16.
+  The dependency policy's answer when no fixed version exists is a waiver, which is the owner's
+  decision and its own change, so this one neither fixes nor waives it.
 
 ## Unverified, for the stages that need it
 
@@ -763,11 +771,13 @@ Later stages, each its own pull request:
 ## Done when
 
 - [x] Stage 0: every task's test passes, and every new check was shown failing first.
-- [ ] Stage 0: each "Unchanged" line holds. `check:instructions` (the size) and
-  `check:generated` (the skill copies) pass; the upgrade-path check and `apply-process.test.ts`
-  (delivery) couldn't run on the building machine, as "Found during the work" says.
-- [ ] Stage 0: the repository's full gate passes. Not yet shown: it needs CI, or Node 24 with
-  symlinks.
+- [x] Stage 0: each "Unchanged" line holds. `check:instructions` (the size) and
+  `check:generated` (the skill copies) pass locally; the upgrade-path check and
+  `apply-process.test.ts` (delivery) pass on CI.
+- [x] Stage 0: the repository's full gate passes, on CI (`npm run check`, the generated-files
+  step, and the upgrade-path step, for commit c1ea437). The separate dependency audit check
+  fails on an advisory with no fixed release, as "Found during the work" says; that waits for
+  the owner.
 - [x] Stage 0: AGENTS.md, `docs/system/agent-reference.md`, `templates/README.md`, the
   changelog, and ADR 0022 are updated where this change moved them. (The template has no
   docs/product.md.)
