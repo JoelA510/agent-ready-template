@@ -672,6 +672,61 @@ The clean-clone proof for stage 1 onward, with no network, no install, and no da
 docker run --rm --network none -v "$PWD":/src:ro node:24-bookworm bash -c 'git -c safe.directory="*" clone -q /src /w && cd /w && test ! -e .mcp.json && test ! -e CLAUDE.local.md && test ! -e .local-power && node continuity/gate.mjs verify && CLAUDE_CODE_REMOTE=true node scripts/agent-target.mjs'
 ```
 
+## Starting a stage
+
+Stage 1 was started from a brief of its own. Every stage after it starts from the text below, in
+a fresh session on the model that will build the stage, with `[N]` replaced by the stage's
+number. The brief is not written ahead of time, because it would be out of date by then: each
+stage lands a little differently from the plan (stage 0 did in six places), and the outside
+versions a stage pins move weekly. So the session's first job is to reconcile the plan with the
+repository and the registries as they are that day, and to stop for an answer where that changes
+what the stage is.
+
+For stages 3 and 4, run that reconciling step on the most capable model available, even if
+another builds the stage: stage 3 changes what every target repository receives, and stage 4
+rests on the most outside facts.
+
+A stage that learns something every later stage needs (a quirk of the building machine, another
+action to ask about first) changes this text in its own pull request.
+
+```text
+Implement Stage [N] of docs/changes/2026-11-17-dual-target-agents.md in this repository. Do that
+stage only.
+
+Before writing anything, reconcile and report back to me:
+1. Read the plan in full, especially the Stage [N] section, "Found during the work", and
+   "Unverified, for the stages that need it". Read AGENTS.md and the ADRs the plan cites.
+2. Compare the plan with the repository as it is now. List every place where an earlier stage
+   landed differently from what the Stage [N] section assumes: paths, file names, test names,
+   workflow job names, anything Stage [N] builds on.
+3. For each outside tool, package, or action this stage pins or calls, check its current version,
+   tag, and commit today, and say where that differs from the plan. A release younger than seven
+   days waits, per .npmrc and ADR 0019.
+4. Tell me what you would change in the Stage [N] specification as a result, then stop for my
+   answer if any change alters the stage's scope or a decision the plan records. Otherwise say
+   what you adjusted and carry on.
+
+Then build the stage as the reconciled specification says. You maintain this code: inside the
+files this stage touches, replace what it supersedes instead of leaving a second path beside it;
+outside them, change nothing and tell me what you would change.
+
+About this machine: Windows 11, with Node outside package.json's engines and symlinks refused, so
+some script tests fail here on main and the full gate cannot pass locally. Reproduce a failure on
+main before calling it pre-existing. CI on the pull request is the proof of the full gate. Do not
+delete or relink node_modules.
+
+Proceed without asking: reading anything, running the checks, rebuilding generated files, working
+on a new branch cut from main, committing there after running the verify skill, pushing that
+branch, and opening a draft pull request against main written per prompts/pre-pr.md. Ask me first
+before marking it ready, merging, enabling auto-merge, force-pushing, changing repository
+settings, or importing the ruleset.
+
+Before you finish: prove each new check can fail against a planted defect, tick the stage in the
+plan, and add what you found to "Found during the work" so the next stage starts from the truth.
+Report each claim as executed or only read, list each departure from the plan, and name what is
+still unverified.
+```
+
 ## Tasks
 
 Stage 0:
