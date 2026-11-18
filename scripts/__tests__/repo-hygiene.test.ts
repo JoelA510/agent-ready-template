@@ -1,6 +1,7 @@
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { parse as parseToml } from 'smol-toml'
 import { describe, expect, it } from 'vitest'
 import { parse as parseYaml } from 'yaml'
 import { floor, satisfies } from '../runtime.mjs'
@@ -453,5 +454,140 @@ describe('the engines range', () => {
   ])('reads the partial range %s: %s satisfies it: %s', (range, version, expected) => {
     expect(satisfies(version, range)).toBe(expected)
     expect(floor(range)).toMatch(/^\d+\.\d+\.\d+$/)
+  })
+})
+
+// The shared core and the two agent targets (ADR 0022, docs/system/agent-targets.md). A clean
+// clone must be complete as it is: Claude Code on the web loads a committed .mcp.json without
+// asking, a personal instruction or settings file would become everyone's, and a hook that
+// requires a user-level install (gstack's team mode writes one) refuses every skill call in a
+// container that lacks it. And the dependency runs one way: the local power pack reads the
+// shared core, never the reverse.
+describe.skipIf(tracked === null)(tracked === null ? 'agent targets (skipped: not a git checkout)' : 'agent targets', () => {
+  // What a commit would carry: tracked files, and new ones git doesn't ignore.
+  const committable = () =>
+    execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: REPO, encoding: 'utf8' })
+      .split('\0')
+      .filter((p) => p && existsSync(join(REPO, p)))
+  const read = (path: string) => readFileSync(join(REPO, path), 'utf8')
+
+  // Each is one machine's, or loads into every session that clones the repository. The skeletons
+  // are named so none of them matches (mcp.skeleton.json, *.tmpl).
+  const PER_MACHINE = [/(^|\/)\.mcp\.json$/, /(^|\/)CLAUDE\.local\.md$/, /(^|\/)\.claude\/settings\.local\.json$/, /(^|\/)\.claude\/hooks\/check-gstack\.cjs$/, /(^|\/)\.local-power\//]
+  const perMachine = (paths: string[]) => paths.filter((p) => PER_MACHINE.some((pattern) => pattern.test(p)))
+
+  it('commits no file that belongs to one machine, or that every cloud session would load', () => {
+    const files = committable()
+    expect(files.length).toBeGreaterThan(100) // positive control: the listing isn't empty
+    expect(perMachine(files)).toEqual([])
+    // Positive control: each of them would be caught, at the root or below it.
+    const planted = ['.mcp.json', 'apps/web/.mcp.json', 'CLAUDE.local.md', '.claude/settings.local.json', '.claude/hooks/check-gstack.cjs', '.local-power/state.json']
+    expect(perMachine([...planted, 'templates/project/mcp.skeleton.json', '.claude/settings.json', 'CLAUDE.md'])).toEqual(planted)
+  })
+
+  it('ignores the per-machine files, so a careless `git add .` leaves them out', () => {
+    // git check-ignore exits 0 for an ignored path and 1 for one that isn't.
+    const ignored = (path: string) => spawnSync('git', ['check-ignore', '-q', path], { cwd: REPO }).status === 0
+    for (const path of ['CLAUDE.local.md', '.claude/settings.local.json', '.local-power/state.json']) expect(ignored(path), path).toBe(true)
+    expect(ignored('CLAUDE.md'), 'positive control: a committed file is not ignored').toBe(false)
+  })
+
+  // A reference from code that runs: an import, or a script or workflow that executes or reads a
+  // pack file. Prose may name the pack, and a test may read its templates to check them.
+  const fromJs = /(?:\bfrom\s+|\bimport\s+|\brequire\(\s*|\bimport\(\s*)['"`][^'"`\n]*\bpacks\/[^'"`\n]*['"`]/
+  const fromShell = /(?:^|[\s"'=(])(?:\.\/)?packs\/[\w.-]+\/[^\s"')]+/m
+  const isJs = (path: string) => /\.(?:[cm]?[jt]s|tsx|mts)$/.test(path)
+  const isShell = (path: string) => /\.(?:sh|ya?ml)$|(^|\/)package\.json$|^\.husky\//.test(path)
+  const reaches = (path: string, text: string) => (isJs(path) ? fromJs.test(text) : isShell(path) ? fromShell.test(text) : false)
+
+  it('lets nothing outside packs/ import or run what is inside it', () => {
+    const code = committable().filter((p) => !p.startsWith('packs/') && (isJs(p) || isShell(p)))
+    expect(code.length).toBeGreaterThan(50) // positive control: scripts, workflows, and package.json are in it
+    expect(code).toEqual(expect.arrayContaining(['package.json', 'scripts/setup.sh', '.github/workflows/ci.yml', 'scripts/agent-target.mjs']))
+    expect(code.filter((p) => reaches(p, read(p)))).toEqual([])
+    // Positive control, with the path assembled here so this file doesn't match its own check.
+    const pack = ['packs', 'local-power'].join('/')
+    expect(reaches('scripts/x.mjs', `import { up } from '../${pack}/probe.mjs'`)).toBe(true)
+    expect(reaches('scripts/x.mjs', `const up = await import("../${pack}/probe.mjs")`)).toBe(true)
+    expect(reaches('scripts/x.mjs', `import '../${pack}/probe.mjs'`), 'an import for its side effects alone').toBe(true)
+    expect(reaches('scripts/x.cjs', `const { up } = require('../${pack}/probe.cjs')`)).toBe(true)
+    expect(reaches('scripts/setup.sh', `bash ${pack}/bootstrap.sh --check`)).toBe(true)
+    expect(reaches('.github/workflows/ci.yml', `        run: docker compose -f ${pack}/docker-compose.local-agents.yml config`)).toBe(true)
+    expect(reaches('package.json', `"power": "bash ./${pack}/bootstrap.sh"`)).toBe(true)
+    expect(reaches('scripts/x.mjs', `// see ${pack}/README.md`)).toBe(false)
+    expect(reaches('scripts/x.mjs', "const packs = config.packs ?? ['node']")).toBe(false)
+  })
+
+  // A rule that lets a whole tool through: the committed settings must never carry one, and the
+  // pack's template only narrow ones.
+  const broad = (rules: unknown) => (Array.isArray(rules) ? rules : []).filter((r) => typeof r !== 'string' || /^\*$|^[\w*]+(?:\(\*\))?$|^mcp__\*/.test(r))
+
+  it('the committed Claude Code settings only deny: nothing allowed for everyone, nothing a cloud session must answer', () => {
+    const { permissions } = JSON.parse(read('.claude/settings.json')) as { permissions?: Record<string, string[]> }
+    expect(Object.keys(permissions ?? {})).toEqual(['deny'])
+    // AGENTS.md "Installs aren't forced": each install command, each flag, in each shell.
+    for (const tool of ['Bash', 'PowerShell']) {
+      for (const command of ['npm install*', 'npm i *', 'npm ci*']) {
+        for (const flag of ['--force', '--legacy-peer-deps']) expect(permissions!.deny).toContain(`${tool}(${command}${flag}*)`)
+      }
+    }
+    expect(broad(permissions!.deny), 'a bare tool in deny removes it from every session').toEqual([])
+  })
+
+  it("the pack's Claude Code settings template parses, asks, and allows nothing broad", () => {
+    const { permissions } = JSON.parse(read('packs/local-power/claude/settings.local.json.tmpl')) as { permissions: Record<string, string[]> }
+    expect(permissions.ask.length).toBeGreaterThan(10)
+    expect(permissions.ask).toEqual(expect.arrayContaining(['Bash(git push --force*)', 'Bash(rm -rf *)', 'PowerShell(git push --force*)']))
+    expect(broad(permissions.allow)).toEqual([])
+    expect(broad(permissions.ask)).toEqual([])
+    // Positive control: every broad form is caught, and a narrow rule isn't.
+    expect(broad(['Bash', 'Bash(*)', 'PowerShell(*)', '*', 'mcp__*', 'Bash(npm run agent:target*)', 42])).toEqual(['Bash', 'Bash(*)', 'PowerShell(*)', '*', 'mcp__*', 42])
+  })
+
+  it("the pack's Codex profile template is top-level keys, as Codex 0.134 and later reads a profile file", () => {
+    const profile = parseToml(read('packs/local-power/codex/local-power.config.toml.tmpl')) as Record<string, unknown>
+    expect(profile).toMatchObject({ approval_policy: 'on-request', sandbox_mode: 'workspace-write' })
+    expect(Object.keys(profile).filter((key) => key === 'profiles' || key === 'profile')).toEqual([])
+    // Positive control: the form Codex now rejects parses to exactly the key this looks for, and
+    // a file that isn't TOML throws rather than reading as empty.
+    expect(Object.keys(parseToml('[profiles.local-power]\nmodel = "x"\n'))).toEqual(['profiles'])
+    expect(() => parseToml('approval_policy = on-request\n')).toThrow()
+  })
+
+  it('the two MCP skeletons name one remote server and one token variable', () => {
+    type Mcp = { mcpServers: Record<string, { type?: string; url?: string; command?: string; headers?: Record<string, string> }> }
+    type Codex = { mcp_servers: Record<string, { url?: string; command?: string; bearer_token_env_var?: string; required?: boolean }> }
+    const claude = JSON.parse(read('templates/project/mcp.skeleton.json')) as Mcp
+    const codex = parseToml(read('templates/project/codex-config.skeleton.toml')) as unknown as Codex
+    const names = Object.keys(claude.mcpServers)
+    expect(names.length).toBeGreaterThan(0)
+    expect(Object.keys(codex.mcp_servers)).toEqual(names)
+    for (const name of names) {
+      const a = claude.mcpServers[name]
+      const b = codex.mcp_servers[name]
+      // Remote only: a stdio server in a committed config runs a command in every cloud session.
+      expect([a.type, a.command, b.command]).toEqual(['http', undefined, undefined])
+      expect(a.url).toBe(b.url)
+      const variable = /^Bearer \$\{(\w+)\}$/.exec(a.headers?.Authorization ?? '')?.[1]
+      expect(variable, 'the token is named by variable, never written').toBeDefined()
+      expect(b.bearer_token_env_var).toBe(variable)
+      expect(b.required, 'an unreachable server must not stop a session').toBe(false)
+    }
+  })
+
+  it('the Codex rules only prompt or forbid, each with its reason and its own examples', () => {
+    const dir = join(REPO, '.codex/rules')
+    const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.rules')) : []
+    const rules = files.flatMap((f) => readFileSync(join(dir, f), 'utf8').split(/^prefix_rule\(/m).slice(1))
+    // No rules file is a valid state (the feature is experimental): then there is nothing to hold.
+    if (files.length) expect(rules.length).toBeGreaterThan(3)
+    const problems = (rule: string) => [
+      ...(/^\s*decision = "(?:prompt|forbidden)",$/m.test(rule) ? [] : ['decision is not prompt or forbidden']),
+      ...(/^\s*justification = ".{20,}",$/m.test(rule) ? [] : ['no justification']),
+      ...(/^\s*match = \[\[/m.test(rule) && /^\s*not_match = \[\[/m.test(rule) ? [] : ['no match and not_match examples']),
+    ]
+    expect(rules.flatMap(problems)).toEqual([])
+    // Positive control: a rule that lets a command through unasked, with nothing else, fails all three.
+    expect(problems('\n    pattern = ["rm"],\n    decision = "allow",\n)\n')).toHaveLength(3)
   })
 })

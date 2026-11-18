@@ -88,7 +88,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   built from the template with nested AGENTS.md files and Codex selected:** run
   `check:instructions`; trim a file it reports, or move its detail into docs.
 
+- **A shared core, a cloud target, and an opt-in local power pack (ADR 0022).** Everything
+  committed now has to work from a clean clone with only Node, git, and the lockfile's packages,
+  so a cloud session (Claude Code on the web, Codex cloud) is complete as it is, while one
+  person's machine may add more through `packs/local-power/` and files git ignores
+  (`CLAUDE.local.md`, `.claude/settings.local.json`, `.local-power/`). `npm run agent:target`
+  tells a session where it is (`cloud`, `local-power`, or `core`) and which optional tools answer;
+  it probes loopback only and never fails. The pack holds three templates for now (a
+  `CLAUDE.local.md`, Claude Code settings that ask before hard-to-undo commands, and a Codex
+  profile), copied by hand as its README says; its bootstrap comes later. What each environment
+  supports is in `docs/system/agent-targets.md`, and the plan the later stages follow is
+  `docs/changes/2026-11-17-dual-target-agents.md`. Tests hold the direction: no `.mcp.json`,
+  per-machine file, or required-install hook is committed, and nothing outside `packs/` imports
+  or runs it. **A fork:** nothing to do. To use the pack on your machine, follow
+  `packs/local-power/README.md`.
+
+- **The committed agent settings refuse a forced install, and ask nothing.**
+  `.claude/settings.json` denies `npm install`, `npm i`, and `npm ci` with `--force` or
+  `--legacy-peer-deps` (the rule AGENTS.md already states), for the Bash and PowerShell tools, and
+  `.codex/rules/blast-radius.rules` forbids the same and makes Codex prompt before a force push,
+  a hard reset, `git clean`, a recursive delete, removing a Docker volume, `npm publish`, and a
+  release. Both match a command as written, so they put the stop in the usual place and aren't a
+  boundary around the program. **A fork:** to take an urgent fix the dependency policy approves,
+  run that one install yourself; an agent will be refused.
+
+- **Two skeletons for one remote MCP server, and two new parts of the AGENTS skeleton.**
+  `mcp.skeleton.json` (instantiated as `.mcp.json`, for Claude Code) and
+  `codex-config.skeleton.toml` (as `.codex/config.toml`, for Codex, which doesn't read
+  `.mcp.json`) name the same server and the same token variable, held equal by a test. They're
+  optional: Claude Code on the web loads a committed `.mcp.json` without asking, so create one
+  only for a server every cloud session should call. The AGENTS skeleton gains an **Ownership**
+  line (whether an agent replaces what a change supersedes or keeps the diff minimal) and a
+  **Where you are running** section with an ask-first list. **A project that received the
+  process:** a re-apply stages the two new skeletons and updates the staged AGENTS skeleton;
+  your own `AGENTS.md` isn't touched. Add the two parts to it if you want them.
+
 ### Changed
+
+- **The template's AGENTS.md says where a session is running and what needs asking, in the same
+  200 lines.** "Agent setup" is now "Where you are running" (the committed baseline, the
+  `agent:target` probe, and what to do when an optional tool is down). The "stop and agree a plan
+  first" rule gains an explicit ask-first list (force pushes, deleting data, installing what the
+  lockfile doesn't pin, changing agent or workflow permissions, publishing outside the pull
+  request) and names what needs no answer. "Working on this template itself" says who owns the
+  code: inside the files a task touches, replace what it supersedes; outside them, flag it. To
+  make room, the closing "Don't" list is gone: each of its six lines restated a rule above it,
+  and the one about verifying an outside reference moved beside the ADR rule.
 
 - **The template's own AGENTS.md keeps the rules and points to the reference.** It goes from
   24,394 bytes and 301 lines to 13,683 bytes and 185 lines (200 with CLAUDE.md's import, inside

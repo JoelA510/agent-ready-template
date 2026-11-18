@@ -15,5 +15,9 @@ docs/proposals/*.html
 *.tar.gz
 # Per-developer agent settings (the shared ones live in .claude/settings.json)
 .claude/settings.local.json
+# Per-developer agent instructions and the local power pack's state: one machine's, never a
+# clone's (docs/system/agent-targets.md). `npm run agent:target` reads the state file.
+CLAUDE.local.md
+.local-power/
 # Skill eval results (claude plugin eval writes one directory per run)
 evals/results/

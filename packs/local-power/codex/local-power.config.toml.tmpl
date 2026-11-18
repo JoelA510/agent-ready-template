@@ -1,0 +1,29 @@
+# The local power profile for Codex. Copy this file to $CODEX_HOME/local-power.config.toml
+# (~/.codex/ by default), delete what this machine doesn't have, and start Codex with:
+#
+#   codex --profile local-power
+#
+# A profile is a file of top-level keys laid over ~/.codex/config.toml (Codex 0.134 and later; a
+# [profiles.<name>] table is rejected). It can't live in a repository, and a trusted project's own
+# .codex/config.toml outranks it, which is why this repository commits none.
+# Source: https://learn.chatgpt.com/docs/config-file/config-advanced (read 2026-11-17).
+
+# Ask before a command leaves the sandbox; edits stay inside the workspace.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# Loopback services and package indexes. Delete this line to keep sandboxed commands offline.
+network_access = true
+
+# One table per MCP server this machine runs. `required = false` matters: an offline optional
+# server must not stop the session. Whether a profile file may hold these tables is read from
+# Codex's source, not its documentation: after copying, confirm with
+#   codex --profile local-power mcp list
+# and if the server isn't listed, register it once with `codex mcp add` instead.
+#
+# [mcp_servers.mempalace]
+# command = "mempalace-mcp"
+# enabled = true
+# required = false
+# startup_timeout_sec = 20

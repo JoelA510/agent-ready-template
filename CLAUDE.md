@@ -13,3 +13,4 @@ Everything above is shared with every other agent. What's specific to Claude Cod
   `npm run check:generated` catches that. On Claude Code on the web, the SessionStart hook
   (`.claude/hooks/session-start.sh`) runs `scripts/setup.sh` and points
   `PLAYWRIGHT_CHROMIUM_EXECUTABLE` at the environment's own Chromium when it ships one.
+- **`CLAUDE.local.md`** (gitignored) is personal and adds to this file; AGENTS.md outranks it.

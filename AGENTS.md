@@ -60,16 +60,22 @@ Codex. A skill only wires up its prompt, so an agent without skills follows the 
 - **Pulling the interface into an EXISTING project:** never the rebrand script (it rewrites files
   repo-wide); read `docs/system/consuming-in-an-existing-project.mdx` first.
 - **Working on this template itself:** the rules below apply, and a prompt or skill change
-  changes every target: test it the way the prompt tests code.
+  changes every target: test it the way the prompt tests code. You maintain this code: inside the
+  files a task touches, replace what it supersedes instead of leaving a shim or a second path
+  beside it; outside them, change nothing and flag what you would change.
 - Log each new-project or existing-project run in `prompts/run-log.md`. Write an ADR (copy
-  `docs/adr/0000-template.md`) for any decision that would take a paragraph to justify.
+  `docs/adr/0000-template.md`) for any decision that would take a paragraph to justify, and verify
+  an outside architectural reference is current before citing it (`prompts/new-project.md`, Phase 0).
 
-## Agent setup
+## Where you are running
 
-- **Cloud and background sessions start from a fresh clone:** run `bash scripts/setup.sh` first
-  (Claude Code on the web's SessionStart hook and `.cursor/environment.json` do; in Codex cloud,
-  make it the setup script). Browser tests need `npx playwright install chromium`, or a sandbox's
-  own Chromium in `PLAYWRIGHT_CHROMIUM_EXECUTABLE`.
+- **Every session starts from the committed baseline.** This file, the skills, and the checks in
+  Commands need only Node, git, and the lockfile's packages: no daemon, MCP server, or user-level
+  install. A fresh clone runs `bash scripts/setup.sh` first (Claude Code on the web's SessionStart
+  hook and `.cursor/environment.json` do; in Codex cloud, make it the setup script).
+- **A machine may have more.** `npm run agent:target` prints `core`, `cloud`, or `local-power` and
+  which optional tools answer now (`docs/system/agent-targets.md`). Use those. When one is down or
+  absent, take the baseline path and say so once: it is no blocker, and not yours to fix unless asked.
 - **This file is sized for the agents in `.agents/platforms.json`** (Claude Code and Codex): under
   Codex's 32 KiB (enforced) and Claude Code's 200 lines with CLAUDE.md (a note). Move detail into
   `docs/` with a pointer rather than grow it; `prompts/agent-platforms.md` is how a project chooses.
@@ -136,8 +142,11 @@ These hold for everything written here and in any project built from this templa
 - **Stop and agree a plan first** for any Governance tier (c) change (renaming or removing a
   token, changing a token's meaning or a component's public API) and for the open stakeholder
   decisions (color strategy, display typeface; a visual decision guide shows them, as below).
-  Refactors beyond the request are flagged first, as above. Everything else in scope: proceed
-  and report.
+  Refactors beyond the request are flagged first, as above. **Ask first** before force-pushing or
+  rewriting history, deleting data or volumes, installing or upgrading a tool the lockfile
+  doesn't pin, changing `.claude/`, `.codex/`, or a workflow's permissions, and anything that
+  publishes or sends outside this repository's own pull request. Everything else in scope
+  (reading anything here, running the checks, rebuilding generated files): proceed and report.
 
 ## Golden rules (don't violate these)
 
@@ -173,13 +182,3 @@ These hold for everything written here and in any project built from this templa
 - **Stakeholder decisions** (color strategy, display typeface, any "options menu" item): default
   to a visual decision guide, one self-contained HTML file showing every option in light and
   dark, never auto-published (it carries the real brand). How: `docs/proposals/README.md`.
-
-## Don't
-
-- Don't edit a generated file (Golden rule 1): edit the source and rebuild.
-- Don't hardcode colors/spacing in components (semantic tokens only).
-- Don't run `npm run init` against an existing project (fresh forks only).
-- Don't add a component without a story, or ship one that fails the a11y bar.
-- Don't make a consequential architectural decision without an ADR in `docs/adr/`.
-- Don't cite an outside architectural reference without verifying it's current first — the
-  procedure is in `prompts/new-project.md`, Phase 0.
