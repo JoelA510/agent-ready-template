@@ -30,6 +30,17 @@ Keep every rule here, not in a per-tool file, and this file under [SIZE BUDGET A
 - **Entry points:** [WHERE THE CODE STARTS — routes, API, schema, e.g. `src/app/`, `src/db/`].
 - **Current milestone:** see [`docs/dev-plan.md`](./docs/dev-plan.md). Work toward the
   current milestone's exit criteria; flag anything that belongs to a later one.
+- **Ownership:** [OWNERSHIP: WHO MAINTAINS THIS CODE, AND WHAT AN AGENT DOES WITH WHAT A CHANGE SUPERSEDES]
+
+<!-- GUIDANCE: One sentence, and it changes how much an agent rewrites. Where the team owns the
+     code and wants it left cleaner: "You maintain this code: inside the files a task touches,
+     replace what it supersedes instead of leaving a shim or a second path beside it; outside
+     them, change nothing and flag what you would change." Where the code is someone else's, or
+     the smallest diff matters more (a vendored module, a regulated path, a first engagement):
+     "This code is [WHOSE]: change only what the task names, and flag the rest." Anthropic's
+     guide for its current models reports that the first form makes a model consolidate far
+     more often and write more, and that operating rule 2 alone doesn't cancel it, which is why
+     it's scoped to the files a task touches. Don't leave both. -->
 
 ## Commands
 
@@ -57,6 +68,32 @@ else, wired up in [WHERE IT'S WIRED UP].
      ships. A hook written for this repo needs the same Node step, or every gate in a cloud
      session runs on a version CI and the host don't use. nvm's script doesn't run under the hook's `set -euo pipefail` (a trial's hook
      exited 3 sourcing it): `set +eu` around the nvm lines, then restore the options. -->
+
+## Where you are running
+
+Every session starts from what is committed: this file, the workflows, and the commands above
+need only [THE RUNTIME AND TOOLS A FRESH CLONE NEEDS]. Nothing committed needs a daemon, an MCP
+server, or anything installed for one user, so a cloud session or a fresh clone is complete as
+it is. A machine may have more: [HOW A SESSION LEARNS WHAT THIS MACHINE HAS, OR "NOTHING OPTIONAL IS USED HERE"].
+Use an optional tool that answers; when one is down or absent, take the committed path and say
+so once. An offline optional tool is not a blocker, and not something to repair unless that was
+the task.
+
+**Ask first** before [ACTIONS THAT NEED A PERSON'S ANSWER — e.g. force-pushing or rewriting history, deleting data or volumes, installing a tool the lockfile doesn't pin, anything that publishes or sends outside this repository's own pull request].
+Reading anything here, running the commands above, and edits inside the task's scope need no
+answer.
+
+<!-- GUIDANCE: Name the actions; "be careful" changes nothing, and "never" is read as absolute,
+     so write "ask first" where asking is what you want. If the team uses nothing beyond the
+     repository, keep the first three sentences and the ask-first list, and say so in the
+     second placeholder. If some machines have more (a memory server, upstream skills,
+     containers), keep it out of the committed files and say how a session finds out: the
+     template has a working probe to adapt, `scripts/agent-target.mjs` in a template checkout,
+     which prints `cloud`, `local-power`, or `core` and which optional tools answer, and never
+     fails a session. A remote MCP server every session should reach goes in the project's own
+     MCP config (skeletons: `mcp.skeleton.json` for Claude Code, `codex-config.skeleton.toml`
+     for Codex); a committed `.mcp.json` is loaded by Claude Code on the web without a prompt,
+     so commit only a server you'd want every cloud session to call. -->
 
 ## Workflows
 

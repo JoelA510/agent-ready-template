@@ -1,5 +1,21 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(npm install*--force*)",
+      "Bash(npm install*--legacy-peer-deps*)",
+      "Bash(npm i *--force*)",
+      "Bash(npm i *--legacy-peer-deps*)",
+      "Bash(npm ci*--force*)",
+      "Bash(npm ci*--legacy-peer-deps*)",
+      "PowerShell(npm install*--force*)",
+      "PowerShell(npm install*--legacy-peer-deps*)",
+      "PowerShell(npm i *--force*)",
+      "PowerShell(npm i *--legacy-peer-deps*)",
+      "PowerShell(npm ci*--force*)",
+      "PowerShell(npm ci*--legacy-peer-deps*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

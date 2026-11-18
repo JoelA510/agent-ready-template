@@ -13,6 +13,8 @@ the process through `process:apply`, the same files are staged under `prompts/sk
 | --- | --- | --- |
 | `project/AGENTS.skeleton.md` | New-project Phase 2.1 — agent operating rules, the one file every agent reads | `AGENTS.md` (or merged into the repo's existing rules file) |
 | `project/CLAUDE.skeleton.md` | New-project Phase 2.1 — the `@AGENTS.md` import, plus Claude-Code-only notes | `CLAUDE.md` |
+| `project/mcp.skeleton.json` | Optional, with `AGENTS.md`'s "Where you are running" — one remote MCP server every Claude Code session should reach, cloud ones included. Named `mcp.skeleton.json` so no agent loads an unfilled one | `.mcp.json` |
+| `project/codex-config.skeleton.toml` | Optional, the same server for Codex, which doesn't read `.mcp.json`. A test holds the two to one server and one token variable | `.codex/config.toml` |
 | `project/CONTRIBUTING.md` | New-project Phase 2.2 + Phase 4 — contribution rules and definition of done | `CONTRIBUTING.md` |
 | `project/.env.example` | New-project Phase 2.6 — env validation | `.env.example` |
 | `project/SECURITY.md` | New-project Phase 2.5 / existing-project audit — where to report a vulnerability privately | `SECURITY.md` |
