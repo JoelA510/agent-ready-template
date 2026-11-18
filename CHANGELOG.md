@@ -108,7 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **The dependency audit passes again, on a waiver for picomatch's ReDoS advisory.**
   GHSA-fc5q-39xc-vjpf (high) covers every picomatch through 4.0.7, the latest, so no update
-  clears it. `docs/security/audit-waivers.json` waives it until 2027-01-05: picomatch is a dev
+  clears it. `docs/security/audit-waivers.json` waives it until 2026-12-23: picomatch is a dev
   dependency only here, and every glob pattern it compiles comes from the build tools themselves
   or from configuration committed in this repo. **A project built from the template:** the waiver
   comes with the release; set its `owner` to someone of yours, check the reason holds for any
