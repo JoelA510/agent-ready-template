@@ -236,7 +236,11 @@ describe('check-audit: running npm', () => {
 
   it.skipIf(process.platform === 'win32')('includes every dependency class, whatever npm omit is set to', () => {
     const { bin, argsFile } = fakeNpm(JSON.stringify(HIGH))
-    const result = spawnSync(process.execPath, [SCRIPT, '--today', TODAY], {
+    // A register of its own, as run() gives the other tests: without --waivers the gate reads this
+    // repository's live one, and holds whatever it waives today to the frozen TODAY.
+    const waivers = join(bin, 'waivers.json')
+    writeFileSync(waivers, JSON.stringify({ waivers: [] }))
+    const result = spawnSync(process.execPath, [SCRIPT, '--waivers', waivers, '--today', TODAY], {
       encoding: 'utf8',
       env: { ...process.env, PATH: bin, NODE_ENV: 'production', npm_config_omit: 'dev' },
     })
