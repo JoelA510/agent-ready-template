@@ -125,6 +125,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   any path ending in a slash, so every missing directory named in an instruction file passed as
   gitignored. Directories are now asked about through a file inside them. `process:apply`'s
   ignore check and the shared file listing were never affected; a regression test holds both.
+- **Two tests no longer hold the repository's live audit waivers to a frozen date.** The test that
+  holds this repository to its own standards scored it against the date the fixture tests use
+  (2026-10-07), and the test of the arguments `check:audit` gives npm read
+  `docs/security/audit-waivers.json` against its own (2026-09-24). So a waiver expiring after
+  2026-12-23 failed the suite as "more than 90 days out" while `check:audit` accepted it, and the
+  first test still passed one that had expired since its date. The conformance test now uses the
+  real date, as `check:audit` and `check:conformance` do, and the npm test brings an empty register
+  of its own; the fixture tests keep their frozen dates. Nothing to do in a fork: its suite now
+  fails on the day one of its waivers expires, as the audit gate does.
 
 ## [1.0.0] - 2026-10-13
 

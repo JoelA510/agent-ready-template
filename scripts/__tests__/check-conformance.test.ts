@@ -2726,7 +2726,9 @@ describe('the CLI', { timeout: 60_000 }, () => {
 describe('this repository', { timeout: 120_000 }, () => {
   it('meets its own standards, with an empty baseline', () => {
     expect(existsSync(join(REPO, 'docs/standards/conformance.json'))).toBe(true)
-    const card = conform(REPO, { today: TODAY })
+    // The day the suite runs, not TODAY: this repository's dated registers (its audit waivers, its
+    // conformance waivers) are held to the date check:audit and check:conformance hold them to.
+    const card = conform(REPO)
     const failing = card.results.filter((r) => r.status === 'fail' || r.status === 'error').map((r) => `${r.key}: ${r.evidence.join('; ')}`)
     expect(failing).toEqual([])
     expect(card.summary.baseline ?? 0).toBe(0)
