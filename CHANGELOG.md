@@ -151,6 +151,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **The dependency audit passes again, on a waiver for picomatch's ReDoS advisory.**
+  GHSA-fc5q-39xc-vjpf (high) covers every picomatch through 4.0.7, the latest, so no update
+  clears it. `docs/security/audit-waivers.json` waives it until 2026-12-23: picomatch is a dev
+  dependency only here, and every glob pattern it compiles comes from the build tools themselves
+  or from configuration committed in this repo. **A project built from the template:** the waiver
+  comes with the release; set its `owner` to someone of yours, check the reason holds for any
+  glob your own tooling takes from outside the repo, and delete it once a fixed picomatch is in
+  your lockfile (the gate fails a stale waiver, which is the reminder).
 - **`check:audit` fails an audit of nothing.** A report of zero dependencies audited (a missing or
   empty lockfile), or one that doesn't say how many, now exits 2 ("couldn't check") instead of
   passing. The summary line names how many dependencies were audited.
@@ -162,6 +170,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   any path ending in a slash, so every missing directory named in an instruction file passed as
   gitignored. Directories are now asked about through a file inside them. `process:apply`'s
   ignore check and the shared file listing were never affected; a regression test holds both.
+- **Two tests no longer hold the repository's live audit waivers to a frozen date.** The test that
+  holds this repository to its own standards scored it against the date the fixture tests use
+  (2026-10-07), and the test of the arguments `check:audit` gives npm read
+  `docs/security/audit-waivers.json` against its own (2026-09-24). So a waiver expiring after
+  2026-12-23 failed the suite as "more than 90 days out" while `check:audit` accepted it, and the
+  first test still passed one that had expired since its date. The conformance test now uses the
+  real date, as `check:audit` and `check:conformance` do, and the npm test brings an empty register
+  of its own; the fixture tests keep their frozen dates. Nothing to do in a fork: its suite now
+  fails on the day one of its waivers expires, as the audit gate does.
 
 ## [1.0.0] - 2026-10-13
 

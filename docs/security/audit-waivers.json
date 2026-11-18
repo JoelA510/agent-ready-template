@@ -1,4 +1,12 @@
 {
   "$comment": "Waivers for npm audit advisories scripts/check-audit.mjs would otherwise block. Policy: docs/security/dependency-policy.md. Each entry: advisory (GHSA id), package, reason, owner, expires (YYYY-MM-DD).",
-  "waivers": []
+  "waivers": [
+    {
+      "advisory": "GHSA-fc5q-39xc-vjpf",
+      "package": "picomatch",
+      "reason": "No fixed release exists: the advisory covers every version through 4.0.7, the latest (upstream: micromatch/picomatch#247). The ReDoS needs an attacker-chosen glob pattern such as +(*). Here picomatch is a dev dependency only (through vite, vitest, knip, lint-staged, typescript-eslint, Storybook's build plugins, and jest's expect), and nothing published includes it. Every pattern it compiles comes from those tools' own code or from configuration committed in this repo (vitest.config.ts, knip.json, .storybook/main.ts, package.json's lint-staged block, and the like); no user or network input reaches a pattern. A hostile pattern would have to be committed, and a commit can already run any code in the same build, so the advisory gives an attacker nothing new. Delete this when a fixed picomatch is in the lockfile.",
+      "owner": "JoelA510 (repository maintainer)",
+      "expires": "2026-12-23"
+    }
+  ]
 }
