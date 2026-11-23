@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Skill Lift has a manual rehearsal and a separately funded paired trial.** The benchmark binds its fixtures, evaluator and preregistration to a continuity decision. It uploads only a sanitized result.
+
 - **Opt-in Linux agent runtimes.** The local power pack installs selected integrations with frozen pins, checks them before activation and retains the previous profile for rollback.
 
 - **Process-only projects can adopt the continuity gate.** `process:apply` offers the

@@ -11,8 +11,9 @@ export async function install(ctx) {
   const venv = join(dir, 'venv')
   const env = { UV_NO_CONFIG: '1', UV_PYTHON_DOWNLOADS: 'never', UV_CACHE_DIR: join(home, '.cache/uv') }
   await ctx.run(uv, ['venv', '--python', python, venv], { env })
+  const lock = name === 'skillevaluator' ? join(ctx.pack, '../..', manifest.sharedLocks[0]) : join(ctx.pack, manifest.locks[0])
   await ctx.run(uv, ['pip', 'sync', '--python', join(venv, 'bin/python'), '--require-hashes', '--only-binary', ':all:',
-    '--index-url', 'https://pypi.org/simple', join(ctx.pack, manifest.locks[0])], { env, timeout: 1200000 })
+    '--index-url', 'https://pypi.org/simple', lock], { env, timeout: 1200000 })
   await ctx.run(uv, ['pip', 'check', '--python', join(venv, 'bin/python')], { env })
 
   const commands = {}

@@ -357,26 +357,9 @@ The Linux x86-64 bootstrap, toolchain lock, seven integration manifests, Compose
 
 ### Stage 5: graduation and live Skill Lift
 
-The triggers for extracting the process half and the pack are in ADR 0022.
+The [benchmark procedure](../../evals/README.md) and [preregistration](../../evals/skill-lift/verify/prereg.md) govern the manual paired experiment. The ten tasks, both arms, three attempts and two harnesses require 120 complete trials. A separate evidence PR imports the sanitized result and records its observed decision. The preregistration receipt establishes the frozen design only.
 
-The benchmark is `.github/workflows/skill-lift.yml`, manual dispatch only, modeled on
-`evals.yml`:
-
-1. **Preregister.** A `docs/changes/` plan stating the bar (lift of +0.05 or more passes, −0.10
-   or less fails), agents, attempts, and stop rules. Locally,
-   `gstack-eval-plan prereg --check` validates it.
-2. **Run.** Datasets live in `evals/skill-lift/<skill>/evals.json`, so they aren't delivered to
-   targets. The job assembles a temporary skill directory and runs
-   `skillevaluator tier3 evaluate <dir> --env-mode docker --agents claude-code,codex --n-attempts 1`,
-   then uploads `result.json`.
-3. **Record.** `append` a decision ("keep `<skill>`: lift +x") citing the skill's SKILL.md and
-   the prereg file, with the result digest as a `ref`.
-4. **Enforce.** A later edit to that SKILL.md makes the decision STALE, and the pull-request
-   gate warns or blocks until the benchmark is re-run and a receipt added.
-
-The metric to track is `report`'s count of revalidations after a change whose outcome was
-`failed`: stale decisions the gate caught that no longer held. Upstream documents no cost
-figures, so start with one skill and one attempt and record what it costs.
+Keep both the process and local pack here under [ADR 0022](../adr/0022-shared-core-and-two-agent-targets.md). The November 23 assessment found one stable release, zero public forks and no verified second maintained consumer in the repository evidence. A private adopter could exist. The local qualification used WSL on this workstation. No independent maintainer, second deployment or month of pack-pin-dominated changes was established. Reopen the extraction decision upon an independent consumer needing a release cadence, a release coupling lasting a quarter, an external request, or one of the pack adoption, Docker CI or sustained maintenance triggers in ADR 0022.
 
 ## Risks and rollback
 

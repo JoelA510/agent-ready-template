@@ -21,7 +21,7 @@ test('both Python installs select isolated hash-checked binary graphs and expose
       const args = calls.find(call => call[1][0] === 'pip' && call[1][1] === 'sync')[1]
       assert.ok(args.includes('--require-hashes'))
       assert.equal(args[args.indexOf('--only-binary') + 1], ':all:')
-      assert.equal(args.at(-1), join(pack, 'locks/python313-' + name + '.txt'))
+      assert.equal(args.at(-1), name === 'mempalace' ? join(pack, 'locks/python313-mempalace.txt') : resolve(pack, '../../evals/skill-lift/evaluator.requirements.txt'))
       const lock = await readFile(args.at(-1), 'utf8')
       assert.match(lock, new RegExp('^' + name + '==' + spec.version.replaceAll('.', '\\.') + ' ', 'm'))
       assert.ok(lock.includes('--hash=' + spec.wheel))

@@ -44,7 +44,11 @@ function readManifest(pack, name) {
       !manifest.capabilities?.length || !manifest.smoke || !manifest.rollback) throw Error('Incomplete manifest for ' + name)
   const inputs = [file, 'bootstrap.mjs', 'runtime.mjs', 'toolchains.lock.json', 'recipes/' + sources[name] + '.mjs', 'claude/settings.local.json.tmpl', 'codex/local-power.config.toml.tmpl', ...manifest.locks]
   if (name === 'skillevaluator') inputs.push('skills/skill-lift/SKILL.md')
-  return { manifest, fingerprint: digestInputs(pack, inputs) }
+  const shared = manifest.sharedLocks ?? []
+  const allowed = 'evals/skill-lift/evaluator.requirements.txt'
+  if (shared.length && (name !== 'skillevaluator' || shared.length !== 1 || shared[0] !== allowed)) throw Error('Unknown shared runtime lock')
+  const fingerprint = digestInputs(pack, inputs) + (shared.length ? '.' + digestInputs(resolve(pack,'../..'), shared) : '')
+  return { manifest, fingerprint }
 }
 
 function render(gen, pack, registry, state) {

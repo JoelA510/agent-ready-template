@@ -70,3 +70,24 @@ and expect three passes before relying on it. When a routing case fails, change 
 
 The contract (fields, grader types, exit codes) is at
 https://code.claude.com/docs/en/plugin-evals; checked 2026-10-07.
+
+
+## Paired Skill Lift on Claude Code and Codex
+
+The manual **Skill Lift** workflow exercises the checked-in [verify preregistration](skill-lift/verify/prereg.md). Its default `rehearse` mode stages the skill and its prompt from the immutable Git tree and validates ten synthetic cases against the pinned evaluator. This path needs no provider account. The GitHub environment `skill-lift` accepts only the protected default branch and requires operator review. The ordinary pull request gates do not dispatch a benchmark.
+
+The [benchmark lock](skill-lift/benchmark.lock.json) records two harnesses, three attempts per arm, case thresholds, evaluator, Harbor and image pins. Provider model IDs, rates, budget and enrollment are unset until a funded experiment has a sponsor. Freeze immutable provider model snapshots and the agent price table in a reviewed pull request. The initial enrollment accepts dated snapshot IDs or content digests. Revalidate its continuity decision against those changes before dispatch. Use a provider-enforced aggregate cap across all four scoped grants, including judges and transport retries. A reported agent spend excludes judge, container and infrastructure costs.
+
+In the protected environment configure `SKILL_LIFT_ENROLLMENT`, `SKILL_LIFT_PROVIDER_CAP_USD`, `SKILL_LIFT_OPENAI_BASE_URL` and `SKILL_LIFT_ANTHROPIC_BASE_URL`. Supply four separate short-lived, task-scoped credentials through the environment secrets `SKILL_LIFT_CLAUDE_TOKEN`, `SKILL_LIFT_CODEX_TOKEN`, `SKILL_LIFT_OPENAI_JUDGE_TOKEN` and `SKILL_LIFT_ANTHROPIC_JUDGE_TOKEN`. Use enrolled endpoints with provider credentials kept outside task containers. The within-harness comparison uses identical judges in both arms. Claude Code has an OpenAI judge and Codex has an Anthropic judge, which lets the pinned evaluator keep agent and judge credentials separate. Compare lift within each harness.
+
+For a local rehearsal, use the pack's activated evaluator or an isolated Python 3.13.18 environment with `pip install --require-hashes --only-binary=:all: -r evals/skill-lift/evaluator.requirements.txt`.
+
+```sh
+tree=$(git rev-parse HEAD)
+base=$(git rev-parse HEAD^1)
+scratch=$(mktemp -d)
+node scripts/ci/skill-lift.mjs prepare --skill verify --tree "$tree" --base "$base" --out "$scratch/verify-trial"
+skillevaluator tier3 validate "$scratch/verify-trial/verify" --strict
+```
+
+Use a fresh private output directory. After a funded run, keep private traces and provider statements under the operator's retention policy. GitHub uploads only the sanitized summary for 14 days. To import a completed run, hash the exact downloaded summary bytes (including the final newline), copy them unchanged to `continuity/evidence/<lowercase-sha256>.json`, and cite that file with the skill, underlying prompt, dataset, preregistration and lock in a new decision. Recheck the digest after copying; use `node continuity/gate.mjs append` and `revalidate` as documented in [the gate guide](../continuity/README.md). An incomplete run has no positive graduation receipt. A change to a cited file invalidates the decision until an actual revalidation.
