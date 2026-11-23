@@ -75,8 +75,8 @@ export const PROCESS_PROMPTS = [
   'run-log.md',
 ]
 export const PROCESS_SKILLS = ['bootstrap', 'complete', 'discovery', 'plan-change', 'root-cause', 'review-change', 'pre-pr', 'verify', 'template-update']
-// The catalog lives in the template, so harvesting into it only makes sense here.
-export const TEMPLATE_ONLY = { prompts: ['harvest.md'], skills: ['harvest'] }
+// Harvest owns this template's catalog. Continuity stays here until process:apply delivers its gate.
+export const TEMPLATE_ONLY = { prompts: ['harvest.md', 'continuity.md'], skills: ['harvest', 'continuity'] }
 
 // Where process:apply delivers the skills, the same files in each: a selected platform reads one.
 export const SKILL_HOMES = ['.agents/skills', '.claude/skills']

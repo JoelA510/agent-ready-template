@@ -19,7 +19,7 @@ export default tseslint.config(
     // rules as the app code, with Node globals instead of browser ones. Scoped to those
     // locations: a browser-side .js file elsewhere (a service worker in public/) shouldn't be
     // linted as Node.
-    files: ['scripts/**/*.{js,mjs,cjs}', '*.{js,mjs,cjs}'],
+    files: ['scripts/**/*.{js,mjs,cjs}', 'continuity/*.mjs', '*.{js,mjs,cjs}'],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 2023,

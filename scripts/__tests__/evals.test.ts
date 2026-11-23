@@ -35,11 +35,10 @@ describe('the skill evals', () => {
   })
 
   it('have a routing case for every skill a model can start, and none for one it can\'t', () => {
-    const routed = cases.filter((c) => c.group === 'routing').map((c) => c.name)
-    for (const skill of skills) {
-      if (skill.explicit) expect(routed, skill.name).not.toContain(skill.name)
-      else expect(routed, `add evals/routing/${skill.name}/ (evals/README.md)`).toContain(skill.name)
-    }
+    // The plugin includes template-only skills, even though process:apply omits them.
+    const routed = cases.filter((c) => c.group === 'routing' && !c.name.startsWith('no-')).map((c) => c.name)
+    const automatic = skills.filter((skill) => !skill.explicit).map((skill) => skill.name)
+    expect(routed.sort(), 'one positive routing case per automatic skill (evals/README.md)').toEqual(automatic.sort())
   })
 
   it.each(cases.map((c) => [`${c.group}/${c.name}`, c]))('%s loads: a prompt, graders, and its scaffold', (_, c) => {

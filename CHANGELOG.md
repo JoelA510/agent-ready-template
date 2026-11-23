@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Decisions can carry checkable evidence.** Record a durable decision with the `continuity`
+  skill and revalidate it when its evidence changes. The initial PR policy warns on stale
+  evidence and blocks failed or unchecked evidence and altered ledger history. Activate the
+  PR check after its Git reader and seed are on the protected branch.
+  This release introduces the gate in the template. See the [operator guide](./continuity/README.md)
+  for Git snapshots, PR citations, and what a receipt establishes.
+
 - **Brand presets for init.** `npm run init -- --name … --slug … --preset plumb` starts a fresh
   fork on a settled brand instead of the neutral placeholder: the preset's token sources replace
   `tokens/`, its `fonts.css` replaces `src/styles/fonts.css`, its `docs/brand/` pages are added,

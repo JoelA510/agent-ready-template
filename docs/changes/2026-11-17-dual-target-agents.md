@@ -1,6 +1,6 @@
 # A shared core, a cloud target, and a local power target for agents
 
-Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (agreed 2026-11-17; stage 0 built 2026-11-17, stages 1 to 5 not started)
+Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stage 0 on main; stage 1 bootstraps the gate and seed first, then activates its PR workflow against the protected base; stages 2 to 5 pending)
 
 ## Why
 
@@ -308,123 +308,18 @@ override each person's profile. The ten existing skills are unchanged.
 
 ### Stage 1: the continuity gate, in the template only
 
-In the template first, because a check is proven in one repository before every repository is
-held to it.
+The [operator guide](../../continuity/README.md) specifies the Git snapshots, immutable records,
+external proof format, optional Nomos links, status fold and CLI. [ADR 0023](../adr/0023-content-bound-continuity.md)
+records the trust boundary. The repository owns its ledger and needs only Node and Git to
+verify it. `process:apply` keeps the continuity skill and prompt in the template until it can
+deliver the executable in stage 3.
 
-**Files:** `continuity/gate.mjs`, `continuity/gate.d.mts`, `continuity/README.md`,
-`continuity/ledger/`, `scripts/__tests__/continuity-gate.test.ts`,
-`.agents/skills/continuity/SKILL.md` (template-only at first, rebuilt with
-`npm run skills:build`), `evals/routing/continuity/`, `.github/workflows/continuity.yml`, a
-`continuity` script in `package.json`, a knip ignore for `continuity/*.d.mts`, one ruleset
-entry, and its ADR. AGENTS.md and the pack's templates then gain the lines that name the gate,
-which stage 0 left out because the path didn't exist yet.
-
-**Storage.** One file per record, `continuity/ledger/<sha256>.json`, never edited after it is
-written. The id is the SHA-256 of the record's canonical JSON: keys sorted recursively, no
-whitespace, UTF-8, values limited to strings, integers, booleans, null, arrays, and objects (an
-RFC 8785 subset). A reference may be any unique prefix of at least 12 hex characters.
-
-```text
-decision { v:1, type:"decision", ts, workstream, title, statement,
-           cites:[ {kind:"file", path, sha256} | {kind:"ref", uri, sha256, ttl_days?} ],
-           prev:[id…], supersedes?:id }
-receipt  { v:1, type:"receipt", ts, of:id, outcome:"held"|"failed", method,
-           cites:[…as observed now…], prev:[id…],
-           attestations?:[ {system:"nomos", kind:"execution-evidence"|"writ"|"ledger-entry",
-                            digest:"sha256:<hex>", id?, key_fingerprint?, uri?} ] }
-```
-
-`prev` is the set of head ids when the record was written, which makes a graph that merges
-without conflicts. File digests are taken over text with line endings normalized and a byte
-order mark stripped, so a Windows checkout doesn't read as an edit.
-
-**Commands** (all take `--root <repo>` and `--today YYYY-MM-DD`, as the other checks do):
-
-| Command | Does | Exit |
-| --- | --- | --- |
-| `append --title --statement --workstream --cite <path>… [--ref uri=sha256[,ttl=N]]… [--supersedes id]` | Writes a decision and prints its id | 0, or 2 on bad input |
-| `revalidate <id> --outcome held\|failed --method "…" [--attest nomos:<kind>=sha256:<hex>[,id=…]]…` | Writes a receipt with the cites' current digests | 0 or 2 |
-| `status [<id>] [--json]` | Folds each decision's status on read | 0 or 2 |
-| `is-current <id>` | True only for HELD | 0 current, 1 not, 2 couldn't check |
-| `verify [--base <ref>]` | The chain check | 0, 1 on the first mismatch, 2 couldn't check |
-| `check --base <ref> [--body-file f] --stale warn\|block [--github]` | The pull-request gate | 0, 1 blocked, 2 couldn't check |
-| `report [--json]` | Counts for the promotion criterion | 0 |
-
-**Status.** UNCHECKED: no file cite, and no receipt covers its `ref` cites; never current.
-FAILED: any latest receipt says `failed` (concurrent receipts resolve to the worst). STALE: a
-cited file's digest differs from the latest snapshot, a cited file is missing, a `ref` is past
-its `ttl_days`, or the decision is superseded. HELD: otherwise; the decision's own cites are the
-first snapshot.
-
-**`verify`** checks that every file name is a 64-hex id equal to the hash of its canonical
-content, that every record matches the schema with unknown fields rejected, and that every
-`prev`, `of`, and `supersedes` resolves. With `--base`,
-`git diff --name-status <base>...HEAD -- continuity/ledger/` may show only additions.
-
-**`check`** runs `verify`, then looks at two sets. Cited: a `continuity:<id>` marker in an added
-line of the diff or in the pull-request body. Affected: a decision whose cited file is among the
-changed files. A cited decision that is FAILED, UNCHECKED, or unknown blocks in both modes. A
-STALE decision in either set warns in warn mode and blocks in block mode.
-
-**Seed entries.** The first decisions are the upstream pins from stage 2, each citing its
-workflow or manifest file, so a pin bump makes the decision STALE until someone records that the
-baseline scan was re-run. In block mode that applies to Dependabot's bumps of those files too,
-by design.
-
-**Promotion from warn to block.** Change `--stale warn` to `--stale block` when `report` on
-`main` shows all three: at least 10 decisions, and at least 3 revalidated after their evidence
-changed; four consecutive weekly scheduled runs with no STALE decision; and, of the last 10
-revalidations after a change, at most half were `held` (more means the cites are too broad and
-blocking would mostly add friction). Demotion is reverting that one line.
-
-```yaml
-name: Continuity
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: '23 6 * * 1'
-  workflow_dispatch:
-
-permissions: {}
-
-concurrency:
-  group: continuity-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  gate:
-    name: Continuity ledger and cited decisions
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0 # the base commit, for the append-only check
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          package-manager-cache: false
-      # No install step: the gate uses Node builtins and git only.
-      - name: Verify the ledger and check what this change cites
-        env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
-          node continuity/gate.mjs check --base "$BASE" --body-file "$RUNNER_TEMP/pr-body.md" --stale warn --github
-```
-
-An empty or all-zero `BASE` (a scheduled run, or a new branch) means a full verify and a status
-report with no anchor. The runtime-pin test in `repo-hygiene.test.ts` expects a job that runs
-Node to install the pinned npm first; this job runs `node` alone, so that test needs a stated
-exception for a job with no `npm` step, or the step, when the workflow lands.
+A new decision starts UNCHECKED. A receipt records an actual check of its full evidence.
+A changed file may make the latest successful receipt STALE. The PR check uses its Git base
+to detect rewritten history, then checks explicit and affected decisions on the candidate
+snapshot. The warning rollout allows STALE and blocks selected FAILED or UNCHECKED decisions.
+The operator guide specifies when a maintainer can propose promoting STALE. Introduce the
+required status context only after the protected base contains its reader and seed.
 
 ### Stage 2: the CI gates
 
@@ -757,8 +652,11 @@ Stage 0:
 
 Later stages, each its own pull request:
 
-- [ ] Stage 1: the gate, its skill, its workflow — proved by `continuity-gate.test.ts` (the
-  negative tests above) and the workflow green on its own pull request.
+- [x] Stage 1 skill, documentation and delivery boundary. The skill has a positive routing
+  case and a nearby plain Git question that calls for no skill. The real apply test checks the
+  positive source files and excludes the prompt and both skill copies from its target.
+- [ ] Stage 1 gate and PR workflow. Qualify the required status against a protected base that
+  already contains the seed and reader. Exercise tampering and a fully recomputed rewrite.
 - [ ] Stage 2: AgentShield now, SkillEvaluator from 2026-11-25 — proved by each workflow's
   `selftest` job, and by removing the plant to see it fail.
 - [ ] Stage 3: delivery — proved by `apply-process.test.ts`, the upgrade-path check, and the
@@ -767,6 +665,11 @@ Later stages, each its own pull request:
 - [ ] Stage 5: the benchmark — proved by one dispatched run ending in a ledger decision.
 
 ## Found during the work
+
+- **Stage 1 uses the actual Git content under review.** Each write observes either staged Git
+  blob bytes or an explicit commit. Independent receipts from different branches can coexist;
+  an unresolved failed observation keeps the decision failed until a subsequent check covers
+  both histories. The protected base catches changes that an unanchored hash check cannot.
 
 - **Lines that name the gate wait for stage 1.** The drafted AGENTS.md section and the
   `CLAUDE.local.md` template named `continuity/gate.mjs`, SkillEvaluator commands, and the
@@ -836,4 +739,6 @@ Later stages, each its own pull request:
 - [x] Stage 0: AGENTS.md, `docs/system/agent-reference.md`, `templates/README.md`, the
   changelog, and ADR 0022 are updated where this change moved them. (The template has no
   docs/product.md.)
-- [ ] Stages 1 to 5: the same three, per stage.
+- [ ] Stage 1 rollout: the bootstrap is on the protected branch, the PR check runs the base's
+  reader against a candidate, and branch protection requires its successful result.
+- [ ] Stages 2 to 5: checks, observed failures and documentation for each stage.
