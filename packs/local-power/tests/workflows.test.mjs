@@ -62,3 +62,31 @@ test('a profile with a saved port rejects malformed connection arguments before 
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /port differs from the saved profile or is invalid/)
 })
+
+test('a migrated DB cannot qualify while another host owns the canonical source', { skip: process.platform !== 'linux' }, (t) => {
+  const dir = scratch(t)
+  const profile = join(dir, 'postgres')
+  mkdirSync(profile, { mode: 0o700 })
+  for (const [name, bytes] of [['port', '15439'], ['owner-password', 'a'.repeat(64)], ['app-password', 'b'.repeat(64)]]) {
+    writeFileSync(join(profile, name), bytes, { mode: 0o600 })
+  }
+  writeFileSync(join(dir, 'docker'), '#!/bin/sh\nprintf "t\\n"\n', { mode: 0o700 })
+  const binary = join(dir, 'gbrain')
+  const writer = join(dir, 'writer.json')
+  writeFileSync(binary, [
+    '#!/bin/sh',
+    'if [ "$2" = list ]; then echo \'{"sources":[{"id":"default"}]}\'; else cat "$TEST_WRITER"; fi',
+    '',
+  ].join('\n'), { mode: 0o700 })
+  const check = () => spawnSync(process.execPath, [join(pack, 'postgres/profile.mjs'), dir, dir, binary, 'check'], {
+    encoding: 'utf8', env: { ...process.env, PATH: dir + ':/usr/bin:/bin', TEST_WRITER: writer },
+  })
+  const state = { local_host_id: 'runtime', bindings: [{ source_id: 'default', owner_host_id: 'migration', state: 'active', local_path: dir }] }
+  writeFileSync(writer, JSON.stringify(state))
+  assert.match(check().stderr, /canonical default writer is not active/)
+  state.bindings[0].owner_host_id = 'runtime'
+  writeFileSync(writer, JSON.stringify(state))
+  assert.equal(check().status, 0)
+  writeFileSync(join(profile, 'pre-migration-config.json'), 'null', { mode: 0o600 })
+  assert.match(check().stderr, /interrupted schema migration needs gbrain-pg up/)
+})

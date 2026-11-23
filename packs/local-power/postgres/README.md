@@ -18,6 +18,9 @@ private tmpfs before it drops to the postgres user. The embedded launcher and th
 PostgreSQL launcher each use their own gbrain configuration and database.
 
 On first activation the image initializes pgvector, pg_trgm, pgcrypto and pg_prewarm.
+The migration and runtime use the same persistent gbrain home, so the default writer and
+its canonical worktree survive activation. A private settings snapshot restores the
+runtime configuration, including after an interrupted migration.
 Postgres owns the event trigger that gbrain v35 needs. A separate migration role holds
 the BYPASSRLS capability required by the pinned v24 migration. An explicit `up` grants
 it a time-limited login while the pinned binary migrates the schema, then disables that
@@ -26,7 +29,8 @@ application tables. It cannot create roles or databases, bypass RLS or assume th
 migration role. Only use this profile for this checkout’s dedicated database.
 
 `check` authenticates as the application role, checks the disabled migration login,
-orders two known vectors by distance and reads the default source through gbrain.
+orders two known vectors by distance and verifies the active canonical writer for the
+default source through gbrain.
 Creating model embeddings requires a separately configured provider. For managed
 source imports, inspect `gbrain-pg run sources writer status --json` and follow
 gbrain’s owner-claim process for the chosen worktree.
