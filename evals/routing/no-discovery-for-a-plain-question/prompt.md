@@ -4,4 +4,5 @@ allowed_tools: [Read, Glob, Grep, Skill]
 tags: [routing]
 ---
 
-Look into what git's `--force-with-lease` flag protects against, and explain it in two sentences.
+Look into what git's `--force-with-lease` flag protects against when someone rewrites a branch
+that contains a decision ledger. I just need a short explanation of the Git flag.

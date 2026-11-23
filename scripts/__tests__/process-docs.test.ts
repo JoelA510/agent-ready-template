@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, posix, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { sources } from '../apply-process.mjs'
+import { PROCESS_SKILLS, TEMPLATE_ONLY, sources } from '../apply-process.mjs'
 import { parseSkill } from '../skills.mjs'
 import reserved from './reserved-command-names.json'
 
@@ -104,9 +104,12 @@ describe('workflow skills', () => {
     expect(read(path)).not.toContain('$ARGUMENTS')
   })
 
-  it.each(skills)('%s names only prompts that exist', (path) => {
-    for (const [, prompt] of read(path).matchAll(/prompts\/([\w-]+\.md)/g)) {
+  it.each(skills)('%s names a prompt that exists wherever the skill is available', (path) => {
+    const prompts = [...read(path).matchAll(/prompts\/([\w-]+\.md)/g)]
+    expect(prompts.length, path).toBeGreaterThan(0)
+    for (const [, prompt] of prompts) {
       expect(existsSync(join(REPO, 'prompts', prompt)), prompt).toBe(true)
+      if (PROCESS_SKILLS.includes(dirOf(path))) expect(TEMPLATE_ONLY.prompts, path).not.toContain(prompt)
     }
   })
 

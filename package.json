@@ -30,6 +30,7 @@
     "fleet:report": "node scripts/fleet-report.mjs",
     "fleet:update": "node scripts/fleet-update.mjs",
     "agent:target": "node scripts/agent-target.mjs",
+    "continuity": "node continuity/gate.mjs",
     "test": "vitest run",
     "pretest:browser": "npm run tokens:build",
     "test:browser": "vitest run --config vitest.browser.config.ts",

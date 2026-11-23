@@ -71,6 +71,10 @@ describe('process:apply: delivery', () => {
     for (const live of ['CLAUDE.md', 'CONTRIBUTING.md', '.env.example', 'docs', '.gemini', '.claude/commands']) {
       expect(existsSync(join(target, live)), live).toBe(false)
     }
+    for (const path of ['prompts/continuity.md', '.agents/skills/continuity/SKILL.md', '.claude/skills/continuity/SKILL.md']) {
+      expect(existsSync(join(template, path)), path).toBe(true)
+      expect(existsSync(join(target, path)), path).toBe(false)
+    }
     expect(out).toContain('The skeletons are staged under prompts/skeletons/')
     // The report names the manifest it wrote, and the first step commits the delivery untouched.
     expect(out).toContain('Recorded prompts/.apply-manifest.json')

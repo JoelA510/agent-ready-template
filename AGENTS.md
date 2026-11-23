@@ -24,8 +24,7 @@ None of that is meant to be kept: `npm run init` replaces the name, so a `packag
 
 ## Figure out which situation you're in first
 
-Each workflow is an Agent Skill in `.agents/skills/` (Claude Code reads its copy in
-`.claude/skills/`), invoked by name: `/bootstrap` in Claude Code and Antigravity, `$bootstrap` in
+Each workflow is a skill in `.agents/skills/` (Claude Code copy in `.claude/skills/`): `/bootstrap` in Claude Code and Antigravity, `$bootstrap` in
 Codex. A skill only wires up its prompt, so an agent without skills follows the prompt directly.
 
 | Situation | Skill | Prompt |
@@ -40,6 +39,7 @@ Codex. A skill only wires up its prompt, so an agent without skills follows the 
 | A change is about to be committed (Claude Code runs it on its own) | `verify` | `prompts/verify.md` |
 | Taking a release of the template this repo was built from | `template-update` | `prompts/template-update.md` |
 | A check proven in one repo should hold in every repo (template only) | `harvest` | `prompts/harvest.md` |
+| Recording a continuity decision, revalidating its evidence or inspecting a ledger citation | `continuity` | `prompts/continuity.md` |
 
 - **Bootstrapping a NEW project:** follow `prompts/new-project.md` in phase order; Phase 0
   (reference verification) is not optional. Each required artifact has a skeleton under

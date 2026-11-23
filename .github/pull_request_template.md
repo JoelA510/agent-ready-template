@@ -7,6 +7,8 @@
 
 <!-- What does this change, and what problem or need does it address? -->
 
+<!-- If this change relies on a recorded decision, cite it in the body as continuity:<decision-id>. -->
+
 ## Type of change
 
 - [ ] Token change (`tokens/**/*.json` — remember to `npm run tokens:build`)
