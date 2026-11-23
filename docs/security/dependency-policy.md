@@ -54,6 +54,21 @@ way. `package.json`'s `allowScripts` records each install script's review (`true
 stops it). npm 11 still runs one it doesn't name, with a warning: when it warns, read the script,
 then add the package. Why: [ADR 0019](../adr/0019-npm-install-guards.md).
 
+## Agent configuration in CI
+
+AgentShield checks the configuration surfaces its pinned release recognizes and runs its
+offline package checks. The dependency audit still examines the complete npm lockfile for
+known advisories. The scanner reads a temporary copy of the tracked files. In that copy
+the job expands Claude's real `@AGENTS.md` import and replaces only canonical SHA-512 SRI
+values at npm lockfile `packages[*].integrity`. AgentShield 1.6.0 misidentifies those
+public digests as credentials. Other fields and malformed integrity strings remain visible.
+Remove this normalization once a qualified upstream release fixes
+[AgentShield issue 179](https://github.com/affaan-m/agentshield/issues/179).
+
+For a new pin, verify the expected shell permission and synthetic secret
+findings independently, alongside the clean fixture. Confirm the corresponding required
+job on GitHub before changing branch protection. See [ADR 0024](../adr/0024-agent-config-and-skill-gates.md).
+
 ## Waivers
 
 A waiver is a time-boxed decision to live with **one advisory in one package**. It lives in

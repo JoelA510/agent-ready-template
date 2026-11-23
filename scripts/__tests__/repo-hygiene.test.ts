@@ -376,7 +376,10 @@ describe.skipIf(!hasWorkflows)('the ruleset requires every pull-request check', 
     expect(triggers('pull_request')).toEqual(['pull_request'])
     expect(triggers(['push', 'pull_request'])).toEqual(['push', 'pull_request'])
     expect(triggers({ pull_request: { branches: ['main'] } })).toEqual(['pull_request'])
-    expect(prJobs.map((j) => j.name)).toEqual(expect.arrayContaining(['Build, lint, typecheck, test', 'npm audit (high and critical block)']))
+    expect(prJobs.map((j) => j.name)).toEqual(expect.arrayContaining([
+      'Build, lint, typecheck, test', 'npm audit (high and critical block)', 'Continuity ledger and cited decisions',
+      'Agent configuration (AgentShield)', 'AgentShield detects planted configuration',
+    ]))
   })
 
   it('leaves out only a job no pull request can run, and keeps one a condition could let in (positive control)', () => {

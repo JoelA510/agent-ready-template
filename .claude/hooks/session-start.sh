@@ -21,8 +21,8 @@ cd "${CLAUDE_PROJECT_DIR:?}"
 # Playwright at it for the session. The env file is sourced by a shell, so the path is quoted
 # for one (%q), whatever characters it holds.
 chromium="${PLAYWRIGHT_BROWSERS_PATH:-}/chromium"
-if [ -n "${CLAUDE_ENV_FILE:-}" ] && [ -z "${PLAYWRIGHT_CHROMIUM_EXECUTABLE:-}" ] &&
-  [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ -f "$chromium" ] && [ -x "$chromium" ]; then
+if [[ -n ${CLAUDE_ENV_FILE:-} && -z ${PLAYWRIGHT_CHROMIUM_EXECUTABLE:-} && \
+      -n ${PLAYWRIGHT_BROWSERS_PATH:-} && -f $chromium && -x $chromium ]]; then
   line=$(printf 'export PLAYWRIGHT_CHROMIUM_EXECUTABLE=%q' "$chromium")
   if [ ! -f "$CLAUDE_ENV_FILE" ] || ! grep -qxF -- "$line" "$CLAUDE_ENV_FILE"; then
     printf '%s\n' "$line" >> "$CLAUDE_ENV_FILE"

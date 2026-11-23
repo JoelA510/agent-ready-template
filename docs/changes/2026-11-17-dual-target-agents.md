@@ -1,6 +1,6 @@
 # A shared core, a cloud target, and a local power target for agents
 
-Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stages 0 and 1 implemented; Stage 1 warns on stale evidence; stages 2 to 5 pending)
+Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stages 0 and 1 implemented, Stage 2 configuration scanner implemented, skill scanner and stages 3 to 5 pending)
 
 ## Why
 
@@ -327,59 +327,11 @@ Both jobs in each workflow become required checks, so the ruleset gains four ent
 workflow carries its own planted-defect job, generated at run time so no secret-shaped fixture is
 committed.
 
-**AgentShield (can land now).** `agentshield.yml`, with the same header, permissions, and
-concurrency as above:
-
-```yaml
-jobs:
-  scan:
-    name: Agent config scan (AgentShield)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: affaan-m/agentshield@b0891303bdcd6037376a94263d45cfd2ff3dfb98 # v1.6.0
-        with:
-          path: .
-          min-severity: high # set from the baseline run
-          fail-on-findings: "true"
-          supply-chain: "true"
-          supply-chain-online: "false"
-
-  selftest:
-    name: AgentShield fails on a planted defect
-    runs-on: ubuntu-latest
-    permissions: {}
-    timeout-minutes: 5
-    steps:
-      - name: Plant a broad permission and a key-shaped string (made here, never committed)
-        run: |
-          d="$RUNNER_TEMP/planted/.claude"; mkdir -p "$d"
-          printf '{"permissions":{"allow":["Bash(*)"]}}\n' > "$d/settings.json"
-          printf 'ANTHROPIC_API_KEY=sk-ant-api03-%s\n' "$(printf 'A%.0s' $(seq 1 93))" > "$RUNNER_TEMP/planted/CLAUDE.md"
-      - id: planted
-        continue-on-error: true
-        uses: affaan-m/agentshield@b0891303bdcd6037376a94263d45cfd2ff3dfb98 # v1.6.0
-        with:
-          path: ${{ runner.temp }}/planted
-          min-severity: high
-          fail-on-findings: "true"
-      - name: The scan must have failed, on both plants
-        env:
-          OUTCOME: ${{ steps.planted.outcome }}
-          TOTAL: ${{ steps.planted.outputs.total-findings }}
-        run: test "$OUTCOME" = failure && test "${TOTAL:-0}" -ge 2
-```
-
-Before enforcing, run one scan and triage. The existing hooks use `$(git rev-parse …)`, which a
-hook-injection rule may flag, and stage 0 added permission rules it will read. A true finding is
-fixed. A false positive needs the baseline file, and the baseline mode's failure behavior must be
-shown by the planted job before it is trusted. Whether the action accepts an absolute `path` is
-unverified; if not, plant inside the workspace.
+**AgentShield.** The executable specification is in `.github/workflows/agentshield.yml`.
+Run the pinned agent configuration scan and its offline supply-chain checks on every PR.
+The separate controls job exercises a clean configuration, a broad shell permission, and a
+runtime-generated synthetic credential. A negative control passes only when its own rule
+identifies the planted file. A crash or lost report fails the control. See ADR 0024.
 
 **SkillEvaluator Tier 1 (on or after 2026-11-25).** Re-verify the version and flags that day.
 `skill-eval-ci.yml`:
@@ -658,14 +610,21 @@ Later stages, each its own pull request:
 - [x] Stage 1 gate and PR workflow. The PR reads its checker from the protected base that
   contains the seed. The Git fixture tests reject a tampered record and an internally valid
   replacement history. Stale evidence emits a warning.
-- [ ] Stage 2: AgentShield now, SkillEvaluator from 2026-11-25 — proved by each workflow's
-  `selftest` job, and by removing the plant to see it fail.
+- [x] Stage 2 AgentShield scan and independent permission and secret controls.
+- [ ] Stage 2 SkillEvaluator source scan and independent schema and security controls.
 - [ ] Stage 3: delivery — proved by `apply-process.test.ts`, the upgrade-path check, and the
   seams test.
 - [ ] Stage 4: the bootstrap and manifests — proved by `local-power.test.ts` and a run on WSL2.
 - [ ] Stage 5: the benchmark — proved by one dispatched run ending in a ledger decision.
 
 ## Found during the work
+
+- **AgentShield 1.6.0 on this repository.** The initial run reported 1,058 npm integrity
+  hashes as Azure keys, five instruction findings and a false background-process finding
+  on a continued shell conditional. The scan now reads the shared Claude instructions as
+  imported, and the hook makes the line continuation explicit. The lockfile
+  normalization and its upstream issue are in the dependency policy. Independent clean,
+  broad-permission and synthetic-secret controls qualify the same scanner commit as the PR.
 
 - **Stage 1 uses the actual Git content under review.** Each write observes either staged Git
   blob bytes or an explicit commit. Independent receipts from different branches can coexist;
@@ -718,7 +677,7 @@ Later stages, each its own pull request:
 
 ## Unverified, for the stages that need it
 
-- What AgentShield and SkillEvaluator report on this repository as it stands.
+- The SkillEvaluator Tier 1 result on the canonical source skills.
 - Whether a Codex profile file accepts `[mcp_servers.*]` tables.
 - How a Claude Code cloud session answers an `ask` rule, and whether a stdio MCP server works
   there. The committed settings avoid both questions.

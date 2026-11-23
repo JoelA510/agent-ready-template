@@ -48,7 +48,7 @@ four skills, gbrain ships no binary, Nomos doesn't deploy, and SkillEvaluator is
 | Shared core (instructions, skills, checks) | Node and git; the lints need `npm ci` | Yes | Yes | Yes | Yes | Yes |
 | gstack | A clone under the user's home, Bun, its own setup script | Yes | No | Partly: an experimental host | No | No |
 | ECC | A native plugin, installed by `ecc-universal` | Yes | No: a cloud session installs no plugins | Yes, for the user only | No | No |
-| AgentShield | A pinned action; or its CLI through `npx` | Yes | Partly: not tried | Yes | Partly: needs the network | Yes |
+| AgentShield | Pinned GitHub Action for configuration and offline package checks. Its CLI is optional locally. | Yes | Partly: not tried | Yes | Partly: needs the network | Yes |
 | MemPalace or gbrain over stdio | A command on `PATH`, registered at local scope | Yes | No | Yes | No | No |
 | Either memory server over HTTP | A URL and a bearer token, in the project's MCP config | Yes | Yes, in a single-repository session | Yes | Partly: connectors only | No |
 | SkillEvaluator Tier 1 | `pipx run`, Python 3.12 or later; it downloads its scanners | Yes | Partly: its offline checks | Yes | Partly | Yes |
