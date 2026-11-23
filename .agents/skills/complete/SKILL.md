@@ -3,8 +3,10 @@ name: complete
 description: "Use when someone asks by name to bring existing code to production grade; it audits and then changes the repo, so don't start it unasked. Runs prompts/existing-project.md — baseline, thirteen-area audit, a remediation plan that accounts for every finding, and milestone 1."
 metadata:
   invocation: explicit
-  argument-hint: "<repo, current state, hosting, constraints, what complete means, known issues, the coding agents it uses, repo visibility and GitHub plan>"
+  argument-hint: "repo, current state, hosting, constraints, what complete means, known issues, the coding agents it uses, repo visibility and GitHub plan"
 ---
+
+# Assess an existing project
 
 Run the existing-project audit-and-completion process, exactly as written in
 `prompts/existing-project.md`. Read that file in full first — it is the authoritative

@@ -379,6 +379,7 @@ describe.skipIf(!hasWorkflows)('the ruleset requires every pull-request check', 
     expect(prJobs.map((j) => j.name)).toEqual(expect.arrayContaining([
       'Build, lint, typecheck, test', 'npm audit (high and critical block)', 'Continuity ledger and cited decisions',
       'Agent configuration (AgentShield)', 'AgentShield detects planted configuration',
+      'Skill content (SkillEvaluator Tier 1)', 'SkillEvaluator rejects invalid skills',
     ]))
   })
 

@@ -2,8 +2,10 @@
 name: harvest
 description: Use when a check proven in one repository should become a standard every repository is held to (in the template repository, where the catalog lives). Runs prompts/harvest.md — prove the check failing in its source, generalize it, write the standard, its probe, and a planted-defect test, and measure which repositories it fails.
 metadata:
-  argument-hint: "<source repository and where the check lives, what it caught, the pack>"
+  argument-hint: "source repository and where the check lives, what it caught, the pack"
 ---
+
+# Promote a proven check
 
 Harvest the check exactly as written in `prompts/harvest.md`. Read that file in full first; it
 is the authoritative instruction set, and this skill only wires it up.
