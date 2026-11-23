@@ -46,7 +46,7 @@ const port = readPrivate(portFile)
 if (!/^\d+$/.test(port) || Number(port) < 1024 || Number(port) > 65535 || (args[0] === '--port' && Number(port) !== Number(args[1]))) throw Error('Requested port differs from the saved profile or is invalid')
 const password = readPrivate(appFile)
 if (!/^[a-f0-9]{64}$/.test(password) || !/^[a-f0-9]{64}$/.test(readPrivate(ownerFile))) throw Error('Invalid private database credential files')
-const composeEnv = { PATH: process.env.PATH, HOME: process.env.HOME, GBRAIN_PG_PORT: port, GBRAIN_OWNER_PASSWORD_FILE: ownerFile, GBRAIN_APP_PASSWORD_FILE: appFile }
+const composeEnv = { PATH: process.env.PATH, HOME: process.env.HOME, GBRAIN_PG_PORT: port, GBRAIN_PG_SECRETS_DIR: profile }
 // A local socket and explicit project separate this database from remote contexts and other checkouts.
 const compose = ['--host', 'unix:///var/run/docker.sock', 'compose', '--project-name', 'gbrain-' + key.toString('hex').slice(0, 14),
   '--file', join(release, 'docker-compose.local-agents.yml'), '--profile', 'gbrain-pg']

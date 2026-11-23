@@ -23,8 +23,8 @@ services:
       retries: 30
 secrets:
   owner_password:
-    file: ${GBRAIN_OWNER_PASSWORD_FILE:?gbrain-pg up sets this}
+    file: ${GBRAIN_PG_SECRETS_DIR:?gbrain-pg up sets this}/owner-password
   app_password:
-    file: ${GBRAIN_APP_PASSWORD_FILE:?gbrain-pg up sets this}
+    file: ${GBRAIN_PG_SECRETS_DIR:?gbrain-pg up sets this}/app-password
 volumes:
   db: {}
