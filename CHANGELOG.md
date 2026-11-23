@@ -14,8 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Decisions can carry checkable evidence.** Record a durable decision with the `continuity`
   skill and revalidate it when its evidence changes. The initial PR policy warns on stale
-  evidence and blocks failed or unchecked evidence and altered ledger history. Activate the
-  PR check after its Git reader and seed are on the protected branch.
+  evidence and blocks failed or unchecked evidence and altered ledger history. Each PR runs
+  the protected base's reader against the proposed merge. Weekly runs check every decision.
   This release introduces the gate in the template. See the [operator guide](./continuity/README.md)
   for Git snapshots, PR citations, and what a receipt establishes.
 

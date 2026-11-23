@@ -29,7 +29,8 @@
           { "context": "Build, lint, typecheck, test", "integration_id": 15368 },
           { "context": "Tests on the oldest supported Node", "integration_id": 15368 },
           { "context": "Stories in a real browser", "integration_id": 15368 },
-          { "context": "npm audit (high and critical block)", "integration_id": 15368 }
+          { "context": "npm audit (high and critical block)", "integration_id": 15368 },
+          { "context": "Continuity ledger and cited decisions", "integration_id": 15368 }
         ]
       }
     }
