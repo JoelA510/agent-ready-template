@@ -84,7 +84,7 @@ describe.skipIf(tracked === null)(suiteName, () => {
 })
 
 // One runtime pin: CI reads .nvmrc (or, in the one floor job, names exactly the lowest version
-// engines accepts), installs the npm package.json pins, and the .nvmrc version is inside
+// engines accepts), installs the npm package.json pins in jobs that use it, and .nvmrc is inside
 // engines. A sibling repo ran CI on Node 20 while production ran 24, and nothing noticed.
 type Step = { text: string; index: number }
 type Job = { file: string; name: string; text: string; steps: Step[] }
@@ -137,23 +137,27 @@ describe.skipIf(!hasWorkflows)(hasWorkflows ? 'runtime pin' : 'runtime pin (skip
     .flatMap((f) => workflowJobs(f, readFileSync(join(WORKFLOWS, f), 'utf8')))
   const isSetupNode = (s: Step) => /uses:\s*actions\/setup-node@/.test(s.text)
   const runsNode = (s: Step) => /\brun:[^\n]*\b(npm|npx|node|pnpm|yarn)\b|\brun:\s*\|[\s\S]*\b(npm|npx|node|pnpm|yarn)\b/.test(s.text)
+  const runsNpm = (s: Step) => /\brun:[^\n]*\b(npm|npx)\b|\brun:\s*\|[\s\S]*\b(npm|npx)\b/.test(s.text)
   // The pinned npm installs itself (npx npm@<pin> install -g npm@<pin>): npm 10.9.7, bundled with Node
-// 22.22.2, fails replacing itself with npm 11 ("Cannot find module 'promise-retry'").
-const pinsNpm = (s: Step) => /packageManager[^\n]*npx -y "npm@\$v" install -g "npm@\$v"/.test(s.text)
+  // 22.22.2, fails replacing itself with npm 11 ("Cannot find module 'promise-retry'").
+  const pinsNpm = (s: Step) => /packageManager[^\n]*npx -y "npm@\$v" install -g "npm@\$v"/.test(s.text)
   const nodeJobs = jobs.filter((j) => j.steps.some(runsNode))
 
   it('finds the jobs that run Node (positive control)', () => {
     expect(nodeJobs.length).toBeGreaterThanOrEqual(2)
   })
 
-  it.each(nodeJobs.map((j) => [`${j.file} ${j.name}`, j]))('%s sets up Node from the pin, then installs the pinned npm, before running anything', (_label, job) => {
+  it.each(nodeJobs.map((j) => [`${j.file} ${j.name}`, j]))('%s sets up Node before running it and pins npm before using it', (_label, job) => {
     const j = job as Job
     const setup = j.steps.findIndex(isSetupNode)
     const pin = j.steps.findIndex(pinsNpm)
     const firstRun = j.steps.findIndex((s) => runsNode(s) && !pinsNpm(s))
     expect(setup, 'a setup-node step').toBeGreaterThanOrEqual(0)
-    expect(pin, 'a step installing the packageManager npm').toBeGreaterThan(setup)
-    expect(firstRun, 'Node runs only after both').toBeGreaterThan(pin)
+    expect(firstRun, 'Node runs only after setup').toBeGreaterThan(setup)
+    if (j.steps.some(runsNpm)) {
+      expect(pin, 'a step installing the packageManager npm').toBeGreaterThan(setup)
+      expect(firstRun, 'package jobs pin npm before using the toolchain').toBeGreaterThan(pin)
+    }
     expect(j.text, 'no job container with its own Node').not.toMatch(/^\s+(container|image):\s*['"]?node:/m)
   })
 

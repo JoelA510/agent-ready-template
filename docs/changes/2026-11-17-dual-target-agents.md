@@ -1,6 +1,6 @@
 # A shared core, a cloud target, and a local power target for agents
 
-Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stage 0 on main; stage 1 bootstraps the gate and seed first, then activates its PR workflow against the protected base; stages 2 to 5 pending)
+Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stages 0 and 1 implemented; Stage 1 warns on stale evidence; stages 2 to 5 pending)
 
 ## Why
 
@@ -655,8 +655,9 @@ Later stages, each its own pull request:
 - [x] Stage 1 skill, documentation and delivery boundary. The skill has a positive routing
   case and a nearby plain Git question that calls for no skill. The real apply test checks the
   positive source files and excludes the prompt and both skill copies from its target.
-- [ ] Stage 1 gate and PR workflow. Qualify the required status against a protected base that
-  already contains the seed and reader. Exercise tampering and a fully recomputed rewrite.
+- [x] Stage 1 gate and PR workflow. The PR reads its checker from the protected base that
+  contains the seed. The Git fixture tests reject a tampered record and an internally valid
+  replacement history. Stale evidence emits a warning.
 - [ ] Stage 2: AgentShield now, SkillEvaluator from 2026-11-25 — proved by each workflow's
   `selftest` job, and by removing the plant to see it fail.
 - [ ] Stage 3: delivery — proved by `apply-process.test.ts`, the upgrade-path check, and the
@@ -739,6 +740,7 @@ Later stages, each its own pull request:
 - [x] Stage 0: AGENTS.md, `docs/system/agent-reference.md`, `templates/README.md`, the
   changelog, and ADR 0022 are updated where this change moved them. (The template has no
   docs/product.md.)
-- [ ] Stage 1 rollout: the bootstrap is on the protected branch, the PR check runs the base's
-  reader against a candidate, and branch protection requires its successful result.
+- [x] Stage 1 rollout in Git: the bootstrap precedes the PR workflow that runs the
+  protected base's reader against the candidate tree.
+- [ ] Verify the live branch ruleset requires the qualified continuity check.
 - [ ] Stages 2 to 5: checks, observed failures and documentation for each stage.
