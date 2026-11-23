@@ -6,15 +6,16 @@
 # commands; the steps marked "node pack" are the node standards'. The dependency audit is its own
 # workflow (docs/dependency-policy.md), and Dependabot (.github/dependabot.yml) keeps the pins
 # and the dependencies current.
+# Rehearse optional agent checks using the staged .github/README.md before requiring them.
 name: CI
 
 on:
   push:
     branches:
-      - main
+      - '[DEFAULT BRANCH]'
   pull_request:
     branches:
-      - main
+      - '[DEFAULT BRANCH]'
 
 # Nothing by default; each job asks for what it uses. These jobs only read the repository.
 permissions: {}

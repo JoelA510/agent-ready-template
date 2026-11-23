@@ -38,9 +38,10 @@ warns. A failed or unchecked decision, a broken graph or an unresolvable citatio
 A changed claim or citation set receives a superseding decision. Corrections and failures
 remain in history. A held receipt identifies the recorded observation and its input bytes.
 Reviewers still assess the method, the truth of the claim, and who could run or attest it.
-The initial gate and skill are template-only. Stage 3 can offer the executable through
-`process:apply` after qualifying delivery, with every consumer owning its own genesis and
-records. See [ADR 0016](./0016-apply-delivers-standards-proposes-merges-checks-drift.md).
+Stage 3 extends manifest-managed delivery to the reader, its declaration and its guide in
+`continuity/`. The consumer creates its own genesis and owns every record. The workflow
+and its required status are separate opt-ins after the consumer's protected branch contains
+the reader and seed. See [ADR 0016](./0016-apply-delivers-standards-proposes-merges-checks-drift.md).
 
 ## Verification
 

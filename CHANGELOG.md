@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Process-only projects can adopt the continuity gate.** `process:apply` offers the
+  reader, declarations, guide and continuity skill. Each project seeds its own ledger.
+  Review the staged CI workflows and helpers under `prompts/skeletons/` before enabling
+  the corresponding checks on the target's default branch.
+
 - **Agent configuration is checked on pull requests.** CI scans the configuration and
   verifies with independent controls that it detects a broad shell permission and a
   synthetic credential. See [ADR 0024](./docs/adr/0024-agent-config-and-skill-gates.md).

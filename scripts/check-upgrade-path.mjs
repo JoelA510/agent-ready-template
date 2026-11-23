@@ -18,7 +18,7 @@
 // Run: node scripts/check-upgrade-path.mjs [--from <tag>]
 //   Exit 0 on a clean upgrade, 1 on one that isn't, 2 when it couldn't check.
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -69,6 +69,36 @@ function walk(dir, base = dir) {
   })
 }
 
+// The scratch target's HEAD is the previous release. Replay the same upgrade with a real
+// local edit to one of the files this release offered, then resolve it as an operator would.
+function checkEditedUpgrade(scratch, target, script) {
+  const edited = join(scratch, 'edited')
+  git(scratch, ['clone', '--quiet', '--no-hardlinks', target, edited])
+  const candidates = ['continuity/gate.mjs', ...walk(target).filter((p) => p.startsWith('prompts/') && p.endsWith('.md') && p !== 'prompts/run-log.md')]
+  const path = candidates.find((p) => existsSync(join(target, p)) && (!existsSync(join(edited, p)) ||
+    !readFileSync(join(target, p)).equals(readFileSync(join(edited, p)))))
+  if (!path) return [] // No changed text deliverable in this release pair.
+  const file = join(edited, path)
+  mkdirSync(dirname(file), { recursive: true })
+  const original = existsSync(file) ? readFileSync(file, 'utf8') : ''
+  const note = path.endsWith('.mjs') ? '// Local project convention.\n' : 'Local project convention.\n'
+  writeFileSync(file, original + '\n' + note)
+  const proposal = file + '.template'
+  const first = apply(script, edited)
+  if (first.status !== 0 || readFileSync(file, 'utf8') !== original + '\n' + note || !existsSync(proposal))
+    return [`edited-target upgrade did not preserve ${path} and offer a proposal: ${first.stderr}`]
+  const offered = readFileSync(proposal)
+  const manifest = join(edited, 'prompts/.apply-manifest.json')
+  const recorded = readFileSync(manifest)
+  if (apply(script, edited, '--check').status !== 1 || apply(script, edited).status !== 0 ||
+      !readFileSync(proposal).equals(offered) || !readFileSync(manifest).equals(recorded))
+    return [`edited-target upgrade did not retain the same pending proposal for ${path}`]
+  writeFileSync(file, readFileSync(join(target, path), 'utf8') + '\n' + note)
+  rmSync(proposal)
+  const final = apply(script, edited, '--check')
+  return final.status === 0 ? [] : [`resolved target still has delivery drift: ${final.stdout}${final.stderr}`]
+}
+
 /** Upgrades a fixture from `from` to HEAD: { from, problems, summary }. */
 export function checkUpgrade(from) {
   const scratch = realpathSync(mkdtempSync(join(tmpdir(), 'upgrade-path-')))
@@ -95,6 +125,7 @@ export function checkUpgrade(from) {
     if (/^No longer in the template, but edited/m.test(second.stdout)) problems.push('reported a file as edited in the target, which nobody edited')
     const check = apply(join(ROOT, 'scripts/apply-process.mjs'), target, '--check')
     if (check.status !== 0) problems.push(`process:apply --check isn't current afterwards:\n${check.stdout}${check.stderr}`)
+    if (!problems.length) problems.push(...checkEditedUpgrade(scratch, target, join(ROOT, 'scripts/apply-process.mjs')))
     const counts = ['Copied', 'Updated in place', 'Removed'].map((h) => `${(second.stdout.split(`\n${h}`)[1]?.split('\n\n')[0].match(/^ {2}\S/gm) ?? []).length} ${h.toLowerCase()}`)
     return { from, problems, summary: counts.join(', ') }
   } finally {

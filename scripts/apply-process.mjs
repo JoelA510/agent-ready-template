@@ -3,12 +3,15 @@
 // templates/project/ — into a target repo, so a project that isn't a fork of this template can
 // run the prompts against local files. See usage() below, or run with no args.
 //
-// Layout in the target (everything the process owns lives under prompts/, plus the skills):
+// Layout in the target:
 //   prompts/*.md                  the prompts, their README, and a fresh run log
 //   prompts/skeletons/**          every skeleton, staged — NOT at its live path. A prompt run
 //                                 copies the ones it needs to their real paths and fills them in.
 //                                 Agent-instruction skeletons are named *.skeleton.md so no agent
 //                                 loads an unfilled one as live instructions.
+//                                 Includes the optional workflows and their CI helpers.
+//   continuity/{gate.mjs,gate.d.mts,README.md}   standalone Node reader, types and instructions
+//                                 The target owns its decisions, receipts and initialization.
 //   .agents/skills/<name>/**      the workflow skills (PROCESS_SKILLS), live: the Agent Skills
 //                                 path Codex, Antigravity, Gemini CLI, Cursor, and Copilot read
 //   .claude/skills/<name>/**      the same skills as Claude Code reads them (generated here by
@@ -43,10 +46,10 @@
 // --check writes nothing and exits 1 when the target has drifted: a re-apply would change a file,
 // a parked .template is still there, a delivered file holds a conflict marker, or a delivered file
 // is ignored by the target's git and not tracked (so a clone never gets it).
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { accessSync, chmodSync, closeSync, constants, existsSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { hostname, tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PROCEDURE, SELECTION_FILE, readSelection } from './agent-platforms.mjs'
@@ -71,12 +74,25 @@ export const PROCESS_PROMPTS = [
   'verify.md',
   'plan-change.md',
   'template-update.md',
+  'continuity.md',
   'agent-platforms.md',
   'run-log.md',
 ]
-export const PROCESS_SKILLS = ['bootstrap', 'complete', 'discovery', 'plan-change', 'root-cause', 'review-change', 'pre-pr', 'verify', 'template-update']
-// Harvest owns this template's catalog. Continuity stays here until process:apply delivers its gate.
-export const TEMPLATE_ONLY = { prompts: ['harvest.md', 'continuity.md'], skills: ['harvest', 'continuity'] }
+export const PROCESS_SKILLS = ['bootstrap', 'complete', 'discovery', 'plan-change', 'root-cause', 'review-change', 'pre-pr', 'verify', 'template-update', 'continuity']
+// Harvest owns this template's catalog.
+export const TEMPLATE_ONLY = { prompts: ['harvest.md'], skills: ['harvest'] }
+
+// Exact names only. No path below the target's ledger, evidence, hooks or profiles belongs here.
+const GATE_FILES = ['continuity/gate.mjs', 'continuity/gate.d.mts', 'continuity/README.md']
+const WORKFLOW_FILES = ['continuity', 'agentshield', 'skill-eval-ci'].map((name) => `.github/workflows/${name}.yml`)
+const CI_FILES = [...WORKFLOW_FILES, 'scripts/ci/agent-config-canary.mjs', 'scripts/ci/skill-tier1.mjs']
+const GATE_DELIVERY = new Set([...GATE_FILES, ...CI_FILES.map((src) => `prompts/skeletons/${src}`)])
+
+function stageWorkflow(text, skillHome) {
+  return text.replaceAll('branches: [main]', "branches: ['[DEFAULT BRANCH]']")
+    .replaceAll('node-version-file: .nvmrc', "node-version: '24'")
+    .replaceAll('skill-tier1.mjs scan .agents/skills ', `skill-tier1.mjs scan ${skillHome} `)
+}
 
 // Where process:apply delivers the skills, the same files in each: a selected platform reads one.
 export const SKILL_HOMES = ['.agents/skills', '.claude/skills']
@@ -126,7 +142,7 @@ function usage() {
   --list       Print what would happen, without writing anything.
   --check      Write nothing; exit 1 if the target has drifted from this template.
 
-Delivers prompts/ (with skeletons staged under prompts/skeletons/ and the standards under
+Delivers the standalone continuity gate, prompts/ (with skeletons staged under prompts/skeletons/ and the standards under
 prompts/standards/) and the workflow skills in .agents/skills/ and .claude/skills/, or only the
 one(s) the platforms in the target's .agents/platforms.json read. Nothing the target owns is ever
 overwritten; the header of this script says exactly how re-runs behave.
@@ -199,12 +215,19 @@ const posixRel = (from, abs) => relative(from, abs).split(sep).join('/')
 
 /**
  * Every file to deliver: { dest (relative, forward slashes), src (its path in the template, or
- * null when the delivered content isn't the file as committed), content }. `packs` are delivered
+ * null for a freshly seeded log), content }. A staged workflow retains its canonical src for
+ * merge proposals. `packs` are delivered
  * beside core; the skills go to `homes` (skillHomes()).
  */
 export function sources(packs = [], homes = SKILL_HOMES) {
   const skeletonRoot = join(ROOT, 'templates', 'project')
   const list = [
+    ...GATE_FILES.map((src) => ({ dest: src, src, content: contentOf(join(ROOT, src)) })),
+    ...CI_FILES.map((src) => ({
+      dest: `prompts/skeletons/${src}`, src, content: WORKFLOW_FILES.includes(src)
+        ? stageWorkflow(readFileSync(join(ROOT, src), 'utf8'), homes.length === 1 ? homes[0] : SKILL_HOMES[0])
+        : contentOf(join(ROOT, src)),
+    })),
     ...PROCESS_PROMPTS.map((f) => {
       const text = readFileSync(join(ROOT, 'prompts', f), 'utf8')
       return f === 'run-log.md' ? { dest: `prompts/${f}`, src: null, content: freshRunLog(text) } : { dest: `prompts/${f}`, src: `prompts/${f}`, content: text }
@@ -233,20 +256,19 @@ function templateCommit() {
   }
 }
 
-function fail(message, code = 1) {
-  console.error(message)
-  process.exit(code)
-}
+class DeliveryError extends Error {}
 
 /** A target whose manifest can't be read: re-applying would guess. */
-export class ManifestError extends Error {}
+export class ManifestError extends DeliveryError {}
+
+class UsageError extends DeliveryError {}
 
 // Where a delivery writes, or wrote (.claude/commands/, before skills): a manifest key outside
 // these, or with a `.` or `..` segment, could make a re-apply write or delete outside the target,
 // and a manifest is a file anyone can edit.
 const DELIVERY_ROOTS = ['prompts/', '.agents/skills/', '.claude/skills/', '.claude/commands/']
 const deliveredPath = (key) =>
-  DELIVERY_ROOTS.some((r) => key.startsWith(r)) && !/[\\\0:]/.test(key) && key.split('/').every((seg) => seg && seg !== '.' && seg !== '..')
+  (GATE_FILES.includes(key) || DELIVERY_ROOTS.some((r) => key.startsWith(r))) && !/[\\\0:]/.test(key) && key.split('/').every((seg) => seg && seg !== '.' && seg !== '..')
 const PACK_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function readManifest(target) {
@@ -326,12 +348,19 @@ function instructionsAdvice(target, instructions) {
 function offeredVersion(commit, src, expected) {
   // A hash, never anything git would read as an option (`--output=...`): the manifest is editable.
   if (!/^[0-9a-f]{40,64}$/.test(commit ?? '') || !src) return null
-  const text = showAt(commit, src)
-  if (text !== null && hash(text) === expected) return text
+  const found = offeredTexts(src, showAt(commit, src)).find((text) => hash(text) === expected)
+  if (found !== undefined) return found
   // Not at that commit: this history doesn't hold it (the target was applied from a copy of an
   // older history, such as an import) or the template was dirty then. Any version of the file
   // here with the recorded hash is the same text.
   return versionsOf(src).get(expected) ?? null
+}
+
+// A workflow's old *staged* bytes are the merge base. The manifest hash identifies the right
+// variant even when a target changed which skill home it selected between deliveries.
+function offeredTexts(src, text) {
+  if (text === null) return []
+  return WORKFLOW_FILES.includes(src) ? SKILL_HOMES.map((home) => stageWorkflow(text, home)) : [text]
 }
 
 // A file at a commit of this checkout, or null when the commit or the file isn't here, or no git.
@@ -356,8 +385,7 @@ function versionsOf(src) {
     if (error.status === undefined && error.code !== 'ENOENT') throw error // else no history, or no git
   }
   for (const commit of commits) {
-    const text = showAt(commit, src)
-    if (text !== null) found.set(hash(text), text)
+    for (const text of offeredTexts(src, showAt(commit, src))) found.set(hash(text), text)
   }
   versionCache.set(src, found)
   return found
@@ -407,6 +435,13 @@ function plan(target, previous, packs, held = [], homes = SKILL_HOMES) {
     const sourceHash = hash(content)
     const destAbs = join(target, dest)
     const last = previous.files[dest]
+    // A consumer can already own a continuity/ file, an alias to its own ledger, or a
+    // directory occupying the slot for a script. Do not read through or replace any of them.
+    if (GATE_DELIVERY.has(dest) && occupiedGatePath(target, dest)) {
+      actions.push({ kind: 'occupied', dest })
+      if (last) next[dest] = last
+      continue
+    }
     const present = existsSync(destAbs)
     const destHash = present ? hash(contentOf(destAbs)) : null
 
@@ -451,6 +486,11 @@ function plan(target, previous, packs, held = [], homes = SKILL_HOMES) {
   const current = new Set(delivered.map((d) => d.dest))
   for (const [dest, last] of Object.entries(previous.files)) {
     if (current.has(dest)) continue
+    if (GATE_DELIVERY.has(dest) && occupiedGatePath(target, dest)) {
+      actions.push({ kind: 'occupied', dest })
+      next[dest] = last
+      continue
+    }
     if (held.some((p) => dest.startsWith(`prompts/standards/${p}/`))) {
       next[dest] = last
       continue
@@ -510,6 +550,17 @@ function plan(target, previous, packs, held = [], homes = SKILL_HOMES) {
     if (previous.files[action.dest]) next[action.dest] = previous.files[action.dest]
     else delete next[action.dest]
   }
+  // A target may already be editing a prior parked proposal. Only claim an identical
+  // outstanding offer (as after an interruption before the manifest was saved).
+  for (const action of actions) {
+    if (!GATE_DELIVERY.has(action.dest) || !parked(action.kind)) continue
+    const offer = join(target, action.dest + '.template')
+    const stat = lstatSync(offer, { throwIfNoEntry: false })
+    if (!stat || (stat.isFile() && hash(contentOf(offer)) === hash(action.content))) continue
+    action.kind = 'occupied'
+    if (previous.files[action.dest]) next[action.dest] = previous.files[action.dest]
+    else delete next[action.dest]
+  }
   // Nothing is written or removed through a symlink that leads out of the target.
   for (const action of actions) {
     if (!(WRITES.includes(action.kind) || action.kind === 'remove') || !outsideTarget(target, action.dest, action.kind)) continue
@@ -518,6 +569,18 @@ function plan(target, previous, packs, held = [], homes = SKILL_HOMES) {
     else delete next[action.dest]
   }
   return { actions, next }
+}
+
+function occupiedGatePath(target, dest) {
+  let path = target
+  const segments = dest.split('/')
+  for (const [i, segment] of segments.entries()) {
+    path = join(path, segment)
+    const stat = lstatSync(path, { throwIfNoEntry: false })
+    if (!stat) return false
+    if (i === segments.length - 1 ? !stat.isFile() : !stat.isDirectory()) return true
+  }
+  return false
 }
 
 const isLink = (path) => {
@@ -590,7 +653,10 @@ export function drift(target) {
   const changes = actions.filter((a) => WRITES.includes(a.kind) || a.kind === 'remove').map((a) => ({ kind: a.kind, dest: a.dest }))
   const heldBack = [...new Set(actions.filter((a) => a.kind === 'own-skill').map((a) => a.dest.split('/').slice(0, 3).join('/')))]
   const leftovers = actions.filter((a) => a.kind === 'outside').map((a) => `${a.dest} leads out of the target through a symlink`)
+  const occupied = new Set(actions.filter((a) => a.kind === 'occupied').map((a) => a.dest))
+  for (const dest of occupied) leftovers.push(`${dest} has a conflicting path or outstanding proposal; resolve the collision and re-apply`)
   for (const dest of Object.keys(previous.files)) {
+    if (occupied.has(dest)) continue
     if (existsSync(join(target, `${dest}.template`))) leftovers.push(`${dest}.template is still parked: merge it into ${dest} and delete it`)
     const abs = join(target, dest)
     const text = existsSync(abs) ? contentOf(abs) : null
@@ -640,6 +706,22 @@ function notInHistory(commit) {
 // Where a commit missing from this history can come from. Only someone who knows the target's
 // history can tell the three apart, so each stays a warning.
 const ELSEWHERE = 'a newer template, another branch, or a repository this template was copied from without its history'
+
+// Readers and retries see either the previous complete file or the new one. The manifest is
+// published last: after interruption, exact files already published are recognized on retry.
+function publishFile(path, content) {
+  const destination = isLink(path) ? realpathSync(path) : path
+  const existing = lstatSync(destination, { throwIfNoEntry: false })
+  if (existing) accessSync(destination, constants.W_OK)
+  const temporary = join(dirname(destination), `.process-apply-${randomUUID()}.tmp`)
+  try {
+    writeFileSync(temporary, content, { flag: 'wx', mode: existing?.mode, flush: true })
+    if (existing) chmodSync(temporary, existing.mode & 0o7777)
+    renameSync(temporary, destination)
+  } finally {
+    rmSync(temporary, { force: true })
+  }
+}
 
 function check(target) {
   const { delivered, templateCommit: from, ahead, held, heldBack, changes, leftovers, ignored, unselected } = drift(target)
@@ -694,29 +776,48 @@ function main() {
     process.exit(args.error ? 2 : 1)
   }
   const target = resolve(args.target)
-  if (!existsSync(target) || !statSync(target).isDirectory()) fail(`Target is not an existing directory: ${target}`)
+  if (!existsSync(target) || !statSync(target).isDirectory()) throw new DeliveryError(`Target is not an existing directory: ${target}`)
   // realpath.native returns the on-disk case, and case-insensitive filesystems are compared as
   // such, so a differently-cased path to this repo can't slip past.
   const insensitive = process.platform === 'darwin' || process.platform === 'win32'
   const canon = (p) => (insensitive ? realpathSync.native(p).toLowerCase() : realpathSync.native(p))
   if (canon(target) === canon(ROOT) || canon(target).startsWith(canon(ROOT) + sep)) {
-    fail('Target is this repo or inside it — these files already live here.')
+    throw new DeliveryError('Target is this repo or inside it — these files already live here.')
   }
 
   // The manifest is the one file every run reads and writes: through a link out of the target,
   // it would be another directory's (a shared prompts/ in a monorepo).
-  if (outsideTarget(target, MANIFEST, 'copy')) fail(`${MANIFEST} leads out of the target through a symlink (prompts/ or the file itself). Nothing was read or written.`)
-  let previous
+  if (outsideTarget(target, MANIFEST, 'copy')) throw new DeliveryError(`${MANIFEST} leads out of the target through a symlink (prompts/ or the file itself). Nothing was read or written.`)
+  if (args.list || args.check) return applyToTarget(target, args)
+
+  // Lock before reading the previous manifest. Two different template releases must not both
+  // plan an update from the same old hashes and then interleave their file and manifest writes.
+  const lock = join(target, '.process-apply.lock')
+  let handle
   try {
-    previous = readManifest(target)
+    handle = openSync(lock, 'wx', 0o600)
   } catch (error) {
-    if (error instanceof ManifestError) fail(error.message)
+    if (error.code === 'EEXIST') throw new DeliveryError(`Delivery lock exists: ${lock}. Wait for the active apply. If it was interrupted, confirm that no apply is running for this target, remove the lock, and rerun process:apply.`)
     throw error
   }
+  try {
+    writeFileSync(handle, JSON.stringify({ hostname: hostname(), pid: process.pid, startedAt: new Date().toISOString() }) + '\n')
+    return applyToTarget(target, args)
+  } finally {
+    // An operator may already have recovered a lock. Release only the file this process opened.
+    const owned = fstatSync(handle, { bigint: true })
+    closeSync(handle)
+    const current = lstatSync(lock, { bigint: true, throwIfNoEntry: false })
+    if (current?.dev === owned.dev && current.ino === owned.ino) unlinkSync(lock)
+  }
+}
+
+function applyToTarget(target, args) {
+  const previous = readManifest(target)
   if (args.check) return check(target)
   const split = splitPacks(previous.packs ?? [])
   const unknownDrop = args.dropPacks.filter((p) => !PACKS().includes(p) && !split.held.includes(p))
-  if (unknownDrop.length) fail(`No pack ${unknownDrop.join(', ')} in the template's standards/ or the target's manifest.`, 2)
+  if (unknownDrop.length) throw new UsageError(`No pack ${unknownDrop.join(', ')} in the template's standards/ or the target's manifest.`)
   const held = split.held.filter((p) => !args.dropPacks.includes(p)) // a dropped one's files go the usual way
   const packs = [...new Set([...split.known, ...args.packs])].filter((p) => p !== 'core' && !args.dropPacks.includes(p)).sort()
   const homes = skillHomes(target)
@@ -734,7 +835,7 @@ function main() {
       if (!WRITES.includes(kind)) continue
       const out = join(target, parked(kind) ? `${dest}.template` : dest)
       mkdirSync(dirname(out), { recursive: true })
-      writeFileSync(out, content)
+      publishFile(out, content)
     }
     // Keys are sorted, and the file is rewritten only when what it records changed, so a no-op
     // re-run (from any OS) leaves the target's working tree clean.
@@ -750,7 +851,7 @@ function main() {
         files: sorted,
       }
       mkdirSync(dirname(join(target, MANIFEST)), { recursive: true })
-      writeFileSync(join(target, MANIFEST), `${JSON.stringify(record, null, 2)}\n`)
+      publishFile(join(target, MANIFEST), `${JSON.stringify(record, null, 2)}\n`)
       recorded = true
     }
   }
@@ -770,13 +871,14 @@ function main() {
     ['shadowed', `${list ? 'Would hold' : 'Held'} back: in Claude Code this skill would silently replace the target's command of the same name (.claude/commands/<name>.md). Move what you need from that command into .agents/skills/<name>/SKILL.md, delete the command, and re-run`, '!'],
     ['own-skill', `${list ? 'Would hold' : 'Held'} back: the target has a skill of its own by this name, not a copy of the template's (Claude Code's /verify records its run recipe at .claude/skills/verify/SKILL.md, for one). Yours is left as it is. To take the template's, fold what yours does into it, delete yours, and re-run`, '!'],
     ['outside', `${list ? 'Would skip' : 'Skipped'}: the path leads out of the target through a symlink, so nothing is written or removed there`, '!'],
+    ['occupied', 'Left for the target to resolve: a link, conflicting file or directory, or an outstanding .template proposal occupies the delivery path', '!'],
     ['unselected', `Left as it is, and no longer updated: delivered by an earlier apply to a skill home no platform in ${SELECTION_FILE} reads. Delete it if no agent you use reads it, or select the platform that does and re-run`, '-'],
   ]
   console.log(`${list ? 'Dry run: ' : ''}process assets -> ${target}\n`)
   let changed = false
   for (const [kind, title, mark] of sections) {
     if (!files(kind).length) continue
-    if (!['kept-deleted', 'orphaned', 'shadowed', 'own-skill', 'outside', 'unselected'].includes(kind)) changed = true
+    if (!['kept-deleted', 'orphaned', 'shadowed', 'own-skill', 'outside', 'occupied', 'unselected'].includes(kind)) changed = true
     console.log(`${title}:`)
     for (const a of byKind[kind]) {
       const note = a.kind === 'propose' ? (a.conflicts ? ` (${a.conflicts} conflict(s) marked)` : ' (merged cleanly)') : ''
@@ -789,7 +891,7 @@ function main() {
   if (notInHistory(previous.templateCommit)) {
     console.log(`! The target was last applied from ${previous.templateCommit.slice(0, 12)}, which isn't in this template checkout's history (${ELSEWHERE}): what this run updated could be older than what it replaced. Review the diff before committing.\n`)
   }
-  const ignored = gitignored(target, [...actions.filter((a) => !['kept-deleted', 'remove', 'shadowed', 'own-skill', 'outside', 'unselected'].includes(a.kind)).map((a) => a.dest), MANIFEST])
+  const ignored = gitignored(target, [...actions.filter((a) => !['kept-deleted', 'remove', 'shadowed', 'own-skill', 'outside', 'occupied', 'unselected'].includes(a.kind)).map((a) => a.dest), MANIFEST])
   if (ignored.length) {
     const shown = ignored.slice(0, 5).map((f) => `  ! ${f}`).join('\n')
     console.log(
@@ -865,6 +967,9 @@ function main() {
      them all.`,
       `The skeletons are staged under prompts/skeletons/. The prompt run copies each one it needs
      to its real path and fills it in; nothing there is live until then.`,
+      `To adopt continuity, read continuity/README.md, initialize this project's own decisions and
+     rehearse any optional CI workflows before requiring their checks. Keep formatting tools off
+     the delivered gate, its declaration and its README to preserve clean future updates.`,
       'Record the project prompt run in prompts/run-log.md.',
       `For day-to-day work afterwards, the skills discovery (prompts/discovery.md) before the next
      piece of work, plan-change (prompts/plan-change.md) to plan a large change, root-cause
@@ -887,4 +992,12 @@ function main() {
 }
 
 // Run only when executed directly, so the tests can import the delivery lists.
-if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main()
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    main()
+  } catch (error) {
+    if (!(error instanceof DeliveryError)) throw error
+    console.error(error.message)
+    process.exitCode = error instanceof UsageError ? 2 : 1
+  }
+}

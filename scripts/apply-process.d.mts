@@ -10,7 +10,7 @@ export declare function skillHomes(target: string): {
   elsewhere: { name: string; skills: string }[]
   problem: string | null
 }
-export declare function sources(packs?: string[], homes?: string[]): { dest: string; src: string | null; content: string }[]
+export declare function sources(packs?: string[], homes?: string[]): { dest: string; src: string | null; content: string | Buffer }[]
 export declare class ManifestError extends Error {}
 export declare function drift(target: string): {
   delivered: boolean

@@ -5,9 +5,10 @@ human) to produce in a target project. The prompts say *what* each artifact must
 these files are the *shape* — copy one, fill in the bracketed placeholders, delete the
 guidance comments, and the phase's output obligation is met.
 
-Everything under `templates/project/` maps onto a target repo root. In a target that received
-the process through `process:apply`, the same files are staged under `prompts/skeletons/`
-(nothing lands at a live path); the prompt run copies each one it needs to the path below:
+In a target that received the process through `process:apply`, files under
+`templates/project/` are staged under `prompts/skeletons/`. The prompt run copies each
+artifact it needs to the target path below. The staged GitHub guide explains how to
+activate optional scanner and continuity workflows. [Activation guide](project/.github/README.md)
 
 | Skeleton | Prompt phase that demands it | Instantiated in the target as |
 | --- | --- | --- |
@@ -19,6 +20,7 @@ the process through `process:apply`, the same files are staged under `prompts/sk
 | `project/.env.example` | New-project Phase 2.6 — env validation | `.env.example` |
 | `project/SECURITY.md` | New-project Phase 2.5 / existing-project audit — where to report a vulnerability privately | `SECURITY.md` |
 | `project/.github/CODEOWNERS` | New-project Phase 2.5, once more than one person merges | `.github/CODEOWNERS` |
+| `project/.github/README.md` | Optional agent checks and ruleset enrollment | Read in staging when activating a workflow |
 | `project/.github/workflows/ci.yml` | New-project Phase 2.5 / existing-project audit §7 — CI on every pull request for a Node project: no token permissions, actions pinned by commit (a test holds them equal to this template's), Node from `.nvmrc`, one step per gate, an optional end-to-end job. Another stack keeps the shape and swaps the commands. Its job names are the ruleset's required checks | `.github/workflows/ci.yml` |
 | `project/.github/rulesets/main.json` | New-project Phase 2.5 — CI as a required check, imported in the repo's settings. Kept, filled in and marked inactive in CONTRIBUTING.md, where the plan can't enforce it (GitHub Free, private repository). Its required checks are the CI job names: hold them equal with a test (`scripts/__tests__/repo-hygiene.test.ts` has one), or rename both together | `.github/rulesets/main.json` |
 | `project/docs/reference-verification.md` | Phase 0 of both prompts — the verification record | `docs/reference-verification.md` (new project); in the dated audit folder (existing project) |

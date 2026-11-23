@@ -77,6 +77,59 @@ it('scans tracked configuration, expanding shared instructions and preserving ev
   expect(run('project', join(work, 'opaque-configuration')).stderr).toContain('submodule')
 })
 
+it.each([
+  ['AGENTS.md', 'Run the Go tests before submitting.\n'],
+  ['CLAUDE.md', 'Use pytest to verify changes.\n'],
+  ['.claude/settings.json', '{}\n'],
+  ['.codex/config.toml', 'sandbox_mode = "workspace-write"\n'],
+  ['.mcp.json', '{"mcpServers":{}}\n'],
+])('scans a non-npm consumer whose tracked agent input is %s', (path, content) => {
+  git('init', '-q')
+  git('config', 'core.autocrlf', 'false')
+  put(join(repo, path), content)
+  git('add', path)
+  const dir = join(work, 'projected')
+  const result = run('project', dir)
+  expect(result.status, result.stderr).toBe(0)
+  expect(read(join(dir, path))).toBe(content)
+  expect(existsSync(join(dir, 'package-lock.json'))).toBe(false)
+})
+
+it('refuses empty inputs, unfinished local imports and a checkout containing only parked assets', () => {
+  git('init', '-q')
+  put(join(repo, 'prompts/skeletons/CLAUDE.skeleton.md'), 'Parked instructions.\n')
+  put(join(repo, 'AGENTS.md'), '  \n')
+  git('add', '.')
+  expect(run('project', join(work, 'empty')).status).toBe(1)
+  git('rm', '-f', 'AGENTS.md')
+  expect(run('project', join(work, 'parked')).status).toBe(1)
+  put(join(repo, 'CLAUDE.md'), '@AGENTS.md\n')
+  git('add', 'CLAUDE.md')
+  expect(run('project', join(work, 'broken-import')).status).toBe(1)
+  put(join(repo, 'AGENTS.md'), '  \n')
+  git('add', 'AGENTS.md')
+  expect(run('project', join(work, 'empty-import')).status).toBe(1)
+})
+
+it('preserves a legacy npm lockfile in the scan copy', () => {
+  git('init', '-q')
+  const legacy = JSON.stringify({ lockfileVersion: 1, dependencies: { example: { version: '1.0.0' } } })
+  put(join(repo, 'package-lock.json'), legacy)
+  put(join(repo, 'AGENTS.md'), 'Inspect the legacy dependencies.\n')
+  git('add', '.')
+  const dir = join(work, 'legacy')
+  expect(run('project', dir).status).toBe(0)
+  expect(read(join(dir, 'package-lock.json'))).toBe(legacy)
+})
+
+it('keeps the template’s own Claude wrapper, settings and npm lockfile in its scan coverage', () => {
+  const template = resolve(__dirname, '../..')
+  expect(read(join(template, 'CLAUDE.md'))).toMatch(/^@AGENTS\.md\r?$/m)
+  expect(read(join(template, 'AGENTS.md')).trim()).not.toBe('')
+  expect(JSON.parse(read(join(template, settings)))).toHaveProperty('hooks')
+  expect(JSON.parse(read(join(template, 'package-lock.json')))).toHaveProperty('packages')
+})
+
 function report(name: string, rules: string[], file = settings, scanned = 1, target = join(work, 'agent-controls', name)) {
   const run = {
     tool: { driver: { name: 'AgentShield' } },
