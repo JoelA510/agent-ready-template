@@ -31,7 +31,8 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
       - name: Exercise the hosted scanner on a disposable skill defect
-        run: sed -i 's/^name: verify$/name: mismatched-skill/' .agents/skills/verify/SKILL.md
+        run: |
+          sed -i 's/^name: verify$/name: mismatched-skill/' .agents/skills/verify/SKILL.md
       - run: node scripts/ci/skill-tier1.mjs scan .agents/skills "$RUNNER_TEMP/skill-reports"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
