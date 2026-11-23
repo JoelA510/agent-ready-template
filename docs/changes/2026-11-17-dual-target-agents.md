@@ -353,53 +353,7 @@ including a parked proposal, a repeated apply and its resolution.
 
 ### Stage 4: the local power pack
 
-```text
-packs/local-power/
-  README.md
-  bootstrap.sh                       # bash; --with <list>, --check, --remove <tool>
-  docker-compose.local-agents.yml
-  integrations/{gstack,ecc,agentshield,mempalace,gbrain,skillevaluator,nomos}.manifest.json
-  claude/  codex/                    # the stage 0 templates
-  skills/skill-lift/SKILL.md         # copied to user-level skill directories, never committed ones
-  nomos/README.md
-```
-
-`bootstrap.sh` follows `scripts/setup.sh`: idempotent, tool output on stderr, one line on
-stdout. It installs nothing unless named with `--with`, refuses to run when
-`CLAUDE_CODE_REMOTE=true`, and for each tool installs from the manifest, runs the smoke command,
-records the result in `.local-power/state.json` (the shape the probe reads), and copies a
-template only where no file exists. On native Windows it installs the subset that works and
-names what needs WSL2.
-
-A manifest has `name`, `source` (`type`, `package` or `url`, `version`, and a full commit for
-git), `runtime`, `install`, `smoke`, `uninstall`, `targets`, `license`, `checked`, and
-`decision` (its ledger id).
-
-| Tool | Pinned install | Smoke | Runtime |
-| --- | --- | --- | --- |
-| gstack | Clone at `eff8b78d…` (v1.100.0.0), `./setup --host claude --no-team`, then `gstack-config set update_check false` | `./setup --status` | Bun 1.4.2 or later |
-| ECC | `npx ecc-universal@2.2.3 install --guided --harness claude --harness codex --claude-scope local --claude-hooks minimal --profile core --yes` | `--dry-run` first | Node 18 or later |
-| AgentShield | None; called as `npx --yes ecc-agentshield@1.6.0 scan --path .` | Exit code | Node 20 or later |
-| MemPalace | `uv tool install mempalace==3.12.0` | `mempalace --version` | Python 3.10 or later |
-| gbrain | `bun add -g --backend=copyfile github:garrytan/gbrain#v<version with a stable-v tag>`, then `gbrain config set self_upgrade.mode off` and `gbrain setup <harness> --no-hooks --no-instructions` (review with `--dry-run`) | `gbrain doctor` | Bun 1.4.4 or later |
-| SkillEvaluator | `uv tool install --python 3.13 "skillevaluator[all]==<version>"` | `skillevaluator doctor --tier 1` | Python 3.13, Docker for Tier 3 |
-| Nomos | Clone at a recorded `develop` commit into `.local-power/vendor/nomos`, then `DEPLOY_TARGET=compose ./scripts/deploy_stack.sh` | `curl -s http://127.0.0.1:9901/healthz` | Linux or WSL2, Docker, a provider key |
-
-The Compose file has two services, each behind a profile, bound to loopback, and pinned by image
-digest resolved when it is written: `gbrain-postgres` (`pgvector/pgvector:pg16` on
-127.0.0.1:5434, a named volume, a `pg_isready` healthcheck) and `embeddings` (Ollama on
-127.0.0.1:11434, so Tier 2 and gbrain can embed without an OpenAI key; Tier 2 rejects Anthropic
-as an embedding provider).
-
-Nomos is off by default and labeled experimental. This stage brings its stack up, overrides its
-`0.0.0.0` binds and default Redis password, and registers its review tools at local MCP scope.
-It builds no execution adapter.
-
-`scripts/__tests__/local-power.test.ts` checks every manifest has an exact version, a full
-commit where it is git, a license, and a checked date, and that no image uses a tag alone. To
-verify at install time: whether a user-level gstack `verify` skill shadows the project's
-`verify`, which Claude Code runs before each commit (`./setup --status`, the skills listing,
-then Tier 2 `similarity-check` across both sets).
+The Linux x86-64 bootstrap, toolchain lock, seven integration manifests, Compose profiles and isolated launchers live under [the local power pack](../../packs/local-power/README.md). Each activation verifies pins and runs functional checks before publishing the candidate. The manifest and hashed lockfiles specify the implemented release, including aged alternatives to newer workflow and memory releases. Nomos deployment, provider use and database migrations require separate operator actions. See [ADR 0025](../adr/0025-local-runtime-pack.md).
 
 ### Stage 5: graduation and live Skill Lift
 

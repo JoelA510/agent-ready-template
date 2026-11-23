@@ -1,0 +1,32 @@
+{
+  "platform": "linux/amd64",
+  "upstream": {
+    "uv.lock": "7e8df5bea857a64b4faa03da16777c41a7372096040ef2db7f061edcfd6dc661",
+    "deploy/docker-compose.yml": "9779eb98ab15791c3c86cd0c67e867acdb0e0487f4f506d42755193b614408be",
+    "deploy/docker-compose.redis-sentinel.yml": "bcf2ee760e5192e0344a1bc3738054d082ffc364e85fc3602822e9c27d93eb98",
+    "deploy/docker-compose.service.yml": "67ded545d262aaaf60580a419846515d9133e70fc121f1eaf7bccba9dbec73bd"
+  },
+  "python": "python:3.13-slim@sha256:6771159cd4fa5d9bba1258caf0b82e6b73458c694d178ad97c5e925c2d0e1a91",
+  "infrastructure": {
+    "redis": "redis@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe",
+    "opa": "openpolicyagent/opa@sha256:564adcf7657817d3d8cab1ef6ae2612744209ddbe5e1b9773626fb2602c04db5",
+    "postgres": "postgres@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d",
+    "vault": "hashicorp/vault@sha256:74a4ab138ab5d64725e89cd9a9c73f7040c7fe49e98b71697b275ca9a69919df",
+    "council-gateway": "nginxinc/nginx-unprivileged@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0"
+  },
+  "dockerfiles": {
+    "council": "Dockerfile",
+    "council-grpc": "Dockerfile",
+    "monitor": "Dockerfile.monitor",
+    "agent-signup": "Dockerfile.agent-signup",
+    "demo": "Dockerfile.demo",
+    "openshell": "Dockerfile.openshell",
+    "executor-openshell": "Dockerfile.executor"
+  },
+  "loopback": {
+    "monitor": "9901:9901",
+    "council-gateway": "9900:8080",
+    "agent-signup": "9905:9905",
+    "executor-openshell": "9907:9906"
+  }
+}

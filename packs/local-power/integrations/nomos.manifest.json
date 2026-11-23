@@ -1,0 +1,13 @@
+{
+  "name": "nomos",
+  "version": "0.1.0",
+  "source": "https://github.com/NVIDIA/Nomos",
+  "pin": "4a8eebef603e8cb02e5e1c6cb11bd0f590fa60cb",
+  "license": "Apache-2.0",
+  "platforms": ["linux-x64"],
+  "toolchains": ["uv", "python"],
+  "locks": ["nomos/deployment.lock.json", "nomos/operator_cli.py", "nomos/receipt.py", "nomos/live.py", "nomos/test_deployment.py"],
+  "capabilities": ["signed execution receipts", "operator-enrolled council and executor"],
+  "smoke": "Offline receipt controls use the frozen upstream verifier. Run the separately enrolled operator proof for live MCP, execution and replay evidence.",
+  "rollback": "Stop the project with nomos-operator stop, preserve volumes and the private receipt store. Restore the previous qualified images, matching state and trust anchors before reenrollment."
+}

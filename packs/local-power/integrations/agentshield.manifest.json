@@ -1,0 +1,13 @@
+{
+  "name": "agentshield",
+  "version": "1.6.0",
+  "source": "https://registry.npmjs.org/ecc-agentshield/-/ecc-agentshield-1.6.0.tgz",
+  "pin": "sha512-lpeHG96DtEn7ofq7Iiyvq29piQOwParaiZOdDB206i4ZeCL4yjwT6xN5BSGI4yhCEAN0eO0f9F9hxHLBuRqf/g==",
+  "license": "MIT",
+  "platforms": ["linux-x64"],
+  "toolchains": [],
+  "locks": ["locks/agentshield/package.json", "locks/agentshield/package-lock.json", "recipes/agentshield-scan.mjs"],
+  "capabilities": ["offline static local agent configuration scanning"],
+  "smoke": "Require a nonempty clean SARIF scan and a separate scan with the exact critical wildcard permission finding.",
+  "rollback": "Select the previous activation. Scan output stays in the local operator's selected directory."
+}

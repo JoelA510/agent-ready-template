@@ -57,3 +57,4 @@ Don't write one for a choice a reader can reconstruct from the code in under a m
 | [0022](./0022-shared-core-and-two-agent-targets.md) | One shared core, a cloud target that is the clean clone, and an opt-in local power pack | Accepted |
 | [0023](./0023-content-bound-continuity.md) | Bind decision receipts to Git content and anchor the ledger to the protected base | Accepted |
 | [0024](./0024-agent-config-and-skill-gates.md) | Check agent configuration and skill content on pull requests | Accepted |
+| [0025](./0025-local-runtime-pack.md) | Install and qualify optional local runtimes per checkout | Accepted |

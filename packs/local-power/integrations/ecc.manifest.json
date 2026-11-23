@@ -1,0 +1,13 @@
+{
+  "name": "ecc",
+  "version": "2.2.3",
+  "source": "https://registry.npmjs.org/ecc-universal/-/ecc-universal-2.2.3.tgz",
+  "pin": "sha512-2xDcL0lCJ9O7GTGm5fNqEZuuWsJOkvIi68/QWTho3DbKFta02EoycXFQh7TCrp4M4YFur0vKQOlOon4jgmJ55A==",
+  "license": "MIT",
+  "platforms": ["linux-x64"],
+  "toolchains": [],
+  "locks": ["locks/ecc/package.json", "locks/ecc/package-lock.json"],
+  "capabilities": ["Claude and Codex test-driven development workflow"],
+  "smoke": "Verify both harnesses' installed tdd-workflow skill bytes against the published npm artifact.",
+  "rollback": "Select the previous activation and its pinned skill directories."
+}

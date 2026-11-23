@@ -12,7 +12,7 @@ export default tseslint.config(
   // (`npm run tokens:build`) — never hand-edited, so never linted. `.claude/` holds agent
   // worktrees (full copies of this repo); flat config doesn't read .gitignore, so without this
   // every warning is counted once per worktree.
-  globalIgnores(['dist', 'storybook-static', 'coverage', 'src/styles/tokens', 'platforms', '**/.claude/**']),
+  globalIgnores(['dist', 'storybook-static', 'coverage', 'src/styles/tokens', 'platforms', '**/.claude/**', '**/.local-power/**']),
   {
     // The Node tooling: scripts/, the Style Dictionary pipeline, and the other root configs.
     // These run in CI and in target repos (apply-process), so they get the same recommended

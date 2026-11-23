@@ -86,9 +86,9 @@ because a cloud session would load it without a prompt.
 ## On a machine with the local power pack
 
 [`packs/local-power/README.md`](../../packs/local-power/README.md) says what the pack holds and
-how to switch it on. Until its bootstrap exists it is three templates copied by hand: a
-`CLAUDE.local.md`, a `.claude/settings.local.json`, and a Codex profile. All three stay out of
-git, so a clone never carries them.
+how to enable selected integrations on Linux x86-64, including WSL2. Start with
+`bash packs/local-power/bootstrap.sh --plan`. The bootstrap publishes isolated harness homes
+and a private command directory after each selected integration passes its smoke test.
 
 What needs a person's answer differs by target. A cloud session works inside a disposable
 container, behind a GitHub proxy that refuses a branch deletion or a tag push, so the committed

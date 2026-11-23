@@ -1,0 +1,18 @@
+{
+  "name": "mempalace",
+  "version": "3.12.0",
+  "source": "https://github.com/MemPalace/mempalace",
+  "pin": "4df7b830ff1398332d4118884520a24f1aab9cc1",
+  "license": "MIT",
+  "platforms": ["linux-x64"],
+  "toolchains": ["uv", "python"],
+  "locks": ["locks/python313-mempalace.txt"],
+  "wheel": "sha256:3832534f377f3a81a324f741f90bf3c1ec277d49404608257cde1b5b0d52626f",
+  "model": {
+    "url": "https://chroma-onnx-models.s3.amazonaws.com/all-MiniLM-L6-v2/onnx.tar.gz",
+    "sha256": "913d7300ceae3b2dbc2c50d1de4baacab4be7b9380491c27fab7418616a16ec3"
+  },
+  "capabilities": ["local Chroma/SQLite palace", "CPU MiniLM embeddings", "stdio MCP retrieval"],
+  "smoke": "Mine a disposable paragraph without an LLM. Retrieve the expected file and text through the CLI, then start a fresh MCP server and retrieve the same drawer.",
+  "rollback": "Select the previous qualified environment. Before a schema or embedding change back up the complete palace and configuration, and restore into a different directory with the matching reader and model."
+}
