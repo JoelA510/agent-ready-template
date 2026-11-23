@@ -56,3 +56,4 @@ Don't write one for a choice a reader can reconstruct from the code in under a m
 | [0021](./0021-brand-presets.md) | Brand presets fill the existing roles, are chosen at init, and leave the default neutral | Accepted |
 | [0022](./0022-shared-core-and-two-agent-targets.md) | One shared core, a cloud target that is the clean clone, and an opt-in local power pack | Accepted |
 | [0023](./0023-content-bound-continuity.md) | Bind decision receipts to Git content and anchor the ledger to the protected base | Accepted |
+| [0024](./0024-agent-config-and-skill-gates.md) | Check agent configuration and skill content on pull requests | Accepted |

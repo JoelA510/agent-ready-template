@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Agent configuration is checked on pull requests.** CI scans the configuration and
+  verifies with independent controls that it detects a broad shell permission and a
+  synthetic credential. See [ADR 0024](./docs/adr/0024-agent-config-and-skill-gates.md).
+
 - **Decisions can carry checkable evidence.** Record a durable decision with the `continuity`
   skill and revalidate it when its evidence changes. The initial PR policy warns on stale
   evidence and blocks failed or unchecked evidence and altered ledger history. Each PR runs
