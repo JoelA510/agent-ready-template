@@ -32,7 +32,7 @@ jobs:
       - name: Exercise the hosted scanner on a disposable configuration defect
         run: |
           node scripts/ci/agent-config-canary.mjs prepare "$RUNNER_TEMP/qualification"
-          cp "$RUNNER_TEMP/qualification/permission/.claude/settings.json" "$RUNNER_TEMP/agent-config/.claude/settings.json"
+          cp "$RUNNER_TEMP/qualification/secret/.claude/settings.json" "$RUNNER_TEMP/agent-config/.claude/settings.json"
       - id: scan
         uses: affaan-m/agentshield@b0891303bdcd6037376a94263d45cfd2ff3dfb98 # v1.6.0
         with:
