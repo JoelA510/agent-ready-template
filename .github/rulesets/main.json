@@ -32,7 +32,9 @@
           { "context": "npm audit (high and critical block)", "integration_id": 15368 },
           { "context": "Continuity ledger and cited decisions", "integration_id": 15368 },
           { "context": "Agent configuration (AgentShield)", "integration_id": 15368 },
-          { "context": "AgentShield detects planted configuration", "integration_id": 15368 }
+          { "context": "AgentShield detects planted configuration", "integration_id": 15368 },
+          { "context": "Skill content (SkillEvaluator Tier 1)", "integration_id": 15368 },
+          { "context": "SkillEvaluator rejects invalid skills", "integration_id": 15368 }
         ]
       }
     }

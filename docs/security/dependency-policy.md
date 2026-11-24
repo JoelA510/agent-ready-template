@@ -69,6 +69,15 @@ For a new pin, verify the expected shell permission and synthetic secret
 findings independently, alongside the clean fixture. Confirm the corresponding required
 job on GitHub before changing branch protection. See [ADR 0024](../adr/0024-agent-config-and-skill-gates.md).
 
+The skill-content gate runs NVIDIA's separately versioned Tier 1 CI image with no network
+access. The workflow pins the image digest from the publisher's release manifest. For an
+update, check its publication date and source revision, and qualify the digest and report
+format together on a PR. Allow seven elapsed days from publication before adopting a new
+scanner release on main. The real scan and its controls use the same strict, static
+configuration. Each skill needs a complete verdict and a passing score of at least 70.
+The 14-day artifact contains skill identifiers, scores, statuses and failed validator names.
+Raw findings can quote credentials and stay on the ephemeral runner.
+
 ## Waivers
 
 A waiver is a time-boxed decision to live with **one advisory in one package**. It lives in

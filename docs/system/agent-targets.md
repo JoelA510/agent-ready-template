@@ -51,8 +51,8 @@ four skills, gbrain ships no binary, Nomos doesn't deploy, and SkillEvaluator is
 | AgentShield | Pinned GitHub Action for configuration and offline package checks. Its CLI is optional locally. | Yes | Partly: not tried | Yes | Partly: needs the network | Yes |
 | MemPalace or gbrain over stdio | A command on `PATH`, registered at local scope | Yes | No | Yes | No | No |
 | Either memory server over HTTP | A URL and a bearer token, in the project's MCP config | Yes | Yes, in a single-repository session | Yes | Partly: connectors only | No |
-| SkillEvaluator Tier 1 | `pipx run`, Python 3.12 or later; it downloads its scanners | Yes | Partly: its offline checks | Yes | Partly | Yes |
-| SkillEvaluator Tier 2 | Embeddings: an OpenAI key or a local Ollama | Yes | No | Yes | No | Advisory |
+| SkillEvaluator Tier 1 | CI runs NVIDIA's digest-pinned Linux image with its bundled scanners. Developers can run the CI helper on a Docker host. | Yes | Partly: CI verdict | Yes | Partly: CI verdict | Yes |
+| SkillEvaluator Tier 2 | Embeddings: an OpenAI key or a local Ollama | Yes | No | Yes | No | Outside the PR gate |
 | SkillEvaluator Tier 3 | Docker, Harbor, and provider keys | Yes | No | Yes | No | By hand |
 | Nomos | Its own Compose stack; MCP over HTTP; Linux | Partly: its review tools | No | Partly | No | No |
 

@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   verifies with independent controls that it detects a broad shell permission and a
   synthetic credential. See [ADR 0024](./docs/adr/0024-agent-config-and-skill-gates.md).
 
+- **Source skills get a static scan on every pull request.** CI checks each canonical
+  `SKILL.md` with SkillEvaluator Tier 1 and publishes a summary of scores and failed checks.
+  Separate schema and security controls verify that the pinned scanner rejects each defect.
+
 - **Decisions can carry checkable evidence.** Record a durable decision with the `continuity`
   skill and revalidate it when its evidence changes. The initial PR policy warns on stale
   evidence and blocks failed or unchecked evidence and altered ledger history. Each PR runs
