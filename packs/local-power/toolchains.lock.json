@@ -1,0 +1,20 @@
+{
+  "bun": {
+    "version": "1.4.4",
+    "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/bun-linux-x64.zip",
+    "sha256": "bf8ccbfb2b0b80159e0f9a6d15c55317add8077534dbc6130a3edb52fccb395c",
+    "entry": "bun-linux-x64/bun"
+  },
+  "uv": {
+    "version": "0.13.8",
+    "url": "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-unknown-linux-gnu.tar.gz",
+    "sha256": "5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91",
+    "entry": "uv-x86_64-unknown-linux-gnu/uv"
+  },
+  "python": {
+    "version": "3.13.18",
+    "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+    "sha256": "f2d2199eb25880e07863b391cf7124e7ffa1338b0d65600dfcec117c4223a7fb",
+    "entry": "python/bin/python3"
+  }
+}

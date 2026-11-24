@@ -1,0 +1,15 @@
+{
+  "name": "gbrain",
+  "version": "0.60.728.0",
+  "source": "https://github.com/garrytan/gbrain/releases/download/v0.60.728.0/gbrain-linux-x64",
+  "pin": "62ed1d0e0780a00d6efe5e61a79c6182a8fb90374464b60bdc9891996ee9a976",
+  "commit": "aa8bb609a082c17643c942d187b33f685e6a3bac",
+  "publishedAt": "2026-11-15T22:07:26Z",
+  "license": "MIT",
+  "platforms": ["linux-x64"],
+  "toolchains": [],
+  "locks": ["docker-compose.local-agents.yml", "postgres/profile.mjs", "postgres/start-postgres.sh", "postgres/init-gbrain.sql"],
+  "capabilities": ["embedded PGLite lookup", "local stdio memory MCP", "opt-in PostgreSQL and pgvector"],
+  "smoke": "Initialize an isolated keyless brain, import one file and retrieve the exact fixture by keyword.",
+  "rollback": "Select the previous activation. Embedded data and the opt-in database volume have separate lifetimes. Release rollback does not undo data migrations."
+}

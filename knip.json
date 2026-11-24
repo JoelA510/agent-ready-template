@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/knip/schema.json",
-  "entry": ["src/components/ui/*.tsx", "scripts/guard-generated.mjs"],
+  "entry": ["src/components/ui/*.tsx", "scripts/guard-generated.mjs", "packs/local-power/bootstrap.mjs", "packs/local-power/postgres/profile.mjs", "packs/local-power/recipes/agentshield-scan.mjs"],
   "ignore": ["platforms/**", "scripts/*.d.mts", "continuity/gate.d.mts", "presets/**"],
+  "ignoreBinaries": ["flock"],
   "ignoreDependencies": ["json5","@fontsource-variable/public-sans", "@fontsource-variable/plus-jakarta-sans", "@fontsource-variable/jetbrains-mono"]
 }

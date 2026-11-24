@@ -1,0 +1,15 @@
+{
+  "name": "gstack",
+  "version": "1.99.5.0",
+  "source": "https://github.com/garrytan/gstack.git",
+  "pin": "0326b144af36676d599dcf63a9fad9a870d22ed6",
+  "license": "MIT",
+  "platforms": ["linux-x64"],
+  "toolchains": ["bun"],
+  "locks": ["toolchains.lock.json"],
+  "bunLockSha256": "7b5eaa5dbc887935eb21f5654fd7e0e14cab23c020a22bd3f487052eff41f797",
+  "publishedAt": "2026-11-16T02:48:11Z",
+  "capabilities": ["review", "eval-plan", "context-save", "context-restore", "cross-model review on explicit request"],
+  "smoke": "Check one valid and one incomplete local preregistration with the upstream CLI and inspect the ten native skill projections.",
+  "rollback": "Select the previous pack activation. The checkout, rendered skills and private runtime remain together in their versioned directory."
+}

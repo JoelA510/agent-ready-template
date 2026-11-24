@@ -1,0 +1,30 @@
+services:
+  gbrain-db:
+    profiles: [gbrain-pg]
+    image: pgvector/pgvector:pg16@sha256:484e838076e04939d27d3e176e91c86eea96236126023be8d3059761122e579f
+    ports:
+      - "127.0.0.1:${GBRAIN_PG_PORT:?gbrain-pg up sets this}:5432"
+    environment:
+      POSTGRES_DB: gbrain
+      POSTGRES_USER: postgres
+    entrypoint: ["/bin/sh", "/opt/local-power/start-postgres.sh"]
+    command: ["postgres"]
+    tmpfs:
+      - /run/gbrain-secrets:rw,noexec,nosuid,nodev,size=1m
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./postgres/start-postgres.sh:/opt/local-power/start-postgres.sh:ro
+      - ./postgres/init-gbrain.sql:/docker-entrypoint-initdb.d/10-gbrain.sql:ro
+    secrets: [owner_password, app_password]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "gbrain"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+secrets:
+  owner_password:
+    file: ${GBRAIN_PG_SECRETS_DIR:?gbrain-pg up sets this}/owner-password
+  app_password:
+    file: ${GBRAIN_PG_SECRETS_DIR:?gbrain-pg up sets this}/app-password
+volumes:
+  db: {}

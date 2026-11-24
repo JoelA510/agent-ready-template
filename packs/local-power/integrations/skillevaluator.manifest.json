@@ -1,0 +1,14 @@
+{
+  "name": "skillevaluator",
+  "version": "1.0.1",
+  "source": "https://github.com/NVIDIA/SkillEvaluator",
+  "pin": "914c15cb3f31562ccffdc9a7166002a87ed2ce1e",
+  "license": "Apache-2.0",
+  "platforms": ["linux-x64"],
+  "toolchains": ["uv", "python"],
+  "locks": ["locks/python313-skillevaluator.txt", "recipes/qualify-tier2.py"],
+  "wheel": "sha256:a6b8523d4022f63e2e0b0d3f31287f884d58fde4091d6e53a900bc2ed8d2df1d",
+  "capabilities": ["Tier 1 pinned CI scanner on local Docker", "Tier 2 catalog and deduplication with an authorized provider", "Tier 3 strict validation and Harbor 0.25.0 paired benchmarks"],
+  "smoke": "Validate a synthetic Tier 3 dataset in strict mode, inspect the installed Harbor and evaluator versions, and run the qualified Tier 1 controls when Docker is available. Live deduplication and paired evaluation require separate provider authorization.",
+  "rollback": "Select the previous qualified environment and evaluator image. Keep the provider/model identities, datasets and retained result digests with their original runs before changing pins."
+}
