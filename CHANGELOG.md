@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-23
+
+Projects can now record decisions against Git evidence and check them on pull requests.
+Cloud agents use the committed toolchain, while Linux and WSL2 users can opt into local
+workflow, memory and evaluation tools. New forks can start with the Plumb brand preset.
+Existing process-only projects can rerun `process:apply` and review the staged workflow
+files before enabling the new checks. [Upgrade guide](./docs/system/updating-from-the-template.mdx)
+
 ### Added
 
 - **Skill Lift has a manual rehearsal and a separately funded paired trial.** The benchmark binds its fixtures, evaluator and preregistration to a continuity decision. It uploads only a sanitized result.
@@ -118,14 +126,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   person's machine may add more through `packs/local-power/` and files git ignores
   (`CLAUDE.local.md`, `.claude/settings.local.json`, `.local-power/`). `npm run agent:target`
   tells a session where it is (`cloud`, `local-power`, or `core`) and which optional tools answer;
-  it probes loopback only and never fails. The pack holds three templates for now (a
-  `CLAUDE.local.md`, Claude Code settings that ask before hard-to-undo commands, and a Codex
-  profile), copied by hand as its README says; its bootstrap comes later. What each environment
-  supports is in `docs/system/agent-targets.md`, and the plan the later stages follow is
-  `docs/changes/2026-11-17-dual-target-agents.md`. Tests hold the direction: no `.mcp.json`,
-  per-machine file, or required-install hook is committed, and nothing outside `packs/` imports
-  or runs it. **A fork:** nothing to do. To use the pack on your machine, follow
-  `packs/local-power/README.md`.
+  it probes loopback services and checks for commands on PATH. The pack's bootstrap installs
+  selected integrations and prepares private Claude Code and Codex profiles after their smoke
+  tests pass. See [agent targets](./docs/system/agent-targets.md) for environment support and
+  [the local pack guide](./packs/local-power/README.md) for setup and rollback.
 
 - **The committed agent settings refuse a forced install, and ask nothing.**
   `.claude/settings.json` denies `npm install`, `npm i`, and `npm ci` with `--force` or
