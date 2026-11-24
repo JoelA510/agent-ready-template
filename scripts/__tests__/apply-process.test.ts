@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ManifestError, PROCESS_PROMPTS, PROCESS_SKILLS, TEMPLATE_ONLY, drift } from '../apply-process.mjs'
 import { runProbe } from '../check-conformance.mjs'
@@ -27,7 +28,7 @@ function scratch(prefix: string) {
 beforeEach(() => {
   template = scratch('apply-template-')
   target = scratch('apply-target-')
-  for (const path of ['scripts/apply-process.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
+  for (const path of ['scripts/apply-process.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards', 'continuity', '.github/workflows', 'scripts/ci']) {
     cpSync(join(REPO, path), join(template, path), { recursive: true })
   }
 })
@@ -49,7 +50,7 @@ const write = (root: string, path: string, content: string) => {
 }
 
 describe('process:apply: delivery', () => {
-  it('stages everything under prompts/, delivers the skills live, and puts nothing else at a live path', () => {
+  it('delivers the gate and selected skills live and stages the optional CI workflows and helpers', () => {
     const { status, out } = apply()
     expect(status).toBe(0)
     for (const path of [
@@ -68,13 +69,25 @@ describe('process:apply: delivery', () => {
     ]) {
       expect(existsSync(join(target, path)), path).toBe(true)
     }
-    for (const live of ['CLAUDE.md', 'CONTRIBUTING.md', '.env.example', 'docs', '.gemini', '.claude/commands']) {
+    for (const live of ['CLAUDE.md', 'CONTRIBUTING.md', '.env.example', 'docs', '.gemini', '.claude/commands', '.claude/hooks', '.github', 'scripts/ci', 'packs', '.local-power', '.mcp.json', 'continuity/ledger', 'continuity/evidence']) {
       expect(existsSync(join(target, live)), live).toBe(false)
     }
-    for (const path of ['prompts/continuity.md', '.agents/skills/continuity/SKILL.md', '.claude/skills/continuity/SKILL.md']) {
-      expect(existsSync(join(template, path)), path).toBe(true)
-      expect(existsSync(join(target, path)), path).toBe(false)
+    for (const path of ['prompts/continuity.md', '.agents/skills/continuity/SKILL.md', '.claude/skills/continuity/SKILL.md', 'continuity/gate.mjs', 'continuity/gate.d.mts', 'continuity/README.md']) {
+      expect(read(target, path), path).toBe(read(template, path))
     }
+    for (const name of ['continuity', 'agentshield', 'skill-eval-ci']) {
+      const path = `.github/workflows/${name}.yml`
+      expect(read(target, 'prompts/skeletons/' + path)).toBe(read(template, path)
+        .replaceAll('branches: [main]', "branches: ['[DEFAULT BRANCH]']").replaceAll('node-version-file: .nvmrc', "node-version: '24'"))
+    }
+    for (const file of ['agent-config-canary', 'skill-tier1']) {
+      const path = `scripts/ci/${file}.mjs`
+      expect(read(target, 'prompts/skeletons/' + path)).toBe(read(template, path))
+    }
+    const help = spawnSync(process.execPath, ['continuity/gate.mjs', '--help'], { cwd: target, encoding: 'utf8', env: ISOLATED_ENV })
+    expect(help.status, help.stderr).toBe(0)
+    expect(help.stdout).toContain('is-current')
+    expect(existsSync(join(target, 'node_modules'))).toBe(false)
     expect(out).toContain('The skeletons are staged under prompts/skeletons/')
     // The report names the manifest it wrote, and the first step commits the delivery untouched.
     expect(out).toContain('Recorded prompts/.apply-manifest.json')
@@ -84,6 +97,116 @@ describe('process:apply: delivery', () => {
     expect(out).toContain('One that runs on commit (a pre-commit\n     hook, lint-staged) needs that before this delivery is committed. One run only by hand can wait')
     expect(out).toMatch(/^ {2}2\. Commit this delivery as it is, with prompts\/\.apply-manifest\.json/m)
     expect(out).not.toContain('Nothing to change.')
+  })
+
+  it('preserves an owned gate, evidence and live workflow, and offers a staged conflict only once', () => {
+    const gate = 'continuity/gate.mjs'
+    const staged = 'prompts/skeletons/.github/workflows/continuity.yml'
+    const privateFiles = ['continuity/ledger/theirs.json', 'continuity/evidence/result.json', '.local-power/state.json',
+      'CLAUDE.local.md', '.github/workflows/continuity.yml', 'scripts/ci/skill-tier1.mjs']
+    for (const path of [gate, staged, ...privateFiles]) write(target, path, 'target owned\n')
+    expect(apply('--list').status).toBe(0)
+    expect(existsSync(join(target, 'prompts/.apply-manifest.json'))).toBe(false)
+    expect(apply().status).toBe(0)
+    expect(apply('--check').status).toBe(1)
+    expect(read(target, gate + '.template')).toBe(read(template, gate))
+    expect(read(target, staged + '.template')).toContain("branches: ['[DEFAULT BRANCH]']")
+    for (const path of [gate, staged, ...privateFiles]) expect(read(target, path)).toBe('target owned\n')
+    rmSync(join(target, gate + '.template'))
+    rmSync(join(target, staged + '.template'))
+    expect(apply().out).toContain('Nothing to change.')
+    expect(apply('--check').status).toBe(0)
+  })
+
+  it('reports an occupied gate slot or proposal without reading, overwriting or recording it', () => {
+    mkdirSync(join(target, 'continuity/gate.mjs'), { recursive: true })
+    const declaration = 'continuity/gate.d.mts'
+    write(target, declaration, 'target declarations\n')
+    write(target, declaration + '.template', 'operator merge in progress\n')
+    expect(apply().out).toContain('Left for the target to resolve')
+    const files = JSON.parse(read(target, 'prompts/.apply-manifest.json')).files
+    expect(files['continuity/gate.mjs']).toBeUndefined()
+    expect(files[declaration]).toBeUndefined()
+    expect(read(target, declaration + '.template')).toBe('operator merge in progress\n')
+    expect(apply('--check')).toMatchObject({ status: 1, out: expect.stringContaining('resolve the collision') })
+  })
+
+  it('resumes newly published gate and staged files after interruption before the manifest advanced', () => {
+    apply()
+    const manifestPath = 'prompts/.apply-manifest.json'
+    const manifest = JSON.parse(read(target, manifestPath))
+    const gate = 'continuity/gate.mjs'
+    const helper = 'prompts/skeletons/scripts/ci/skill-tier1.mjs'
+    delete manifest.files[gate]
+    delete manifest.files[helper]
+    write(target, manifestPath, JSON.stringify(manifest))
+    rmSync(join(target, helper))
+    expect(apply('--check').status).toBe(1)
+    expect(existsSync(join(target, helper))).toBe(false)
+    expect(apply().status).toBe(0)
+    expect(read(target, helper)).toBe(read(template, 'scripts/ci/skill-tier1.mjs'))
+    expect(existsSync(join(target, gate + '.template'))).toBe(false)
+    expect(apply('--check').status).toBe(0)
+  })
+
+  it('serializes competing writers, releases the lock on publication failure, and recovers on retry', () => {
+    // Pause the first real apply inside publication and start an unmodified second CLI process
+    // against the same target. Then inject an I/O failure at manifest rename, after asset writes.
+    const probe = join(template, 'probe.mjs')
+    const observed = join(template, 'contender.json')
+    const manifest = 'prompts/.apply-manifest.json'
+    writeFileSync(probe, `
+      import fs from 'node:fs'
+      import { spawnSync } from 'node:child_process'
+      import { syncBuiltinESMExports } from 'node:module'
+      const rename = fs.renameSync
+      let started = false
+      fs.renameSync = (from, to) => {
+        if (!started) {
+          started = true
+          const other = spawnSync(process.execPath, process.argv.slice(1), { encoding: 'utf8' })
+          fs.writeFileSync(${JSON.stringify(observed)}, JSON.stringify({ status: other.status, stderr: other.stderr }))
+        }
+        if (to === ${JSON.stringify(join(target, manifest))}) throw Error('simulated manifest publication failure')
+        return rename(from, to)
+      }
+      syncBuiltinESMExports()
+    `)
+    const first = spawnSync(process.execPath, ['--import', pathToFileURL(probe).href, join(template, 'scripts/apply-process.mjs'), '--target', target], { encoding: 'utf8' })
+    expect(first.status).toBe(1)
+    expect(first.stderr).toContain('simulated manifest publication failure')
+    expect(JSON.parse(readFileSync(observed, 'utf8'))).toMatchObject({ status: 1, stderr: expect.stringContaining('Delivery lock exists') })
+    expect(existsSync(join(target, manifest))).toBe(false)
+    expect(existsSync(join(target, '.process-apply.lock'))).toBe(false)
+    expect(readdirSync(join(target, 'prompts')).some((path) => path.endsWith('.tmp'))).toBe(false)
+    expect(read(target, 'continuity/gate.mjs')).toBe(read(template, 'continuity/gate.mjs'))
+    expect(apply().status).toBe(0)
+    expect(apply('--check').status).toBe(0)
+  })
+
+  it('leaves an abandoned lock for explicit recovery while list and check stay read-only', () => {
+    expect(apply().status).toBe(0)
+    const lock = '.process-apply.lock'
+    const manifest = 'prompts/.apply-manifest.json'
+    const previous = read(target, manifest)
+    write(target, lock, 'previous writer\n')
+    expect(apply()).toMatchObject({ status: 1, out: expect.stringContaining('confirm that no apply is running') })
+    expect(apply('--list').status).toBe(0)
+    expect(apply('--check').status).toBe(0)
+    expect(read(target, lock)).toBe('previous writer\n')
+    expect(read(target, manifest)).toBe(previous)
+    rmSync(join(target, lock))
+    expect(apply().status).toBe(0)
+    expect(existsSync(join(target, lock))).toBe(false)
+  })
+
+  it('holds back an aliased continuity directory, including links to another directory inside the consumer', () => {
+    write(target, 'decisions/gate.mjs', 'target owned\n')
+    symlinkSync(join(target, 'decisions'), join(target, 'continuity'), 'junction')
+    expect(apply().out).toContain('! continuity/gate.mjs')
+    expect(readdirSync(join(target, 'decisions'))).toEqual(['gate.mjs'])
+    expect(read(target, 'decisions/gate.mjs')).toBe('target owned\n')
+    expect(apply('--check').status).toBe(1)
   })
 
   it('delivers no brand preset: presets are fork-only, applied by init (ADR 0021)', () => {
@@ -510,6 +633,25 @@ describe('process:apply: merge proposals', () => {
     gitTemplate('init', '-q')
     commitTemplate('template')
   })
+  it('recovers the previously staged workflow bytes when the platform selection and upstream both change', () => {
+    const source = '.github/workflows/skill-eval-ci.yml'
+    const staged = 'prompts/skeletons/' + source
+    write(target, '.agents/platforms.json', JSON.stringify({ platforms: ['claude-code'] }))
+    apply()
+    const old = read(target, staged)
+    expect(old).toContain('skill-tier1.mjs scan .claude/skills ')
+    write(target, staged, '# local edits\n' + old)
+    write(template, source, read(template, source) + '\n# upstream edit\n')
+    commitTemplate('update workflow')
+    write(target, '.agents/platforms.json', JSON.stringify({ platforms: ['codex'] }))
+    const result = apply()
+    expect(result.out).toContain(staged + '.template (merged cleanly)')
+    const proposed = read(target, staged + '.template')
+    for (const text of ['# local edits', '# upstream edit', 'skill-tier1.mjs scan .agents/skills ', "branches: ['[DEFAULT BRANCH]']"]) {
+      expect(proposed).toContain(text)
+    }
+    expect(read(target, staged)).toBe('# local edits\n' + old)
+  })
   const lines = (n: number, edit: Record<number, string> = {}) => Array.from({ length: n }, (_, i) => edit[i] ?? `line ${i}`).join('\n') + '\n'
 
   it('parks a clean merge of both sides when the edits touch different lines', () => {
@@ -825,6 +967,9 @@ describe('process:apply: refusals', () => {
     ['an absolute key', `{"files": {"/etc/victim.txt": "${'0'.repeat(64)}"}}`],
     ['a template commit that is not a string', '{"files": {}, "templateCommit": 42}'],
     ['a key outside the delivery paths', `{"files": {"src/main.ts": "${'0'.repeat(64)}"}}`],
+    ['a ledger file inside the new gate directory', `{"files": {"continuity/ledger/${'a'.repeat(64)}.json": "${'0'.repeat(64)}"}}`],
+    ['an evidence file inside the new gate directory', `{"files": {"continuity/evidence/private.json": "${'0'.repeat(64)}"}}`],
+    ['a live workflow', `{"files": {".github/workflows/continuity.yml": "${'0'.repeat(64)}"}}`],
   ])('refuses a manifest that is %s, instead of guessing', (_label, content) => {
     write(target, 'prompts/.apply-manifest.json', content)
     const { status, out } = apply()

@@ -1,0 +1,124 @@
+{
+  "$comment": "Ownership on graduation under ADR 0022. Each Git path must match exactly one selector. A trailing slash includes its complete subtree (including dotfiles). Other selectors are repo-relative POSIX file paths or globs. Order documents related rules and gives no rule precedence.",
+  "owners": {
+    "process": "Canonical tooling, parser dependencies, workflow sources, distributions and their tests move together to the process repository. Each consumer retains its own enabled jobs and settings.",
+    "interface": "Keep the React, Storybook, token and registry product, its build outputs and corresponding decisions in the template.",
+    "local-power": "Move the opt-in local runtime, toolchain locks and its qualification to a local pack repository if it graduates.",
+    "shared": "Keep the live instance in its repository. Split mixed-purpose tooling by its actual jobs and source inventory. Each future repository owns its own enforcement, evidence, releases and dependency lock."
+  },
+  "rules": [
+    {
+      "owner": "process",
+      "purpose": "Author and distribute skills, standards, instructions, conformance checks and target skeletons.",
+      "paths": [
+        ".agents/platforms.json", ".agents/skills/", ".claude/skills/", ".claude-plugin/plugin.json",
+        "prompts/", "standards/", "templates/", "evals/README.md", "evals/routing/", "evals/behavior/",
+        "continuity/gate.mjs", "continuity/gate.d.mts", "continuity/README.md",
+        ".github/workflows/audit.yml", ".github/workflows/evals.yml", ".github/workflows/continuity.yml",
+        ".github/workflows/agentshield.yml", ".github/workflows/skill-eval-ci.yml",
+        ".github/workflows/skill-lift.yml", "evals/skill-lift/benchmark.lock.json",
+        "docs/system/agent-targets.md", "docs/system/updating-from-the-template.mdx",
+        "docs/changes/2026-11-17-dual-target-agents.md", "docs/security/dependency-policy.md",
+        "docs/adr/0000-template.md", "docs/adr/0002-process-distribution.md",
+        "docs/adr/0005-dependency-audit-gate.md", "docs/adr/0006-staged-skeletons-and-apply-manifest.md",
+        "docs/adr/0007-agents-md-with-claude-import.md", "docs/adr/0008-supported-node-versions.md",
+        "docs/adr/0011-agent-portable-workflows.md", "docs/adr/0014-tagged-releases-and-template-version.md",
+        "docs/adr/0015-standards-catalog-and-conformance.md", "docs/adr/0016-apply-delivers-standards-proposes-merges-checks-drift.md",
+        "docs/adr/0017-actions-pinned-by-commit.md", "docs/adr/0018-a-guard-and-a-setup-for-every-agent.md",
+        "docs/adr/0019-npm-install-guards.md", "docs/adr/0020-instructions-sized-for-selected-platforms.md",
+        "docs/adr/0023-content-bound-continuity.md", "docs/adr/0024-agent-config-and-skill-gates.md"
+      ]
+    },
+    {
+      "owner": "process",
+      "purpose": "Move these specific executables, declarations, supporting parsers and test fixtures with the process. Keep yaml, smol-toml, json5 and typescript declared with the released entrypoints that load them.",
+      "paths": [
+        "scripts/agent-platforms.mjs", "scripts/agent-platforms.d.mts", "scripts/agent-target.mjs", "scripts/agent-target.d.mts",
+        "scripts/apply-process.mjs", "scripts/apply-process.d.mts", "scripts/build-skills.mjs", "scripts/check-audit.mjs",
+        "scripts/check-conformance.mjs", "scripts/check-conformance.d.mts", "scripts/check-env.mjs", "scripts/check-env.d.mts",
+        "scripts/check-instructions.mjs", "scripts/check-instructions.d.mts", "scripts/check-placeholders.mjs", "scripts/check-placeholders.d.mts",
+        "scripts/check-settings.mjs", "scripts/check-settings.d.mts", "scripts/check-upgrade-path.mjs", "scripts/check-upgrade-path.d.mts",
+        "scripts/fleet-report.mjs", "scripts/fleet-report.d.mts", "scripts/fleet-update.mjs", "scripts/fleet-update.d.mts",
+        "scripts/repo-files.mjs", "scripts/repo-files.d.mts", "scripts/runtime.mjs", "scripts/runtime.d.mts",
+        "scripts/setup.sh", "scripts/skills.mjs", "scripts/skills.d.mts", "scripts/template-dependency.mjs",
+        "scripts/ci/agent-config-canary.mjs", "scripts/ci/skill-tier1.mjs", "scripts/ci/skill-lift.mjs",
+        "scripts/__tests__/agent-platforms.test.ts", "scripts/__tests__/agent-target.test.ts", "scripts/__tests__/apply-process.test.ts",
+        "scripts/__tests__/build-skills.test.ts", "scripts/__tests__/check-audit.test.ts", "scripts/__tests__/check-conformance.test.ts",
+        "scripts/__tests__/check-env.test.ts", "scripts/__tests__/check-instructions.test.ts", "scripts/__tests__/check-placeholders.test.ts",
+        "scripts/__tests__/check-settings.test.ts", "scripts/__tests__/check-upgrade-path.test.ts", "scripts/__tests__/evals.test.ts",
+        "scripts/__tests__/fleet-report.test.ts", "scripts/__tests__/fleet-update.test.ts", "scripts/__tests__/process-docs.test.ts",
+        "scripts/__tests__/reserved-command-names.json", "scripts/__tests__/setup.test.ts", "scripts/__tests__/agent-ci.test.ts",
+        "scripts/__tests__/agent-config-canary.test.ts", "scripts/__tests__/consumer-workflows.test.ts",
+        "scripts/__tests__/continuity-gate.test.ts", "scripts/__tests__/continuity-workflow.test.ts",
+        "scripts/__tests__/skill-tier1.test.ts", "scripts/__tests__/skill-lift.test.ts"
+      ]
+    },
+    {
+      "owner": "interface",
+      "purpose": "Keep the design system, its production assets, Storybook and browser tests with the interface release.",
+      "paths": [
+        "src/", "tokens/", "platforms/", "presets/", "public/", ".storybook/", ".github/workflows/pages.yml",
+        "bundle-budget.json", "components.json", "index.html", "registry.json", "style-dictionary.config.mjs",
+        "tsconfig.app.json", "tsconfig.assets.json", "tsconfig.json", "tsconfig.node.json",
+        "vite.config.ts", "vitest.browser.config.ts", "vitest.setup.ts",
+        "docs/brand/", "docs/foundations/", "docs/proposals/", "docs/system/consuming-in-an-existing-project.mdx",
+        "docs/changes/2026-10-08-tanstack-table-v9.md", "docs/changes/2026-11-14-plumb-preset.md",
+        "docs/adr/0001-interface-foundation.md", "docs/adr/0003-dark-status-roles.md", "docs/adr/0004-solid-focus-ring.md",
+        "docs/adr/0009-wcag-2-2-aa.md", "docs/adr/0010-token-pipeline-colors-and-native-shapes.md",
+        "docs/adr/0012-stories-in-a-real-browser.md", "docs/adr/0013-registry-on-pages.md", "docs/adr/0021-brand-presets.md",
+        "scripts/build-registry.mjs", "scripts/check-bundle-size.mjs", "scripts/check-bundle-size.d.mts", "scripts/check-contrast.mjs",
+        "scripts/check-pages-homepage.mjs", "scripts/color.mjs", "scripts/color.d.mts", "scripts/homepage.mjs", "scripts/homepage.d.mts",
+        "scripts/init.mjs", "scripts/native-tokens.mjs", "scripts/native-tokens.d.mts",
+        "scripts/__tests__/build-registry.test.ts", "scripts/__tests__/check-bundle-size.test.ts", "scripts/__tests__/check-contrast.test.ts",
+        "scripts/__tests__/check-pages-homepage.test.ts", "scripts/__tests__/color.test.ts", "scripts/__tests__/fixtures/README.md",
+        "scripts/__tests__/fixtures/placeholder-tokens/", "scripts/__tests__/homepage.test.ts", "scripts/__tests__/init.test.ts",
+        "scripts/__tests__/native-tokens.test.ts", "scripts/__tests__/presets.test.ts", "scripts/__tests__/tokens-build.test.ts"
+      ]
+    },
+    {
+      "owner": "local-power",
+      "purpose": "Keep the pack, its opt-in tests and runtime-specific decisions together.",
+      "paths": ["packs/local-power/", "docs/adr/0025-local-runtime-pack.md"]
+    },
+    {
+      "owner": "shared",
+      "purpose": "Each adopter owns its instructions, hook registrations, live CI bindings, organization policies, release history and public notices. Applying a skeleton does not grant permissions.",
+      "paths": [
+        ".agents/hooks.json", ".claude/hooks/session-start.sh", ".claude/settings.json", ".codex/hooks.json",
+        ".codex/rules/blast-radius.rules", ".cursor/environment.json", ".gemini/settings.json",
+        ".editorconfig", ".gitattributes", ".gitignore", ".husky/pre-commit", ".npmrc", ".nvmrc",
+        ".github/ISSUE_TEMPLATE/", ".github/dependabot.yml", ".github/hooks/guard-generated.json",
+        ".github/pull_request_template.md", ".github/rulesets/main.json", ".github/workflows/ci.yml", ".github/workflows/copilot-setup-steps.yml",
+        "AGENTS.md", "CHANGELOG.md", "CLAUDE.md", "CONTRIBUTING.md", "GOVERNANCE.md", "LICENSE", "README.md", "SECURITY.md", "THIRD-PARTY-NOTICES.md",
+        "docs/adr/0022-shared-core-and-two-agent-targets.md", "docs/adr/README.md", "docs/security/audit-waivers.json",
+        "docs/standards/conformance.json", "docs/system/agent-reference.md", "docs/system/contributing.mdx",
+        "docs/system/governance.mdx", "docs/system/introduction.mdx", "docs/system/seams.json"
+      ]
+    },
+    {
+      "owner": "shared",
+      "purpose": "Split generators' inventory and guard configuration, tooling manifests and mixed test suites by the files and jobs each repository actually owns.",
+      "paths": [
+        "eslint.config.js", "knip.json", "package.json", "package-lock.json", "tsconfig.test.json", "vitest.config.ts",
+        "scripts/check-generated.mjs", "scripts/generated.mjs", "scripts/generated.d.mts", "scripts/guard-generated.mjs",
+        "scripts/__tests__/agent-hooks.test.ts", "scripts/__tests__/check-generated.test.ts", "scripts/__tests__/fixture-git.ts",
+        "scripts/__tests__/isolated-env.test.ts", "scripts/__tests__/isolated-env.ts", "scripts/__tests__/repo-hygiene.test.ts",
+        "scripts/__tests__/seams.test.ts"
+      ]
+    },
+    {
+      "owner": "shared",
+      "purpose": "Decisions, evidence, benchmark tasks and preregistrations belong to the repository that makes the claim. Only the gate, benchmark protocol and reviewed workflow sources graduate.",
+      "paths": ["continuity/ledger/", "continuity/evidence/", "evals/skill-lift/*/prereg.md", "evals/skill-lift/*/evals.json"]
+    }
+  ],
+  "generated": {
+    "tokens:build": { "owner": "interface", "sources": ["tokens/"] },
+    "registry:build": {
+      "owner": "interface",
+      "sources": ["src/components/ui/", "src/lib/utils.ts", "src/hooks/use-mobile.ts"],
+      "repositoryInputs": ["package.json"]
+    },
+    "skills:build": { "owner": "process", "sources": [".agents/skills/"] }
+  }
+}

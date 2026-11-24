@@ -2,7 +2,7 @@
 
 The ledger records a decision, the evidence it depends on, and later observations about that
 evidence. It runs with Node and Git in a clean checkout. Each repository owns its ledger.
-Start with [ADR 0023](../docs/adr/0023-content-bound-continuity.md) for the design choice.
+Start with the [template's ADR 0023](https://github.com/JoelA510/agent-ready-template/blob/395863275232b92b920c2595a4998b41e5b80f13/docs/adr/0023-content-bound-continuity.md) for the design choice.
 
 ## Check a decision
 

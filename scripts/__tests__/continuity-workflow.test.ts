@@ -54,7 +54,7 @@ describe.skipIf(windowsWithoutBash)(windowsWithoutBash ? 'continuity workflow Gi
     return spawnSync(bash, ['-c', script], {
       cwd: repo,
       encoding: 'utf8',
-      env: { ...process.env, GITHUB_EVENT_NAME: event, GITHUB_REF: 'refs/heads/main', GITHUB_ENV: join(runner, 'env'),
+      env: { ...process.env, GITHUB_EVENT_NAME: event, DEFAULT_BRANCH: 'release/trunk', GITHUB_REF: 'refs/heads/release/trunk', GITHUB_ENV: join(runner, 'env'),
         GITHUB_WORKSPACE: repo, GITHUB_EVENT_PATH: join(runner, 'event.json'), RUNNER_TEMP: runner, EVENT_BASE: base, TREE: tree, ...extra },
     })
   }
@@ -73,7 +73,7 @@ describe.skipIf(windowsWithoutBash)(windowsWithoutBash ? 'continuity workflow Gi
 
   it('rejects an absent anchor, an off-branch dispatch and a protected base with no reader', () => {
     expect(run(scripts[0], 'push', { EVENT_BASE: '' }).status).toBe(1)
-    expect(run(scripts[0], 'workflow_dispatch', { GITHUB_REF: 'refs/heads/untrusted' }).status).toBe(1)
+    expect(run(scripts[0], 'workflow_dispatch', { GITHUB_REF: 'refs/heads/main' }).status).toBe(1)
     git('rm', '-q', 'continuity/gate.mjs')
     base = commit('remove the reader from the base')
     writeFileSync(join(repo, 'candidate.txt'), 'changed\n')

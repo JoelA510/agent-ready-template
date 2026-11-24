@@ -9,6 +9,17 @@ template ships a fix you want (a check that now catches something, a component a
 fix, a prompt that asks a better question), you take it on purpose, from a release, and review
 it like any other change.
 
+For process-only consumers, a release can offer the continuity reader at its live path and
+the CI workflows under `prompts/skeletons/`. Review parked proposals before activating a
+workflow. Keep the consumer's existing records, create its own first decision if needed,
+and land the reviewed seed and reader before enabling the continuity check. Qualify the
+actual check names on a pull request before requiring them in the target's branch rules.
+
+A mutating apply holds `.process-apply.lock` in the target. If a run stops before it can
+release the lock, check the recorded host, PID and start time. After confirming the writer
+has stopped, remove its abandoned lock and rerun the same apply. Review any pending
+`.template` files before treating `process:apply --check` as current.
+
 An agent can walk through all of it: the `template-update` skill runs `prompts/template-update.md`
 (the CHANGELOG checklist, the files, each `.template`, and the scorecard). Across many
 repositories, the template's `npm run fleet:update` (and the hub's **Fleet update** workflow)

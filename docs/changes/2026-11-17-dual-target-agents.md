@@ -1,6 +1,6 @@
 # A shared core, a cloud target, and a local power target for agents
 
-Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stages 0 through 2 implemented, stages 3 to 5 pending)
+Kind: FEATURE · Drawn up: 2026-11-17 · Owner: Joel Abraham · Status: IN PROGRESS (stages 0 through 3 implemented, stages 4 and 5 pending)
 
 ## Why
 
@@ -344,13 +344,12 @@ ephemeral runner. The acceptance threshold is 70.
 
 ### Stage 3: modularize in place
 
-Nothing moves. `process:apply` learns to deliver `continuity/gate.mjs` and
-`continuity/README.md`, never the ledger, and the `continuity` skill becomes a process skill.
-Skeleton workflows join `templates/project/.github/workflows/` (`continuity.yml`,
-`agentshield.yml`, `skill-eval-ci.yml`) with their entries in the ruleset skeleton. A
-`docs/system/seams.json` maps each top-level path to `process`, `interface`, `shared`, or
-`local-power`, and a hygiene test fails on an unclassified path, so the table in ADR 0022 becomes
-checked data. `apply-process.test.ts` and the upgrade-path check cover the new deliveries.
+`process:apply` delivers the continuity skill, prompt, gate, declarations and guide. The
+consumer owns its ledger and branch protection. The three optional PR workflows and their
+helpers are staged under `prompts/skeletons/` from the template's executable sources.
+`docs/system/seams.json` assigns every tracked path to one owner and records the source
+owners of generated files. Upgrade checks exercise a clean repository and an edited one,
+including a parked proposal, a repeated apply and its resolution.
 
 ### Stage 4: the local power pack
 
@@ -571,7 +570,7 @@ Later stages, each its own pull request:
   replacement history. Stale evidence emits a warning.
 - [x] Stage 2 AgentShield scan and independent permission and secret controls.
 - [x] Stage 2 SkillEvaluator source scan and independent schema and security controls.
-- [ ] Stage 3: delivery — proved by `apply-process.test.ts`, the upgrade-path check, and the
+- [x] Stage 3: delivery — proved by `apply-process.test.ts`, the upgrade-path check, and the
   seams test.
 - [ ] Stage 4: the bootstrap and manifests — proved by `local-power.test.ts` and a run on WSL2.
 - [ ] Stage 5: the benchmark — proved by one dispatched run ending in a ledger decision.
@@ -668,5 +667,5 @@ Later stages, each its own pull request:
   docs/product.md.)
 - [x] Stage 1 rollout in Git: the bootstrap precedes the PR workflow that runs the
   protected base's reader against the candidate tree.
-- [ ] Verify the live branch ruleset requires the qualified continuity check.
+- [x] Verified the live main ruleset requires the qualified continuity and AgentShield checks.
 - [ ] Stages 3 to 5: checks, observed failures and documentation for each stage.

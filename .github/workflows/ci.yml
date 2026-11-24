@@ -61,7 +61,13 @@ jobs:
           curl -fsSLo "$RUNNER_TEMP/actionlint.tgz" https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/actionlint.tgz" -C "$RUNNER_TEMP" actionlint
-          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml templates/hub/.github/workflows/*.yml
+          consumer=$(mktemp -d "$RUNNER_TEMP/workflow-consumer.XXXXXXXX")
+          node scripts/apply-process.mjs --target "$consumer"
+          mkdir -p "$consumer/.github/workflows"
+          for file in "$consumer"/prompts/skeletons/.github/workflows/*.yml; do
+            sed 's/\[DEFAULT BRANCH\]/trunk/g' "$file" > "$consumer/.github/workflows/$(basename "$file")"
+          done
+          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml templates/hub/.github/workflows/*.yml "$consumer"/.github/workflows/*.yml
 
       # The single aggregate gate: tokens:build -> check-contrast -> typecheck -> lint ->
       # check:unused -> build -> check:bundle -> build-storybook -> test.

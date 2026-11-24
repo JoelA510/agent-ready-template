@@ -61,8 +61,11 @@ function normalizeLock(file) {
   // npm emits round-trippable JSON. Refuse to collapse duplicate keys or other ambiguous input
   // when serializing the scan copy. Whitespace outside JSON strings is immaterial.
   const compact = raw.replace(/"(?:\\.|[^"\\])*"|\s+/gu, (token) => token[0] === '"' ? token : '')
-  requireThat(compact === JSON.stringify(lock) && lock.packages && !Array.isArray(lock.packages) &&
-    typeof lock.packages === 'object', 'Unsupported npm lockfile representation')
+  requireThat(compact === JSON.stringify(lock), 'Unsupported npm lockfile representation')
+  // npm v1 has no packages map. Its original bytes still go through the scanner.
+  if (lock?.lockfileVersion === 1 && !Object.hasOwn(lock, 'packages')) return
+  requireThat(lock?.packages && !Array.isArray(lock.packages) && typeof lock.packages === 'object',
+    'Unsupported npm lockfile representation')
   for (const pkg of Object.values(lock.packages)) {
     if (typeof pkg?.integrity !== 'string') continue
     const match = /^sha512-([A-Za-z0-9+/]{86}==)$/.exec(pkg.integrity)
@@ -79,7 +82,6 @@ function project(destination) {
   const outside = relative(repo, dir)
   requireThat(outside.startsWith('..' + sep) || isAbsolute(outside), 'Scan copy must be outside the repository')
   const index = execFileSync('git', ['ls-files', '--stage', '-z'], { cwd: repo, encoding: 'utf8' })
-  requireThat(/\t\.agents\/skills\/[^/\0]+\/SKILL\.md\0/.test(index), 'Expected a tracked source skill')
   const entries = new Map(index.split('\0').filter(Boolean).map((entry) => {
     const match = /^(100644|100755|120000|160000) [0-9a-f]+ 0\t(.+)$/su.exec(entry)
     requireThat(match, 'Scan needs a resolved Git index')
@@ -108,11 +110,20 @@ function project(destination) {
     mkdirSync(dirname(target), { recursive: true })
     copyFileSync(source, target)
   }
-  requireThat(read(join(dir, settings)).trim(), 'Missing committed Claude settings')
-  const claude = read(join(dir, 'CLAUDE.md'))
-  requireThat(/^@AGENTS\.md\r?$/m.test(claude), 'Expected the shared AGENTS.md import in CLAUDE.md')
-  writeFileSync(join(dir, 'CLAUDE.md'), claude.replace(/^@AGENTS\.md\r?$/m, () => read(join(dir, 'AGENTS.md'))))
-  normalizeLock(join(dir, 'package-lock.json'))
+  // A parked template or package manifest alone is insufficient evidence of live agent configuration.
+  const inputs = ['AGENTS.md', 'CLAUDE.md', '.claude/CLAUDE.md', settings, '.codex/config.toml', '.mcp.json']
+  requireThat(inputs.some(path => entries.has(path) && read(join(dir, path)).trim()), 'Missing tracked agent configuration')
+  if (entries.has('CLAUDE.md')) {
+    const path = join(dir, 'CLAUDE.md')
+    const claude = read(path)
+    const expanded = claude.replace(/^@(?:\.\/)?AGENTS\.md\r?$/gm, () => {
+      const shared = read(join(dir, 'AGENTS.md'))
+      requireThat(shared.trim(), 'Imported AGENTS.md has no instructions')
+      return shared
+    })
+    if (expanded !== claude) writeFileSync(path, expanded)
+  }
+  if (entries.has('package-lock.json')) normalizeLock(join(dir, 'package-lock.json'))
 }
 
 const [command, path, ...extra] = process.argv.slice(2)

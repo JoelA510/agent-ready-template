@@ -34,6 +34,7 @@ jobs:
         shell: bash
         env:
           EVENT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           [[ "$TREE" =~ ^[0-9a-f]{40}$ && "$(git rev-parse HEAD)" == "$TREE" ]]
@@ -41,7 +42,7 @@ jobs:
             pull_request) base=$EVENT_BASE; [[ "$(git rev-parse --verify "$TREE^1")" == "$base" ]] ;;
             push) base=$EVENT_BASE ;;
             schedule|workflow_dispatch)
-              [[ "$GITHUB_REF" == refs/heads/main ]]
+              [[ "$GITHUB_REF" == "refs/heads/$DEFAULT_BRANCH" ]]
               base=$(git rev-parse --verify "$TREE^1") ;;
             *) exit 1 ;;
           esac
@@ -49,7 +50,7 @@ jobs:
           git merge-base --is-ancestor "$base" "$TREE"
           # A missing reader is an error. First merge the gate and seed under ordinary CI.
           git show "$base:continuity/gate.mjs" > "$RUNNER_TEMP/base-gate.mjs"
-          # Read .nvmrc and package metadata from the protected checkout too.
+          # Use the protected checkout for runner setup.
           git checkout --quiet --detach "$base"
           echo "BASE=$base" >> "$GITHUB_ENV"
 

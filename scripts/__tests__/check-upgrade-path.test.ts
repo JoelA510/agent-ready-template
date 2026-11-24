@@ -20,7 +20,7 @@ const check = (...args: string[]) => spawnSync(process.execPath, [join(template,
 
 beforeEach(() => {
   template = mkdtempSync(join(tmpdir(), 'upgrade-template-'))
-  for (const path of ['scripts/apply-process.mjs', 'scripts/check-upgrade-path.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
+  for (const path of ['scripts/apply-process.mjs', 'scripts/check-upgrade-path.mjs', 'scripts/check-instructions.mjs', 'scripts/agent-platforms.mjs', 'scripts/repo-files.mjs', 'scripts/runtime.mjs', 'scripts/skills.mjs', 'scripts/template-dependency.mjs', 'scripts/ci', '.github/workflows', 'continuity', 'package.json', 'prompts', '.agents/skills', '.claude/skills', 'templates/project', 'templates/standards', 'standards']) {
     cpSync(join(REPO, path), join(template, path), { recursive: true })
   }
   git('init', '-q')
@@ -51,6 +51,18 @@ describe('check-upgrade-path', () => {
     const r = check()
     expect(r.status).toBe(1)
     expect(r.stderr).toContain('parked 1 file(s) nobody edited')
+  })
+
+  it('fails when upgrading would overwrite a consumer edit instead of parking its proposal', () => {
+    const path = join(template, 'scripts/apply-process.mjs')
+    const source = readFileSync(path, 'utf8')
+    const planted = source.replace('const out = join(target, parked(kind) ? `${dest}.template` : dest)', 'const out = join(target, dest)')
+    expect(planted).not.toBe(source)
+    writeFileSync(path, planted)
+    git('commit', '-q', '--no-verify', '-am', 'overwrite a consumer edit')
+    const r = check()
+    expect(r.status, r.stderr).toBe(1)
+    expect(r.stderr).toContain('did not preserve prompts/review.md')
   })
 
   it('upgrades from a release, not the candidate before it', () => {

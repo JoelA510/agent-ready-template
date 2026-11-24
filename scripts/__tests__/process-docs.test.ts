@@ -282,12 +282,13 @@ describe('relative links', () => {
     expect(paths.size).toBeGreaterThan(10)
     const broken = delivered
       .filter((d) => /\.mdx?$/.test(d.dest))
-      .flatMap((d) =>
-        links(d.content)
+      .flatMap((d) => {
+        if (typeof d.content !== 'string') throw new Error(`Expected UTF-8 Markdown at ${d.dest}`)
+        return links(d.content)
           .map((href) => ({ href, resolved: posix.normalize(posix.join(posix.dirname(d.dest), href)).replace(/\/$/, '') }))
           .filter(({ resolved }) => !paths.has(resolved) && ![...paths].some((p) => p.startsWith(`${resolved}/`)))
-          .map(({ href }) => `${d.dest} -> ${href}`),
-      )
+          .map(({ href }) => `${d.dest} -> ${href}`)
+      })
     expect(broken).toEqual([])
   })
 })
