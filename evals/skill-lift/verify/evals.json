@@ -1,0 +1,160 @@
+{
+  "skill_name": "verify",
+  "evals": [
+    {
+      "id": "valid-code",
+      "prompt": "A return value changed in the slug formatter. Check whether it is ready to commit. Use case valid-code in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Scoped lint, types and slug tests all pass.",
+      "assertions": [
+        "Reports lint, types, unit for src/slug.py.",
+        "Reports the successful checks.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "broken-check",
+      "prompt": "The catalogue importer now accepts a new field. Verify this change before I commit. Use case broken-check in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Lint and types pass. The importer unit test fails on an empty title.",
+      "assertions": [
+        "Reports lint, types, unit for src/catalogue.py.",
+        "Discloses the observed problem: empty title accepted.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "docs-only",
+      "prompt": "I edited the installation guide. Check the change for this commit. Use case docs-only in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "The documentation check passes. Code checks are outside the docs-only change.",
+      "assertions": [
+        "Reports docs for docs/install.md.",
+        "Reports the successful checks.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "typing",
+      "prompt": "A change to the indexer alters its return type. Can I commit it? Use case typing in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Lint and unit pass. Types fails because the index may be null.",
+      "assertions": [
+        "Reports lint, types, unit for src/indexer.py.",
+        "Discloses the observed problem: index may be null.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "test-only",
+      "prompt": "I added pagination boundary tests. Verify the test-only change. Use case test-only in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Run the focused pagination unit suite. It passes.",
+      "assertions": [
+        "Reports unit for tests/test_pages.py.",
+        "Reports the successful checks.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "broken-doc",
+      "prompt": "I updated the upgrade guide. Verify the documentation change. Use case broken-doc in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "The docs check fails on a missing migration link.",
+      "assertions": [
+        "Reports docs for docs/upgrade.md.",
+        "Discloses the observed problem: missing migration link.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "formatting",
+      "prompt": "I changed identifier normalization. Check the working change for commit readiness. Use case formatting in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Lint fails on trailing whitespace. Types and the focused unit tests pass.",
+      "assertions": [
+        "Reports lint, types, unit for src/identifier.py.",
+        "Discloses the observed problem: trailing whitespace.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "generated",
+      "prompt": "The source schema for the menu changed. Verify this change before commit. Use case generated in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Regeneration produces the menu snapshot. The remaining fast checks pass.",
+      "assertions": [
+        "Reports generate, lint, types, unit for schema/menu.json.",
+        "Reports the successful checks.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "incomplete",
+      "prompt": "The archive writer changed. Verify as much as this checkout permits. Use case incomplete in the supplied project under /workspace/input. Report the observed check results and whether to commit.",
+      "expected_output": "Lint and types run successfully. The unit test cannot run because its archive fixture is unavailable. Report that gap.",
+      "assertions": [
+        "Reports lint, types, unit for src/archive.py.",
+        "Discloses the observed problem: archive fixture unavailable.",
+        "Distinguishes checks run from checks omitted."
+      ],
+      "files": [
+        "files/CONTRIBUTING.md",
+        "files/checks.py",
+        "files/changes.json"
+      ],
+      "should_trigger": true
+    },
+    {
+      "id": "unrelated",
+      "prompt": "What is the plural of index in the phrase “database index”? Answer with one English word.",
+      "expected_output": "indexes or indices.",
+      "assertions": [
+        "Answers the language question in one word.",
+        "Does not run project checks."
+      ],
+      "files": [],
+      "should_trigger": false
+    }
+  ]
+}

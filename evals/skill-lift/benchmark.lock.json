@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "skill": "verify",
+  "evaluator": "1.0.1",
+  "harbor": "0.25.0",
+  "python": "3.13.18",
+  "baseImage": "python:3.12-slim@sha256:05a994d2344eb364cc186910f4fc8786a38215f39f00d0acc25bff33a08f4177",
+  "agents": {
+    "claude-code": {
+      "model": null,
+      "cli": "2.1.292"
+    },
+    "codex": {
+      "model": null,
+      "cli": "0.161.0"
+    }
+  },
+  "judge": {
+    "claude-code": {
+      "provider": "openai",
+      "model": null
+    },
+    "codex": {
+      "provider": "anthropic",
+      "model": null
+    }
+  },
+  "attempts": 3,
+  "passThreshold": 0.8,
+  "threshold": 0.05,
+  "decoys": [
+    "unrelated"
+  ],
+  "files": [
+    "evals/skill-lift/verify/files/CONTRIBUTING.md",
+    "evals/skill-lift/verify/files/checks.py",
+    "evals/skill-lift/verify/files/changes.json"
+  ],
+  "prices": {},
+  "budgetUsd": null,
+  "enrollment": null
+}

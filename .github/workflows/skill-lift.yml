@@ -1,0 +1,88 @@
+name: Skill Lift
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Execution mode
+        type: choice
+        required: true
+        options: [rehearse, funded]
+      skill:
+        description: Preregistered skill
+        type: choice
+        required: true
+        options: [verify]
+
+permissions: {}
+concurrency:
+  group: skill-lift-verify
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Preregistered Skill Lift
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    environment: skill-lift
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      TREE: ${{ github.sha }}
+      SKILL: ${{ inputs.skill }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.18'
+      - name: Verify the protected base and provision the evaluator
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$SKILL" = verify
+          test "$(git rev-parse HEAD)" = "$TREE"
+          base=$(git rev-parse "$TREE^1")
+          git show "$base:continuity/gate.mjs" > "$RUNNER_TEMP/base-gate.mjs"
+          node "$RUNNER_TEMP/base-gate.mjs" verify --root "$PWD" --base "$base" --tree "$TREE"
+          printf 'BASE=%s\n' "$base" >> "$GITHUB_ENV"
+          python -m venv "$RUNNER_TEMP/evaluator"
+          "$RUNNER_TEMP/evaluator/bin/pip" install --disable-pip-version-check --require-hashes --only-binary=:all: -r evals/skill-lift/evaluator.requirements.txt
+          "$RUNNER_TEMP/evaluator/bin/pip" check
+          echo "$RUNNER_TEMP/evaluator/bin" >> "$GITHUB_PATH"
+      - name: Prepare immutable inputs
+        run: node scripts/ci/skill-lift.mjs prepare --skill "$SKILL" --tree "$TREE" --base "$BASE" --out "$RUNNER_TEMP/experiment"
+      - name: Validate the prepared dataset
+        run: skillevaluator tier3 validate "$RUNNER_TEMP/experiment/verify" --strict
+      - name: Generate both Harbor task arms
+        run: python -I scripts/ci/rehearse-skill-lift.py "$RUNNER_TEMP/experiment/verify"
+      - name: Execute enrolled matrix
+        id: trial
+        if: inputs.mode == 'funded'
+        env:
+          SKILL_LIFT_OPENAI_BASE_URL: ${{ vars.SKILL_LIFT_OPENAI_BASE_URL }}
+          SKILL_LIFT_ANTHROPIC_BASE_URL: ${{ vars.SKILL_LIFT_ANTHROPIC_BASE_URL }}
+          SKILL_LIFT_PROVIDER_CAP_USD: ${{ vars.SKILL_LIFT_PROVIDER_CAP_USD }}
+          SKILL_LIFT_ENROLLMENT: ${{ vars.SKILL_LIFT_ENROLLMENT }}
+          SKILL_LIFT_CLAUDE_TOKEN: ${{ secrets.SKILL_LIFT_CLAUDE_TOKEN }}
+          SKILL_LIFT_CODEX_TOKEN: ${{ secrets.SKILL_LIFT_CODEX_TOKEN }}
+          SKILL_LIFT_OPENAI_JUDGE_TOKEN: ${{ secrets.SKILL_LIFT_OPENAI_JUDGE_TOKEN }}
+          SKILL_LIFT_ANTHROPIC_JUDGE_TOKEN: ${{ secrets.SKILL_LIFT_ANTHROPIC_JUDGE_TOKEN }}
+        run: node scripts/ci/skill-lift.mjs run --skill "$SKILL" --tree "$TREE" --base "$BASE" --out "$RUNNER_TEMP/experiment"
+      - name: Summarize paired trials
+        id: summary
+        if: "!cancelled() && (steps.trial.outcome == 'success' || steps.trial.outcome == 'failure')"
+        run: node scripts/ci/skill-lift.mjs summarize --skill "$SKILL" --tree "$TREE" --in "$RUNNER_TEMP/experiment" --out "$RUNNER_TEMP/skill-lift-summary.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: "!cancelled() && (steps.summary.outcome == 'success' || steps.summary.outcome == 'failure')"
+        with:
+          name: skill-lift-verify-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/skill-lift-summary.json
+          retention-days: 14
+          if-no-files-found: error

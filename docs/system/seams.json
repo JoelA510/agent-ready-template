@@ -16,7 +16,7 @@
         "continuity/gate.mjs", "continuity/gate.d.mts", "continuity/README.md",
         ".github/workflows/audit.yml", ".github/workflows/evals.yml", ".github/workflows/continuity.yml",
         ".github/workflows/agentshield.yml", ".github/workflows/skill-eval-ci.yml",
-        ".github/workflows/skill-lift.yml", "evals/skill-lift/benchmark.lock.json",
+        ".github/workflows/skill-lift.yml", "evals/skill-lift/benchmark.lock.json", "evals/skill-lift/evaluator.requirements.txt",
         "docs/system/agent-targets.md", "docs/system/updating-from-the-template.mdx",
         "docs/changes/2026-11-17-dual-target-agents.md", "docs/security/dependency-policy.md",
         "docs/adr/0000-template.md", "docs/adr/0002-process-distribution.md",
@@ -41,7 +41,7 @@
         "scripts/fleet-report.mjs", "scripts/fleet-report.d.mts", "scripts/fleet-update.mjs", "scripts/fleet-update.d.mts",
         "scripts/repo-files.mjs", "scripts/repo-files.d.mts", "scripts/runtime.mjs", "scripts/runtime.d.mts",
         "scripts/setup.sh", "scripts/skills.mjs", "scripts/skills.d.mts", "scripts/template-dependency.mjs",
-        "scripts/ci/agent-config-canary.mjs", "scripts/ci/skill-tier1.mjs", "scripts/ci/skill-lift.mjs",
+        "scripts/ci/agent-config-canary.mjs", "scripts/ci/skill-tier1.mjs", "scripts/ci/skill-lift.mjs", "scripts/ci/skill-lift-results.mjs", "scripts/ci/rehearse-skill-lift.py",
         "scripts/__tests__/agent-platforms.test.ts", "scripts/__tests__/agent-target.test.ts", "scripts/__tests__/apply-process.test.ts",
         "scripts/__tests__/build-skills.test.ts", "scripts/__tests__/check-audit.test.ts", "scripts/__tests__/check-conformance.test.ts",
         "scripts/__tests__/check-env.test.ts", "scripts/__tests__/check-instructions.test.ts", "scripts/__tests__/check-placeholders.test.ts",
@@ -50,7 +50,7 @@
         "scripts/__tests__/reserved-command-names.json", "scripts/__tests__/setup.test.ts", "scripts/__tests__/agent-ci.test.ts",
         "scripts/__tests__/agent-config-canary.test.ts", "scripts/__tests__/consumer-workflows.test.ts",
         "scripts/__tests__/continuity-gate.test.ts", "scripts/__tests__/continuity-workflow.test.ts",
-        "scripts/__tests__/skill-tier1.test.ts", "scripts/__tests__/skill-lift.test.ts"
+        "scripts/__tests__/skill-tier1.test.ts", "scripts/__tests__/skill-lift.test.ts", "scripts/__tests__/skill-lift-results.test.ts"
       ]
     },
     {
@@ -109,7 +109,7 @@
     {
       "owner": "shared",
       "purpose": "Decisions, evidence, benchmark tasks and preregistrations belong to the repository that makes the claim. Only the gate, benchmark protocol and reviewed workflow sources graduate.",
-      "paths": ["continuity/ledger/", "continuity/evidence/", "evals/skill-lift/*/prereg.md", "evals/skill-lift/*/evals.json"]
+      "paths": ["continuity/ledger/", "continuity/evidence/", "evals/skill-lift/*/prereg.md", "evals/skill-lift/*/evals.json", "evals/skill-lift/*/decision.txt", "evals/skill-lift/*/files/*", "evals/skill-lift/*/environment/Dockerfile"]
     }
   ],
   "generated": {

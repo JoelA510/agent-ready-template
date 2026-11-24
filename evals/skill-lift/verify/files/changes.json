@@ -1,0 +1,56 @@
+{
+  "valid-code": {
+    "file": "src/slug.py",
+    "fail": "",
+    "reason": "",
+    "generated": ""
+  },
+  "broken-check": {
+    "file": "src/catalogue.py",
+    "fail": "unit",
+    "reason": "empty title accepted",
+    "generated": ""
+  },
+  "docs-only": {
+    "file": "docs/install.md",
+    "fail": "",
+    "reason": "",
+    "generated": ""
+  },
+  "typing": {
+    "file": "src/indexer.py",
+    "fail": "types",
+    "reason": "index may be null",
+    "generated": ""
+  },
+  "test-only": {
+    "file": "tests/test_pages.py",
+    "fail": "",
+    "reason": "",
+    "generated": ""
+  },
+  "broken-doc": {
+    "file": "docs/upgrade.md",
+    "fail": "docs",
+    "reason": "missing migration link",
+    "generated": ""
+  },
+  "formatting": {
+    "file": "src/identifier.py",
+    "fail": "lint",
+    "reason": "trailing whitespace",
+    "generated": ""
+  },
+  "generated": {
+    "file": "schema/menu.json",
+    "fail": "",
+    "reason": "",
+    "generated": "menu.snapshot"
+  },
+  "incomplete": {
+    "file": "src/archive.py",
+    "fail": "unit",
+    "reason": "archive fixture unavailable",
+    "generated": ""
+  }
+}
