@@ -57,7 +57,7 @@ jobs:
           npx --yes @anthropic-ai/claude-code@2.1.286 plugin eval . --trust-plugin --scaffold \
             --ablation none --no-publish --max-cost-usd 10 --json results.json "${models[@]}"
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: eval-results
